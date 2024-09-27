@@ -1,0 +1,27 @@
+{
+  "name": "red-alert-server",
+  "version": "1.0.0",
+  "description": "A simple Node.js server that connects to SQL Server and executes a query.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "jest --coverage"
+  },
+  "dependencies": {
+    "axios": "^0.21.1",
+    "date-and-time": "^0.14.2",
+    "dotenv": "^10.0.0",
+    "express": "^4.17.1",
+    "node-fetch": "^2.6.1"
+  },
+  "jest": {
+    "testEnvironment": "node"
+  },
+  "author": "Israel",
+  "license": "ISC",
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^7.0.0",
+    "date-and-time": "^3.5.0"
+  }
+}
