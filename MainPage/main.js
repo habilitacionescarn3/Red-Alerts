@@ -6,7 +6,7 @@ let alerts = [];
 let locations = [];
 const timeLine = document.getElementById("timeline");
 const time = document.getElementById("time");
-
+let checker = 0;
 const map = L.map("map").setView([32.0, 35.0], 8); // Default view
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   attribution: "© OpenStreetMap contributors",
@@ -15,7 +15,7 @@ const markers = L.layerGroup().addTo(map);
 
 getAlerts();
 
-timeLine.addEventListener("input", (event) => {
+timeLine.addEventListener("input", async (event) => {
   const hours = Math.floor(event.target.value / 3600);
   const minutes = Math.floor((event.target.value % 3600) / 60);
   const formattedHours = String(hours).padStart(2, "0");
@@ -30,19 +30,17 @@ timeLine.addEventListener("input", (event) => {
     (today.getMonth() + 1).toString().padStart(2, "0") +
     "/" +
     today.getDate().toString().padStart(2, "0");
-
+  checker++;
   if ((gotData = true)) {
-    addMarkers(`${formattedDate} ${time.textContent}:00`);
+    await addMarkers(`${formattedDate} ${time.textContent}:00`, checker);
   }
   //function
 });
 
-function getAlerts() {
+async function getAlerts() {
   fetch(`http://${IP}:3000/array`)
     .then((response) => response.json())
-    .then((data) => {
-      console.log(data.alerts);
-      console.log(data.locations);
+    .then(async (data) => {
       alerts = data.alerts;
       locations = data.locations;
       gotData = true;
@@ -61,35 +59,56 @@ function getAlerts() {
         today.getMinutes().toString().padStart(2, "0") +
         ":00";
       time.textContent = formattedTime;
-      console.log(time.textContent);
 
       if (gotData === true) {
-        addMarkers(`${formattedDate} ${time.textContent}`);
+        await addMarkers(`${formattedDate} ${time.textContent}`);
       }
       return data;
     })
     .catch((error) => console.error("Error fetching array:", error));
 }
-
-function addMarkers(time) {
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+async function addMarkers(time, check) {
   markers.clearLayers();
+  const markerArray = [];
   let markerCount = 0;
-  for (let i = 0; i < alerts.length; i++) {
-    for (let j = 0; j < alerts[i].data.length; j++) {
+  for (let i = 0; i < alerts.length && check === checker; i++) {
+    for (let j = 0; j < alerts[i].data.length && check === checker; j++) {
       let found = false;
-      for (let k = 0; k < locations.length && !found; k++) {
+
+      for (
+        let k = 0;
+        k < locations.length && !found && check === checker;
+        k++
+      ) {
         if (
           alerts[i].data[j].toString() === locations[k].address.toString() &&
           getTimeDifference(alerts[i].time, time) < 10
         ) {
-          console.log(alerts[i]);
-
           found = true;
-          L.marker([
-            locations[k].coordinates.lon,
-            locations[k].coordinates.lat,
-          ]).addTo(markers);
-          markerCount++;
+
+          if (
+            !has(markerArray, {
+              lon: locations[k].coordinates.lon,
+              lat: locations[k].coordinates.lat,
+            })
+          ) {
+            console.log(markerCount);
+
+            //gpt
+            const { lon, lat } = locations[k].coordinates;
+            if (isNaN(lon) || isNaN(lat)) {
+              console.error(`Invalid coordinates for ${locations[k].address}`);
+              continue; // Skip invalid coordinates
+            }
+            L.marker([lon, lat]).addTo(markers);
+            //
+            markerArray.push({
+              lon: locations[k].coordinates.lon,
+              lat: locations[k].coordinates.lat,
+            });
+            markerCount++;
+          } //else console.log(`found`);
         }
       }
       if (!found) {
@@ -99,6 +118,12 @@ function addMarkers(time) {
     }
   }
   console.log(markerCount); //TODO :FIX
+  if (check !== checker) {
+    console.log("stop" + " " + check + "" + checker);
+
+    markers.clearLayers();
+    markerCount = 0;
+  }
 }
 
 function getTimeDifference(time1, time2) {
@@ -114,7 +139,14 @@ function getTimeDifference(time1, time2) {
   const diffInMinutes = Math.floor(
     (diffInMs % (1000 * 60 * 60)) / (1000 * 60) + diffInHours * 60
   );
-  console.log(time1, time2, diffInMinutes);
 
   return diffInMinutes;
+}
+function has(array, obj) {
+  for (let i = 0; i < array.length; i++)
+    if (array[i].lat === obj.lat && array[i].lon === obj.lon) {
+      return true;
+    }
+
+  return false;
 }

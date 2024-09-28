@@ -10,49 +10,137 @@ const PORT = 3000;
 const filePathData = "/Projects/red Alerts/data.json";
 const filePathCord = "/Projects/red Alerts/coordinates.json";
 const setup = false;
+// Define the validateCoordinatesArray function first
+function validateCoordinatesArray(coordinatesArray) {
+  try {
+    const validatedArray = [];
+
+    for (let i = 0; i < coordinatesArray.length; i++) {
+      const location = coordinatesArray[i];
+      const { lat, lon } = location.coordinates;
+
+      // Check if lat and lon are valid numbers
+      if (!isNaN(lat) && !isNaN(lon)) {
+        validatedArray.push(location); // Add valid entries to the result array
+      } else {
+        // Only log invalid coordinates
+        console.error(
+          `Invalid coordinates for ${location.address}: lat=${lat}, lon=${lon}`
+        );
+      }
+    }
+
+    return validatedArray;
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+// Now define the async function that reads the file and validates
+async function validateAndLogCoordinates() {
+  try {
+    const coordinatesArray = await readJsonFile(filePathCord); // Await the JSON file read
+    const validatedArray = validateCoordinatesArray(coordinatesArray); // Validate the coordinates
+    //console.log("Validated Coordinates Array:", validatedArray); // Log validated results
+  } catch (error) {
+    console.error("Error validating coordinates:", error);
+  }
+}
+
+// Call the function to validate and log//Make translate server
+validateAndLogCoordinates();
+async function translateAddress(address) {
+  try {
+    const response = await axios.post("https://libretranslate.com/translate", {
+      q: address,
+      source: "he",
+      target: "en",
+    });
+    return response.data.translatedText;
+  } catch (error) {
+    console.error("Error translating address:", error);
+    return address; // Return the original address if translation fails
+  }
+}
 const setCord = async () => {
   try {
     const fileData = await readJsonFile(filePathData);
 
     const fileCord = await readJsonFile(filePathCord);
     console.log(fileData.length);
-    console.log(fileData[1].data.length);
+
     console.log(fileCord.length);
     let found = false;
     for (let i = 0; i < fileData.length; i++) {
       for (let j = 0; j < fileData[i].data.length; j++) {
+        found = false;
         for (let k = 0; k < fileCord.length; k++) {
-          console.log(fileData[i].data[j]);
-          console.log(fileCord[k].address);
-
-          found = false;
           if (fileData[i].data[j] === fileCord[k].address) {
             found = true;
           }
         }
+        console.log(found);
         if (!found) {
-          console.log(fileData[i].data[j]);
-          console.log("1");
-
           let query = encodeURIComponent(fileData[i].data[j]);
           let response = await axios.get(
             `https://photon.komoot.io/api/?q=${query}`
-          );
-          const obj = {
-            address: fileData[i].data[j],
-            coordinates: {
-              lat: response.data.features[0].geometry.coordinates[0],
-              lon: response.data.features[0].geometry.coordinates[1],
-            },
-          };
-          console.log(obj);
+          ); //add secondary source //Nominatim//Geocode.xyz
 
-          await saveObjectToFileCord(filePathCord, obj);
-          console.log("Data saved successfully");
+          let obj = "";
+          if (response.data.features.length !== 0) {
+            obj = {
+              address: fileData[i].data[j],
+              coordinates: {
+                lat: response.data.features[0].geometry.coordinates[0],
+                lon: response.data.features[0].geometry.coordinates[1],
+              },
+            };
+          } else {
+            console.log("teanslate");
+
+            const translatedAddress = await translateAddress(
+              fileData[i].data[j]
+            );
+            console.log("Translated Address:", translatedAddress);
+            //////
+            if (translatedAddress) {
+              const response = await axios.get(
+                `https://photon.komoot.io/api/?q=${encodeURIComponent(
+                  translatedAddress
+                )}`
+              );
+              if (response.data.error) {
+                throw new Error(response.data.error.description);
+              } else {
+                if (response.data.features.length !== 0) {
+                  obj = {
+                    address: fileData[i].data[j],
+                    coordinates: {
+                      lat: response.data.features[0].geometry.coordinates[0],
+                      lon: response.data.features[0].geometry.coordinates[1],
+                    },
+                  };
+                }
+                // obj = {
+                //   address: fileData[i].data[j],
+                //   coordinates: {
+                //     lat: response.data.latt,
+                //     lon: response.data.longt,
+                //   },
+                // };
+              }
+            }
+          }
+          if (obj) {
+            await saveObjectToFileCord(filePathCord, obj);
+          }
+          console.log(obj);
         }
       }
     }
-  } catch {}
+  } catch (error) {
+    console.error("Error:", error.message);
+  }
 };
 if (setup) {
   setCord();
@@ -97,7 +185,7 @@ const fetchData = async () => {
       console.log("File data:", fileData);
 
       // Check if the file contains 100 objects
-      if (fileData.length < 100) {
+      if (fileData.length < 1000) {
         // Continue fetching data
         setTimeout(fetchData, 4700);
       } else {
