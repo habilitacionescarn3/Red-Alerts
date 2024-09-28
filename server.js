@@ -9,6 +9,7 @@ const app = express();
 const PORT = 3000;
 const filePathData = "/Projects/red Alerts/data.json";
 const filePathCord = "/Projects/red Alerts/coordinates.json";
+const filePathError = "/Projects/red Alerts/errors.json";
 const setup = false;
 // Define the validateCoordinatesArray function first
 function validateCoordinatesArray(coordinatesArray) {
@@ -42,6 +43,24 @@ async function validateAndLogCoordinates() {
     const coordinatesArray = await readJsonFile(filePathCord); // Await the JSON file read
     const validatedArray = validateCoordinatesArray(coordinatesArray); // Validate the coordinates
     //console.log("Validated Coordinates Array:", validatedArray); // Log validated results
+    const badArray = [];
+    for (let i = 0; i < validatedArray.length; i++) {
+      if (
+        !(
+          //lay =y//lon=x
+          (
+            validatedArray[i].coordinates.lon < 33.35468927091694 &&
+            validatedArray[i].coordinates.lon > 29.489364393908087 &&
+            validatedArray[i].coordinates.lat < 35.93310954929203 &&
+            validatedArray[i].coordinates.lat > 34
+          )
+        )
+      ) {
+        badArray.push(coordinatesArray[i]);
+        saveObjectToFileCord(filePathError, coordinatesArray[i]);
+      }
+    }
+    console.log(badArray);
   } catch (error) {
     console.error("Error validating coordinates:", error);
   }
@@ -51,11 +70,15 @@ async function validateAndLogCoordinates() {
 validateAndLogCoordinates();
 async function translateAddress(address) {
   try {
-    const response = await axios.post("https://libretranslate.com/translate", {
+    const onlineUse = `https://libretranslate.com/translate`;
+    const localuse = `http://localhost:5000/translate`;
+    const response = await axios.post(`${localuse}`, {
       q: address,
       source: "he",
       target: "en",
     });
+    console.log(response.data.translatedText);
+
     return response.data.translatedText;
   } catch (error) {
     console.error("Error translating address:", error);
