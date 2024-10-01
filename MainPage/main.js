@@ -12,8 +12,55 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   attribution: "© OpenStreetMap contributors",
 }).addTo(map);
 const markers = L.layerGroup().addTo(map);
-
+const now = new Date();
 getAlerts();
+function updateBackground() {
+  const alertTimes = alerts;
+  // const currentDate = new Date("2024/09/30"); // Set to the current day//TODO FIX
+  const currentDate = new Date(
+    `${now.getFullYear()}/${now.getMonth() + 1}/${now.getDate()}`
+  );
+  // console.log(currentDate);
+  const startOfDay = new Date(currentDate.setHours(0, 0, 0, 0));
+  const endOfDay = new Date(currentDate.setHours(23, 59, 59, 999));
+
+  const highlightRanges = alertTimes
+    .filter((alert) => {
+      const alertTime = new Date(alert.time);
+      return alertTime >= startOfDay && alertTime <= endOfDay;
+    })
+    .map((alert) => {
+      const alertTime = new Date(alert.time);
+      const start = new Date(alertTime.getTime() - 5 * 60000); // 5 minutes before
+      const end = new Date(alertTime.getTime() + 5 * 60000); // 5 minutes after
+      return { start, end };
+    });
+
+  let background = "linear-gradient(to right, ";
+  let lastPosition = 0;
+
+  highlightRanges.forEach((range, index) => {
+    const startPercentage = ((range.start - startOfDay) / 86400000) * 100;
+    const endPercentage = ((range.end - startOfDay) / 86400000) * 100;
+
+    if (startPercentage > lastPosition) {
+      background += `#ddd ${lastPosition}%, #ddd ${startPercentage}%, `;
+    }
+    background += `#ff4500 ${startPercentage}%, #ff4500 ${endPercentage}%`;
+    lastPosition = endPercentage;
+
+    if (index < highlightRanges.length - 1) {
+      background += ", ";
+    }
+  });
+
+  if (lastPosition < 100) {
+    background += `, #ddd ${lastPosition}%, #ddd 100%`;
+  }
+
+  background += ")";
+  timeLine.style.background = background;
+}
 
 timeLine.addEventListener("input", async (event) => {
   const hours = Math.floor(event.target.value / 3600);
@@ -59,7 +106,7 @@ async function getAlerts() {
         today.getMinutes().toString().padStart(2, "0") +
         ":00";
       time.textContent = formattedTime;
-
+      updateBackground();
       if (gotData === true) {
         await addMarkers(`${formattedDate} ${time.textContent}`);
       }
@@ -101,8 +148,13 @@ async function addMarkers(time, check) {
               console.error(`Invalid coordinates for ${locations[k].address}`);
               continue; // Skip invalid coordinates
             }
-            L.marker([lon, lat]).addTo(markers);
-            //
+            const marker = L.marker([lon, lat]).addTo(markers);
+            marker
+              .bindPopup(
+                `<b>${alerts[i].data[j]}</b><br>${alerts[i].title}</br><br>${alerts[i].time}</br>`
+              )
+              .openPopup();
+
             markerArray.push({
               lon: locations[k].coordinates.lon,
               lat: locations[k].coordinates.lat,
@@ -117,9 +169,9 @@ async function addMarkers(time, check) {
       //title
     }
   }
-  console.log(markerCount); //TODO :FIX
+  // console.log(markerCount); //TODO :FIX
   if (check !== checker) {
-    console.log("stop" + " " + check + "" + checker);
+    // console.log("stop" + " " + check + "" + checker);
 
     markers.clearLayers();
     markerCount = 0;

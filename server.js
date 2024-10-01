@@ -10,7 +10,7 @@ const PORT = 3000;
 const filePathData = "/Projects/red Alerts/data.json";
 const filePathCord = "/Projects/red Alerts/coordinates.json";
 const filePathError = "/Projects/red Alerts/errors.json";
-const setup = false;
+const setup = true; //npm start not nodemon
 // Define the validateCoordinatesArray function first
 function validateCoordinatesArray(coordinatesArray) {
   try {
@@ -60,7 +60,7 @@ async function validateAndLogCoordinates() {
         saveObjectToFileCord(filePathError, coordinatesArray[i]);
       }
     }
-    console.log(badArray);
+    // console.log(badArray);
   } catch (error) {
     console.error("Error validating coordinates:", error);
   }
@@ -77,7 +77,7 @@ async function translateAddress(address) {
       source: "he",
       target: "en",
     });
-    console.log(response.data.translatedText);
+    // console.log(response.data.translatedText);
 
     return response.data.translatedText;
   } catch (error) {
@@ -90,9 +90,9 @@ const setCord = async () => {
     const fileData = await readJsonFile(filePathData);
 
     const fileCord = await readJsonFile(filePathCord);
-    console.log(fileData.length);
+    // console.log(fileData.length);
 
-    console.log(fileCord.length);
+    // console.log(fileCord.length);
     let found = false;
     for (let i = 0; i < fileData.length; i++) {
       for (let j = 0; j < fileData[i].data.length; j++) {
@@ -102,7 +102,7 @@ const setCord = async () => {
             found = true;
           }
         }
-        console.log(found);
+        // console.log(found);
         if (!found) {
           let query = encodeURIComponent(fileData[i].data[j]);
           let response = await axios.get(
@@ -119,12 +119,12 @@ const setCord = async () => {
               },
             };
           } else {
-            console.log("teanslate");
+            // console.log("teanslate");
 
             const translatedAddress = await translateAddress(
               fileData[i].data[j]
             );
-            console.log("Translated Address:", translatedAddress);
+            // console.log("Translated Address:", translatedAddress);
             //////
             if (translatedAddress) {
               const response = await axios.get(
@@ -157,7 +157,7 @@ const setCord = async () => {
           if (obj) {
             await saveObjectToFileCord(filePathCord, obj);
           }
-          console.log(obj);
+          // console.log(obj);
         }
       }
     }
@@ -201,18 +201,18 @@ const fetchData = async () => {
       data.time = formattedDate;
 
       await saveObjectToFile(filePathData, data);
-      console.log("Data saved successfully");
+      // console.log("Data saved successfully");
 
       // Read the updated JSON file
       const fileData = await readJsonFile(filePathData);
-      console.log("File data:", fileData);
+      // console.log("File data:", fileData);
 
       // Check if the file contains 100 objects
-      if (fileData.length < 1000) {
+      if (fileData.length < 100000) {
         // Continue fetching data
         setTimeout(fetchData, 4700);
       } else {
-        console.log("File contains 100 objects. Stopping fetch.");
+        // console.log("File contains 100 objects. Stopping fetch.");
       }
     } else {
       // If the data is empty, retry after 4.7 seconds
