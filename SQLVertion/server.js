@@ -1,3 +1,4 @@
+//to do add validate cord
 //libs
 require("dotenv").config();
 const axios = require("axios");
@@ -10,11 +11,12 @@ const moment = require("moment-timezone");
 const app = express();
 //files and network
 const PORT = 3001;
-const filePathData = "/Projects/red Alerts/data.json";
-const filePathCord = "/Projects/red Alerts/coordinates.json";
-const filePathError = "/Projects/red Alerts/errors.json";
+const filePathData = "/Projects/red Alerts/JsonVertion(OutDated)/data.json";
+const filePathCord =
+  "/Projects/red Alerts/JsonVertion(OutDated)/coordinates.json";
+const filePathError = "/Projects/red Alerts/JsonVertion(OutDated)/errors.json";
 //valuables
-const setup = true; //npm start not nodemon
+const setup = false; //npm start not nodemon
 let test = true;
 const dates = new Date();
 //DB config
@@ -111,6 +113,7 @@ async function convertToSql() {
 }
 async function fetchEvents(date) {
   const arr = await getEventsByDate(date);
+
   return arr;
 }
 

@@ -14,7 +14,11 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   attribution: "© OpenStreetMap contributors",
 }).addTo(map);
 const markers = L.layerGroup().addTo(map);
-
+const midnight = new Date(now);
+midnight.setHours(0);
+midnight.setMinutes(0);
+midnight.setSeconds(0);
+timeLine.value = getTimeDifference(midnight, now) * 60;
 //add event listener
 timeLine.addEventListener("input", async (event) => {
   const secondsInDay = 86400;
@@ -133,7 +137,7 @@ async function addMarkers(time, check) {
   markers.clearLayers();
   const markerArray = [];
   let markerCount = 0;
-  console.log(alerts.length);
+
   for (let i = 0; i < alerts.length; i++) {
     for (let j = 0; j < alerts[i].data.length; j++) {
       for (let k = 0; k < locations.length; k++) {
@@ -148,6 +152,7 @@ async function addMarkers(time, check) {
             })
           ) {
             //gpt
+            console.log("found");
             const { address, lon, lat } = locations[k];
             if (isNaN(lon) || isNaN(lat)) {
               console.error(`Invalid coordinates for ${locations[k].address}`);
