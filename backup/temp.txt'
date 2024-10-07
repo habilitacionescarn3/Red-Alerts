@@ -1,0 +1,65 @@
+async function addMarkers(time, check) {
+  markers.clearLayers();
+  const markerArray = [];
+  let markerCount = 0;
+  console.log(alerts.length);
+
+  for (let i = 0; i < alerts.length && check === checker; i++) {
+    for (let j = 0; j < alerts[i].data.length && check === checker; j++) {
+      let found = false;
+      console.log(found);
+
+      for (
+        let k = 0;
+        k < locations.length && !found && check === checker;
+        k++
+      ) {
+        if (
+          alerts[i].data[j].toString() === locations[k].address.toString() &&
+          getTimeDifference(alerts[i].time, time) < 10
+        ) {
+          found = true;
+
+          if (
+            !has(markerArray, {
+              lon: locations[k].coordinates.lon,
+              lat: locations[k].coordinates.lat,
+            })
+          ) {
+            console.log(markerCount);
+
+            //gpt
+            const { lon, lat } = locations[k].coordinates;
+            if (isNaN(lon) || isNaN(lat)) {
+              console.error(`Invalid coordinates for ${locations[k].address}`);
+              continue; // Skip invalid coordinates
+            }
+            const marker = L.marker([lon, lat]).addTo(markers);
+            marker
+              .bindPopup(
+                `<b>${alerts[i].data[j]}</b><br>${alerts[i].title}</br><br>${alerts[i].time}</br>`
+              )
+              .openPopup();
+
+            markerArray.push({
+              lon: locations[k].coordinates.lon,
+              lat: locations[k].coordinates.lat,
+            });
+            markerCount++;
+          } //else console.log(`found`);
+        }
+      }
+      if (!found) {
+        // console.log(`${alerts[i].data[j]} was not found`);
+      }
+      //title
+    }
+  }
+  // console.log(markerCount); //TODO :FIX
+  if (check !== checker) {
+    // console.log("stop" + " " + check + "" + checker);
+
+    markers.clearLayers();
+    markerCount = 0;
+  }
+}

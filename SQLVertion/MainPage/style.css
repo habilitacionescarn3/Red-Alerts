@@ -25,7 +25,8 @@ input[type="range"] {
   display: none;
 }
 #timeline {
-  -webkit-appearance: none;
+  appearance: none;
+  /* -webkit-appearance: none; */
   width: 100%;
   height: 10px;
   border-radius: 5px;
@@ -34,7 +35,8 @@ input[type="range"] {
 }
 
 #timeline::-webkit-slider-thumb {
-  -webkit-appearance: none;
+  appearance: none;
+  /* -webkit-appearance: none; */
   width: 20px;
   height: 20px;
   background: #ff4500;
@@ -50,4 +52,31 @@ input[type="range"] {
   border-radius: 50%;
   cursor: pointer;
   box-shadow: 0 0 2px 0 #555;
+}
+
+/* Floating Menu Styles */
+#floatingMenu {
+  position: fixed; /* Makes it stay on screen */
+  top: 20px; /* Position from the top of the screen */
+  right: 20px; /* Position from the left of the screen */
+  background-color: rgba(0, 0, 0, 0.8); /* Semi-transparent background */
+  color: white;
+  padding: 10px;
+  border-radius: 5px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  z-index: 1000; /* Ensures it's above other content */
+}
+
+#floatingMenu button {
+  background: #ff4500;
+  border: none;
+  color: white;
+  padding: 10px;
+  margin: 5px 0;
+  cursor: pointer;
+  border-radius: 3px;
+}
+
+#floatingMenu button:hover {
+  background: #e03e00;
 }

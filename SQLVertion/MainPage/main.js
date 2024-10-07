@@ -1,41 +1,102 @@
-// Initialize the map
+// network
 const IP = "localhost"; //85.250.91.110
+//valuables
 let gotData = false; //maybe useless
-// console.log(getTimeDifference(`2024/09/27 15:49:32`, `2024/09/27 15:59:32`));
 let alerts = [];
 let locations = [];
+let checker = 0;
+const now = new Date();
+//elements
 const timeLine = document.getElementById("timeline");
 const time = document.getElementById("time");
-let checker = 0;
 const map = L.map("map").setView([32.0, 35.0], 8); // Default view
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   attribution: "© OpenStreetMap contributors",
 }).addTo(map);
 const markers = L.layerGroup().addTo(map);
-const now = new Date(`2024/10/05`);
+
+//add event listener
+timeLine.addEventListener("input", async (event) => {
+  const secondsInDay = 86400;
+  const value = event.target.value;
+  const hours = Math.floor(value / 3600);
+  const minutes = Math.floor((value % 3600) / 60);
+
+  const formattedHours = String(hours).padStart(2, "0");
+  const formattedMinutes = String(minutes).padStart(2, "0");
+  const formattedTime = `${formattedHours}:${formattedMinutes}`;
+  time.textContent = formattedTime;
+
+  markers.clearLayers();
+
+  // Get current date (for current day timeline scrolling)
+  const today = now;
+  const formattedDate =
+    today.getFullYear() +
+    "/" +
+    (today.getMonth() + 1).toString().padStart(2, "0") +
+    "/" +
+    today.getDate().toString().padStart(2, "0");
+
+  // Check if we have alert data already
+
+  if (gotData) {
+    await addMarkers(`${formattedDate} ${formattedTime}:00`);
+  }
+});
+
 getAlerts();
-//"2024-10-03T13:30:13" to format
+
+//get alerts from server
+async function getAlerts() {
+  fetch(`http://${IP}:3001/array`)
+    .then((response) => response.json())
+    .then(async (data) => {
+      alerts = data.alerts;
+
+      locations = data.locations;
+
+      gotData = true;
+      timeLine.style.display = "block";
+      const today = new Date();
+
+      const formattedDate =
+        today.getFullYear() +
+        "/" +
+        (today.getMonth() + 1).toString().padStart(2, "0") +
+        "/" +
+        today.getDate().toString().padStart(2, "0");
+      const formattedTime =
+        today.getHours().toString().padStart(2, "0") +
+        ":" +
+        today.getMinutes().toString().padStart(2, "0") +
+        ":00";
+      time.textContent = formattedTime;
+
+      updateBackground();
+      if (gotData === true) {
+        await addMarkers(`${formattedDate} ${formattedTime}`, 0);
+      }
+
+      return data;
+    })
+    .catch((error) => console.error("Error fetching array:", error));
+}
+
+//set scroll background
 function updateBackground() {
   const alertTimes = alerts;
-  const currentDate = new Date("2024/10/05"); // Set to the current day//TODO FIX
-  // const currentDate = new Date(
-  //   `${now.getFullYear()}/${now.getMonth() + 1}/${now.getDate()}`
-  // );
-  console.log(alertTimes);
+  const currentDate = now;
 
-  console.log(currentDate);
   const startOfDay = new Date(currentDate.setHours(0, 0, 0, 0));
   const endOfDay = new Date(currentDate.setHours(23, 59, 59, 999));
 
   const highlightRanges = alertTimes
     .filter((alert) => {
-      console.log(formatDate(alert.time));
       const alertTime = new Date(formatDate(alert.time));
       return alertTime >= startOfDay && alertTime <= endOfDay;
     })
     .map((alert) => {
-      console.log(formatDate(alert.time));
-
       const alertTime = new Date(formatDate(alert.time));
       const start = new Date(alertTime.getTime() - 5 * 60000); // 5 minutes before
       const end = new Date(alertTime.getTime() + 5 * 60000); // 5 minutes after
@@ -44,7 +105,6 @@ function updateBackground() {
 
   let background = "linear-gradient(to right, ";
   let lastPosition = 0;
-  console.log(highlightRanges);
 
   highlightRanges.forEach((range, index) => {
     const startPercentage = ((range.start - startOfDay) / 86400000) * 100;
@@ -69,104 +129,26 @@ function updateBackground() {
   timeLine.style.background = background;
 }
 
-timeLine.addEventListener("input", async (event) => {
-  const secondsInDay = 86400; // Total seconds in a day
-  const value = event.target.value;
-  const hours = Math.floor(value / 3600);
-  const minutes = Math.floor((value % 3600) / 60);
-
-  const formattedHours = String(hours).padStart(2, "0");
-  const formattedMinutes = String(minutes).padStart(2, "0");
-  const formattedTime = `${formattedHours}:${formattedMinutes}`;
-
-  // Update the time display
-  time.textContent = formattedTime;
-
-  // Clear old markers
-  markers.clearLayers();
-
-  // Get current date (for current day timeline scrolling)
-  const today = now;
-  const formattedDate =
-    today.getFullYear() +
-    "/" +
-    (today.getMonth() + 1).toString().padStart(2, "0") +
-    "/" +
-    today.getDate().toString().padStart(2, "0");
-
-  // Check if we have alert data already
-  console.log(gotData);
-
-  if (gotData) {
-    await addMarkers(`${formattedDate} ${formattedTime}:00`);
-  }
-});
-
-async function getAlerts() {
-  fetch(`http://${IP}:3001/array`)
-    .then((response) => response.json())
-    .then(async (data) => {
-      alerts = data.alerts;
-      console.log(alerts);
-
-      locations = data.locations;
-      console.log(locations);
-      gotData = true;
-      timeLine.style.display = "block";
-      const today = new Date();
-
-      const formattedDate =
-        today.getFullYear() +
-        "/" +
-        (today.getMonth() + 1).toString().padStart(2, "0") +
-        "/" +
-        today.getDate().toString().padStart(2, "0");
-      const formattedTime =
-        today.getHours().toString().padStart(2, "0") +
-        ":" +
-        today.getMinutes().toString().padStart(2, "0") +
-        ":00";
-      time.textContent = formattedTime;
-      console.log(data);
-      updateBackground();
-      if (gotData === true) {
-        await addMarkers(`${formattedDate} ${time.textContent}`);
-      }
-
-      return data;
-    })
-    .catch((error) => console.error("Error fetching array:", error));
-}
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 async function addMarkers(time, check) {
   markers.clearLayers();
   const markerArray = [];
   let markerCount = 0;
-  for (let i = 0; i < alerts.length && check === checker; i++) {
-    for (let j = 0; j < alerts[i].data.length && check === checker; j++) {
-      let found = false;
-
-      for (
-        let k = 0;
-        k < locations.length && !found && check === checker;
-        k++
-      ) {
+  console.log(alerts.length);
+  for (let i = 0; i < alerts.length; i++) {
+    for (let j = 0; j < alerts[i].data.length; j++) {
+      for (let k = 0; k < locations.length; k++) {
         if (
           alerts[i].data[j].toString() === locations[k].address.toString() &&
           getTimeDifference(alerts[i].time, time) < 10
         ) {
-          found = true;
-
           if (
             !has(markerArray, {
-              lon: locations[k].coordinates.lon,
-              lat: locations[k].coordinates.lat,
+              lon: locations[k].lon,
+              lat: locations[k].lat,
             })
           ) {
-            console.log(markerCount);
-
             //gpt
-            const { lon, lat } = locations[k].coordinates;
+            const { address, lon, lat } = locations[k];
             if (isNaN(lon) || isNaN(lat)) {
               console.error(`Invalid coordinates for ${locations[k].address}`);
               continue; // Skip invalid coordinates
@@ -179,44 +161,38 @@ async function addMarkers(time, check) {
               .openPopup();
 
             markerArray.push({
-              lon: locations[k].coordinates.lon,
-              lat: locations[k].coordinates.lat,
+              lon: locations[k].lon,
+              lat: locations[k].lat,
             });
             markerCount++;
-          } //else console.log(`found`);
+          }
         }
       }
-      if (!found) {
-        // console.log(`${alerts[i].data[j]} was not found`);
-      }
-      //title
     }
-  }
-  // console.log(markerCount); //TODO :FIX
-  if (check !== checker) {
-    // console.log("stop" + " " + check + "" + checker);
-
-    markers.clearLayers();
-    markerCount = 0;
   }
 }
 
+//retuen time diff in minutes
 function getTimeDifference(time1, time2) {
-  // Convert time strings to Date objects
   const date1 = new Date(time1);
   const date2 = new Date(time2);
 
-  // Calculate the difference in milliseconds
-  const diffInMs = Math.abs(date1 - date2);
+  // Ensure both Date objects are valid
+  if (isNaN(date1.getTime()) || isNaN(date2.getTime())) {
+    console.error(`Invalid date(s) found: ${time1}, ${time2}`);
+    return Number.MAX_SAFE_INTEGER; // Return a large number to skip invalid dates
+  }
 
-  // Convert milliseconds to hours and minutes
-  const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
-  const diffInMinutes = Math.floor(
-    (diffInMs % (1000 * 60 * 60)) / (1000 * 60) + diffInHours * 60
-  );
+  // Calculate the difference in milliseconds
+  const diffInMs = Math.abs(date2 - date1);
+
+  // Convert milliseconds to minutes
+  const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
 
   return diffInMinutes;
 }
+
+//check if obj is in array
 function has(array, obj) {
   for (let i = 0; i < array.length; i++)
     if (array[i].lat === obj.lat && array[i].lon === obj.lon) {
@@ -225,6 +201,8 @@ function has(array, obj) {
 
   return false;
 }
+
+//format date
 function formatDate(dateString) {
   const date = new Date(dateString); // Create a Date object from the string
 
