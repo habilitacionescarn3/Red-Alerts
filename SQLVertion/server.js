@@ -53,7 +53,7 @@ app.get("/array", async (req, res) => {
 });
 //api gives page
 app.use(express.static(path.join(__dirname, "MainPage")));
-app.get("/map", (req, res) => {
+app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "MainPage", "index.html"));
 });
 //start server
