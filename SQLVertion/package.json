@@ -2,9 +2,9 @@
   "name": "red-alert-server",
   "version": "1.0.0",
   "description": "A simple Node.js server that connects to SQL Server and executes a query.",
-  "main": "server.js",
+  "mains": "server.js",
   "scripts": {
-    "start": "vercel dev",
+    "startss": "vercel dev",
     "starts": "node server.js",
     "test": "jest --coverage"
   },
