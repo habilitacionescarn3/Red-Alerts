@@ -45,15 +45,21 @@ if (setup) {
 }
 //api call for getting data
 app.use(express.static("public"));
+
 app.get("/array", async (req, res) => {
-  console.log(formatDate(dates));
-  const fileData = await fetchEvents(formatDate(dates));
-  const fileCord = await fetchCords(formatDate(dates));
-  res.json({
-    alerts: fileData,
-    locations: fileCord,
-  });
+  try {
+    console.log(formatDate(dates));
+    const fileData = await fetchEvents(formatDate(dates));
+    const fileCord = await fetchCords(formatDate(dates));
+    res.json({
+      alerts: fileData,
+      locations: fileCord,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching data", error });
+  }
 });
+
 //api gives page
 // app.use(express.static(path.join(__dirname, "public")));
 app.get("/", (req, res) => {
