@@ -51,9 +51,9 @@ app.get("/array", async (req, res) => {
   });
 });
 //api gives page
-app.use(express.static(path.join(__dirname, "MainPage")));
+app.use(express.static(path.join(__dirname, "public")));
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "MainPage", "index.html"));
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 //start server
 // app.listen(PORT, () => {
