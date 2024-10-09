@@ -166,8 +166,11 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    -- Select events that occurred on the same day as @input_date
-    -- Format the data as JSON output
+    -- Convert @input_date to DATETIME to handle time zone calculations
+    DECLARE @start_datetime DATETIME = DATEADD(HOUR, -3, CAST(@input_date AS DATETIME));  -- Start from midnight Israel time in UTC
+    DECLARE @end_datetime DATETIME = DATEADD(HOUR, 21, CAST(@input_date AS DATETIME));    -- End of day Israel time in UTC
+
+    -- Select events that occurred between the adjusted date range
     SELECT 
         E.id,
         E.category AS cat,
@@ -182,9 +185,12 @@ BEGIN
         E.description AS [desc],
         E.event_time AS [time]
     FROM Events E
-    WHERE CAST(E.event_time AS DATE) = @input_date
+    WHERE E.event_time BETWEEN @start_datetime AND @end_datetime
     FOR JSON PATH, ROOT('events');
-END
+END;
+
+
+
 
 
 CREATE PROCEDURE InsertOrUpdateCoordinates
@@ -229,14 +235,31 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
+    -- Convert @input_date to DATETIME to handle time zone calculations
+    DECLARE @start_datetime DATETIME = DATEADD(HOUR, -3, CAST(@input_date AS DATETIME));  -- Start from midnight Israel time in UTC
+    DECLARE @end_datetime DATETIME = DATEADD(HOUR, 21, CAST(@input_date AS DATETIME));    -- End of day Israel time in UTC
+
     -- Select the address and coordinates from the Coordinates table
-    SELECT 
-        C.address,
+    -- and make sure even locations without coordinates are included
+    SELECT DISTINCT
+        L.location_name AS address, -- Take location names from the Events
         C.lat,
         C.lon
     FROM Event_Location EL
-    JOIN Coordinates C ON EL.location_id = C.coordinate_id  -- Adjusted to match your Coordinates table
+    JOIN Locations L ON EL.location_id = L.location_id  -- Ensure we get all locations
+    LEFT JOIN Coordinates C ON L.location_name = C.address  -- Left join to include missing coordinates
     JOIN Events E ON EL.event_id = E.event_id
-    WHERE CAST(E.event_time AS DATE) = @input_date
+    WHERE E.event_time BETWEEN @start_datetime AND @end_datetime
     FOR JSON PATH, ROOT('coordinates');
 END;
+
+
+
+EXEC GetEventsByDate '2024-10-08'
+SELECT * FROM Events
+WHERE CAST(event_time AS DATE) = '2024-10-08';
+
+SELECT *
+FROM Events
+WHERE event_time BETWEEN '2024-10-07T21:00:00' AND '2024-10-08T21:00:00';
+exec GetCoordinatesByEventDate '2024-10-08'

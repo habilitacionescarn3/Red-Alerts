@@ -10,7 +10,7 @@ const sql = require("mssql");
 const moment = require("moment-timezone");
 const app = express();
 //files and network
-const PORT = 3001;
+const PORT = 3000;
 const filePathData = "/Projects/red Alerts/JsonVertion(OutDated)/data.json";
 const filePathCord =
   "/Projects/red Alerts/JsonVertion(OutDated)/coordinates.json";
