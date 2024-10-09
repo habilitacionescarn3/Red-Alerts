@@ -1,7 +1,11 @@
 // network
 const currentUrl = window.location.href;
 // console.log(currentUrl);
-
+fetch(`${currentUrl}array`)
+  .then((response) => response.json())
+  .then(async (data) => {
+    console.log(data);
+  });
 // const IP = "85.250.91.110"; //85.250.91.110 localhost
 //valuables
 let gotData = false; //maybe useless

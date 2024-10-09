@@ -18,6 +18,7 @@ const filePathError = path.join(__dirname, "errors.json");
 const setup = false; //npm start not nodemon
 let test = true;
 const dates = new Date();
+let running = false;
 //DB config
 const dbConfig = {
   server: process.env.DB_SERVER,
@@ -60,10 +61,17 @@ app.get("/", (req, res) => {
 //   console.log(`Server running at http://localhost:${PORT}`);
 // });
 app.get("/start", async (req, res) => {
-  fetchData();
-  res.json({
-    status: "starting",
-  });
+  if (!running) {
+    fetchData();
+    running = true;
+    res.json({
+      status: "starting",
+    });
+  } else {
+    res.json({
+      status: "running",
+    });
+  }
 });
 ////stand by functions
 //checks for alerts
