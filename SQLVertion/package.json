@@ -4,7 +4,8 @@
   "description": "A simple Node.js server that connects to SQL Server and executes a query.",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
+    "start": "vercel dev",
+    "starts": "node server.js",
     "test": "jest --coverage"
   },
   "dependencies": {
