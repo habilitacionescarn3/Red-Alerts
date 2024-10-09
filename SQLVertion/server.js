@@ -56,9 +56,9 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "MainPage", "index.html"));
 });
 //start server
-app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
-});
+// app.listen(PORT, () => {
+//   console.log(`Server running at http://localhost:${PORT}`);
+// });
 app.get("/start", async (req, res) => {
   fetchData();
   res.json({
