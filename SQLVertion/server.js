@@ -17,7 +17,9 @@ const filePathError = path.join(__dirname, "errors.json");
 //valuables
 const setup = false; //npm start not nodemon
 let test = true;
-const dates = new Date();
+const dates = new Date("10/9/2024 12:00");
+console.log(dates);
+
 let running = false;
 //DB config
 const dbConfig = {
@@ -42,6 +44,7 @@ if (setup) {
   convertToSql();
 }
 //api call for getting data
+app.use(express.static("public"));
 app.get("/array", async (req, res) => {
   console.log(formatDate(dates));
   const fileData = await fetchEvents(formatDate(dates));
@@ -52,14 +55,14 @@ app.get("/array", async (req, res) => {
   });
 });
 //api gives page
-app.use(express.static(path.join(__dirname, "public")));
+// app.use(express.static(path.join(__dirname, "public")));
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 //start server
-// app.listen(PORT, () => {
-//   console.log(`Server running at http://localhost:${PORT}`);
-// });
+app.listen(PORT, () => {
+  console.log(`Server running at http://localhost:${PORT}`);
+});
 app.get("/start", async (req, res) => {
   if (!running) {
     fetchData();
@@ -191,9 +194,13 @@ async function getEventsByDate(date) {
     request.input("input_date", sql.Date, date);
 
     const result = await request.execute("GetEventsByDate");
+    console.log("SQL Result: ", result.recordset);
 
     // Check if we have valid data in the recordset
-    if (result.recordset.length > 0) {
+    if (
+      result.recordset.length > 0 &&
+      result.recordset[0]["JSON_F52E2B61-18A1-11d1-B105-00805F49916B"]
+    ) {
       const eventsJson =
         result.recordset[0]["JSON_F52E2B61-18A1-11d1-B105-00805F49916B"];
       const events = JSON.parse(eventsJson);
@@ -205,6 +212,7 @@ async function getEventsByDate(date) {
           .format("YYYY-MM-DD HH:mm:ss")
           .toString(); // Correct format without 'T'
       }
+
       // Transform the data field from array of objects to array of strings
       const transformedEvents = events.events.map((event) => {
         return {
