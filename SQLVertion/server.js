@@ -11,10 +11,9 @@ const moment = require("moment-timezone");
 const app = express();
 //files and network
 const PORT = 3000;
-const filePathData = "/Projects/red Alerts/JsonVertion(OutDated)/data.json";
-const filePathCord =
-  "/Projects/red Alerts/JsonVertion(OutDated)/coordinates.json";
-const filePathError = "/Projects/red Alerts/JsonVertion(OutDated)/errors.json";
+const filePathData = path.join(__dirname, "data.json");
+const filePathCord = path.join(__dirname, "coordinates.json");
+const filePathError = path.join(__dirname, "errors.json");
 //valuables
 const setup = false; //npm start not nodemon
 let test = true;
@@ -60,6 +59,12 @@ app.get("/", (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
 });
+app.get("/start", async (req, res) => {
+  fetchData();
+  res.json({
+    status: "starting",
+  });
+});
 ////stand by functions
 //checks for alerts
 const fetchData = async () => {
@@ -94,7 +99,7 @@ const fetchData = async () => {
     setTimeout(fetchData, 2490);
   }
 };
-fetchData();
+// fetchData();
 //convert existing alerts to sql
 async function convertToSql() {
   const dataArray = await readJsonFile(filePathData);
