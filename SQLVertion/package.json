@@ -5,7 +5,7 @@
   "mains": "server.js",
   "scripts": {
     "startss": "vercel dev",
-    "starts": "node server.js",
+    "start": "node server.js",
     "test": "jest --coverage"
   },
   "dependencies": {

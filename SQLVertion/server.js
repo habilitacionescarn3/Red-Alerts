@@ -76,14 +76,14 @@ app.get("/start", async (req, res) => {
     });
   }
 });
-addNewAlert({
-  id: "369",
-  cat: "1",
-  title: "TEST",
-  data: ["כברי"],
-  desc: "היכנסו למרחב המוגן ושהו בו 10 דקות",
-  time: "2024/10/10 17:28:15",
-});
+// addNewAlert({
+//   id: "369",
+//   cat: "1",
+//   title: "TEST",
+//   data: ["כברי"],
+//   desc: "היכנסו למרחב המוגן ושהו בו 10 דקות",
+//   time: "2024/10/10 17:28:15",
+// });
 //api gives page
 // app.use(express.static(path.join(__dirname, "public")));
 app.get("*", (req, res) => {
