@@ -15,13 +15,13 @@ const filePathData = path.join(__dirname, "data.json");
 const filePathCord = path.join(__dirname, "coordinates.json");
 const filePathError = path.join(__dirname, "errors.json");
 // const dates = new Date("10/9/2024 12:00");
-console.log(dates);
 
 let running = false;
 //valuables
 const setup = false; //npm start not nodemon
 let test = true;
-const dates = new Date();
+const dates = new Date("10/9/2024 12:00");
+console.log(dates);
 //DB config
 const dbConfig = {
   server: process.env.DB_SERVER,
