@@ -18,7 +18,7 @@ const filePathError = "/Projects/red Alerts/JsonVertion(OutDated)/errors.json";
 //valuables
 const setup = false; //npm start not nodemon
 let test = true;
-const dates = new Date();
+const dates = new Date(); //10/9/2024 9:00
 //DB config
 const dbConfig = {
   server: process.env.DB_SERVER,
@@ -32,6 +32,7 @@ const dbConfig = {
   },
   port: parseInt(process.env.DB_PORT) || 1433,
   options: {
+    encrypt: false,
     trustServerCertificate: true,
     trustedConnection: true,
     connectTimeout: 30000,
@@ -50,6 +51,14 @@ app.get("/array", async (req, res) => {
     alerts: fileData,
     locations: fileCord,
   });
+});
+addNewAlert({
+  id: "369",
+  cat: "1",
+  title: "TEST",
+  data: ["כברי"],
+  desc: "היכנסו למרחב המוגן ושהו בו 10 דקות",
+  time: "2024/10/10 17:28:15",
 });
 //api gives page
 app.use(express.static(path.join(__dirname, "MainPage")));
