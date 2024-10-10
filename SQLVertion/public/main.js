@@ -141,9 +141,11 @@ function updateBackground() {
   if (lastPosition < 100) {
     background += `, #ddd ${lastPosition}%, #ddd 100%`;
   }
+  console.log(highlightRanges);
 
   background += ")";
   timeLine.style.background = background;
+  console.log(timeLine.style.background);
 }
 
 async function addMarkers(time, check) {
