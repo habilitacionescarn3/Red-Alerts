@@ -1,14 +1,19 @@
 // network
 const currentUrl = window.location.href;
-// console.log(currentUrl);
-
+// const currentUrl = `https://red-alerts-mauve.vercel.app/`;
+console.log(currentUrl);
+fetch(`/array`)
+  .then((response) => response.json())
+  .then(async (data) => {
+    console.log(data);
+  });
 // const IP = "85.250.91.110"; //85.250.91.110 localhost
 //valuables
 let gotData = false; //maybe useless
 let alerts = [];
 let locations = [];
 let checker = 0;
-const now = new Date();
+const now = new Date("10/9/2024 12:00"); //"10/9/2024 9:00"
 //elements
 const timeLine = document.getElementById("timeline");
 const time = document.getElementById("time");
@@ -21,7 +26,7 @@ const midnight = new Date(now);
 midnight.setHours(0);
 midnight.setMinutes(0);
 midnight.setSeconds(0);
-timeLine.value = getTimeDifference(midnight, now) * 60;
+timeLine.value = getTimeDifference(midnight, now) * 60 + 60 * 3;
 //add event listener
 timeLine.addEventListener("input", async (event) => {
   const secondsInDay = 86400;
@@ -53,12 +58,15 @@ timeLine.addEventListener("input", async (event) => {
 });
 
 getAlerts();
+console.log(`${currentUrl}array`);
 
 //get alerts from server
 async function getAlerts() {
-  fetch(`${currentUrl}array`)
+  fetch(`/array`)
     .then((response) => response.json())
     .then(async (data) => {
+      console.log(data);
+
       alerts = data.alerts;
 
       locations = data.locations;
@@ -133,9 +141,11 @@ function updateBackground() {
   if (lastPosition < 100) {
     background += `, #ddd ${lastPosition}%, #ddd 100%`;
   }
+  console.log(highlightRanges);
 
   background += ")";
   timeLine.style.background = background;
+  console.log(timeLine.style.background);
 }
 
 async function addMarkers(time, check) {

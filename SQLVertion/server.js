@@ -11,14 +11,17 @@ const moment = require("moment-timezone");
 const app = express();
 //files and network
 const PORT = 3000;
-const filePathData = "/Projects/red Alerts/JsonVertion(OutDated)/data.json";
-const filePathCord =
-  "/Projects/red Alerts/JsonVertion(OutDated)/coordinates.json";
-const filePathError = "/Projects/red Alerts/JsonVertion(OutDated)/errors.json";
+const filePathData = path.join(__dirname, "data.json");
+const filePathCord = path.join(__dirname, "coordinates.json");
+const filePathError = path.join(__dirname, "errors.json");
+// const dates = new Date("10/9/2024 12:00");
+
+let running = false;
 //valuables
 const setup = false; //npm start not nodemon
 let test = true;
-const dates = new Date(); //10/9/2024 9:00
+const dates = new Date("10/9/2024 12:00"); //"10/9/2024 12:00"
+console.log(dates);
 //DB config
 const dbConfig = {
   server: process.env.DB_SERVER,
@@ -42,15 +45,36 @@ const dbConfig = {
 if (setup) {
   convertToSql();
 }
+
+app.use(express.static(path.join(__dirname, "public")));
 //api call for getting data
+// app.use(express.static("public"));
+
 app.get("/array", async (req, res) => {
-  console.log(formatDate(dates));
-  const fileData = await fetchEvents(formatDate(dates));
-  const fileCord = await fetchCords(formatDate(dates));
-  res.json({
-    alerts: fileData,
-    locations: fileCord,
-  });
+  try {
+    console.log(formatDate(dates));
+    const fileData = await fetchEvents(formatDate(dates));
+    const fileCord = await fetchCords(formatDate(dates));
+    res.json({
+      alerts: fileData,
+      locations: fileCord,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching data", error });
+  }
+});
+app.get("/start", async (req, res) => {
+  if (!running) {
+    fetchData();
+    running = true;
+    res.json({
+      status: "starting",
+    });
+  } else {
+    res.json({
+      status: "running",
+    });
+  }
 });
 addNewAlert({
   id: "369",
@@ -61,14 +85,14 @@ addNewAlert({
   time: "2024/10/10 17:28:15",
 });
 //api gives page
-app.use(express.static(path.join(__dirname, "MainPage")));
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "MainPage", "index.html"));
+// app.use(express.static(path.join(__dirname, "public")));
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 //start server
-app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
-});
+// app.listen(PORT, () => {
+//   console.log(`Server running at http://localhost:${PORT}`);
+// });
 ////stand by functions
 //checks for alerts
 const fetchData = async () => {
@@ -103,7 +127,7 @@ const fetchData = async () => {
     setTimeout(fetchData, 2490);
   }
 };
-fetchData();
+// fetchData();
 //convert existing alerts to sql
 async function convertToSql() {
   const dataArray = await readJsonFile(filePathData);
@@ -187,9 +211,13 @@ async function getEventsByDate(date) {
     request.input("input_date", sql.Date, date);
 
     const result = await request.execute("GetEventsByDate");
+    console.log("SQL Result: ", result.recordset);
 
     // Check if we have valid data in the recordset
-    if (result.recordset.length > 0) {
+    if (
+      result.recordset.length > 0 &&
+      result.recordset[0]["JSON_F52E2B61-18A1-11d1-B105-00805F49916B"]
+    ) {
       const eventsJson =
         result.recordset[0]["JSON_F52E2B61-18A1-11d1-B105-00805F49916B"];
       const events = JSON.parse(eventsJson);
@@ -201,6 +229,7 @@ async function getEventsByDate(date) {
           .format("YYYY-MM-DD HH:mm:ss")
           .toString(); // Correct format without 'T'
       }
+
       // Transform the data field from array of objects to array of strings
       const transformedEvents = events.events.map((event) => {
         return {
