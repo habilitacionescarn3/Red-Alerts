@@ -75,7 +75,7 @@ async function getAlerts() {
 
       gotData = true;
       timeLine.style.display = "block";
-      const today = new Date();
+      const today = new Date(now); //new Date();
 
       const formattedDate =
         today.getFullYear() +
@@ -107,6 +107,7 @@ function updateBackground() {
 
   const startOfDay = new Date(currentDate.setHours(0, 0, 0, 0));
   const endOfDay = new Date(currentDate.setHours(23, 59, 59, 999));
+  console.log(alertTimes);
 
   const highlightRanges = alertTimes
     .filter((alert) => {
@@ -122,6 +123,7 @@ function updateBackground() {
 
   let background = "linear-gradient(to right, ";
   let lastPosition = 0;
+  console.log(highlightRanges);
 
   highlightRanges.forEach((range, index) => {
     const startPercentage = ((range.start - startOfDay) / 86400000) * 100;
@@ -132,6 +134,7 @@ function updateBackground() {
     }
     background += `#ff4500 ${startPercentage}%, #ff4500 ${endPercentage}%`;
     lastPosition = endPercentage;
+    console.log(highlightRanges);
 
     if (index < highlightRanges.length - 1) {
       background += ", ";

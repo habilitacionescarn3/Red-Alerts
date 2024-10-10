@@ -177,25 +177,29 @@ async function insertCoordinate(location) {
   }
 }
 async function addNewAlert(eventData) {
-  const pool = await sql.connect(dbConfig);
-
-  const request = pool.request();
-
-  request.input("id", sql.VarChar(50), eventData.id);
-  request.input("category", sql.VarChar(50), eventData.cat);
-  request.input("title", sql.VarChar(255), eventData.title);
-  request.input("description", sql.VarChar(500), eventData.desc);
-  request.input("event_time", sql.DateTime, eventData.time);
-  request.input(
-    "locations",
-    sql.NVarChar(sql.MAX),
-    JSON.stringify(eventData.data)
-  );
   try {
-    const result = await request.execute("AddNewEvent");
-    console.log(result);
+    const pool = await sql.connect(dbConfig);
+
+    const request = pool.request();
+
+    request.input("id", sql.VarChar(50), eventData.id);
+    request.input("category", sql.VarChar(50), eventData.cat);
+    request.input("title", sql.VarChar(255), eventData.title);
+    request.input("description", sql.VarChar(500), eventData.desc);
+    request.input("event_time", sql.DateTime, eventData.time);
+    request.input(
+      "locations",
+      sql.NVarChar(sql.MAX),
+      JSON.stringify(eventData.data)
+    );
+    try {
+      const result = await request.execute("AddNewEvent");
+      console.log(result);
+    } catch (err) {
+      console.error("SQL error", err);
+    }
   } catch (err) {
-    console.error("SQL error", err);
+    console.log(err);
   }
 }
 //gets from sql
