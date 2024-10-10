@@ -20,7 +20,7 @@ let running = false;
 //valuables
 const setup = false; //npm start not nodemon
 let test = true;
-const dates = new Date(); //"10/9/2024 12:00"
+const dates = new Date("10/9/2024 12:00"); //"10/9/2024 12:00"
 console.log(dates);
 //DB config
 const dbConfig = {
