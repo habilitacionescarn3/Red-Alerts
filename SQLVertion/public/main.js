@@ -26,7 +26,7 @@ const midnight = new Date(now);
 midnight.setHours(0);
 midnight.setMinutes(0);
 midnight.setSeconds(0);
-timeLine.value = getTimeDifference(midnight, now) * 60;
+timeLine.value = getTimeDifference(midnight, now) * 60 + 60 * 3;
 //add event listener
 timeLine.addEventListener("input", async (event) => {
   const secondsInDay = 86400;
