@@ -8,7 +8,7 @@ let gotData = false; //maybe useless
 let alerts = [];
 let locations = [];
 let checker = 0;
-const now = new Date();
+const now = new Date("10/9/2024 9:00"); //"10/9/2024 9:00"
 //elements
 const timeLine = document.getElementById("timeline");
 const time = document.getElementById("time");
@@ -53,6 +53,7 @@ timeLine.addEventListener("input", async (event) => {
 });
 
 getAlerts();
+console.log(`${currentUrl}array`);
 
 //get alerts from server
 async function getAlerts() {

@@ -18,7 +18,7 @@ const filePathError = "/Projects/red Alerts/JsonVertion(OutDated)/errors.json";
 //valuables
 const setup = false; //npm start not nodemon
 let test = true;
-const dates = new Date();
+const dates = new Date("10/9/2024 9:00"); //10/9/2024 9:00
 //DB config
 const dbConfig = {
   server: process.env.DB_SERVER,
@@ -32,6 +32,7 @@ const dbConfig = {
   },
   port: parseInt(process.env.DB_PORT) || 1433,
   options: {
+    encrypt: false,
     trustServerCertificate: true,
     trustedConnection: true,
     connectTimeout: 30000,
@@ -41,6 +42,8 @@ const dbConfig = {
 if (setup) {
   convertToSql();
 }
+
+app.use(express.static("public"));
 //api call for getting data
 app.get("/array", async (req, res) => {
   console.log(formatDate(dates));
@@ -57,9 +60,9 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "MainPage", "index.html"));
 });
 //start server
-app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
-});
+// app.listen(PORT, () => {
+//   console.log(`Server running at http://localhost:${PORT}`);
+// });
 ////stand by functions
 //checks for alerts
 const fetchData = async () => {
