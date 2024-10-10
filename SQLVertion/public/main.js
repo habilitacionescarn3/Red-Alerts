@@ -74,6 +74,9 @@ async function getAlerts() {
       console.log(locations);
       gotData = true;
       console.log(gotData);
+      gotData = false;
+      console.log(gotData);
+      gotData = true;
       timeLine.style.display = "block";
       console.log(timeLine.style.display);
       const today = new Date(now); //new Date();
