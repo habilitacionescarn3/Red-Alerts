@@ -48,7 +48,7 @@ if (setup) {
 
 app.use(express.static("public"));
 //api call for getting data
-app.use(express.static("public"));
+// app.use(express.static("public"));
 
 app.get("/array", async (req, res) => {
   try {
