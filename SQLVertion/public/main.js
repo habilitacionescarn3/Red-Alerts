@@ -1,6 +1,7 @@
 // network
 const currentUrl = window.location.href;
-// console.log(currentUrl);
+// const currentUrl = `https://red-alerts-mauve.vercel.app/`;
+console.log(currentUrl);
 fetch(`/array`)
   .then((response) => response.json())
   .then(async (data) => {
