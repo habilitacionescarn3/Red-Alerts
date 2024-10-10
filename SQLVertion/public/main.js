@@ -65,6 +65,8 @@ async function getAlerts() {
   fetch(`/array`)
     .then((response) => response.json())
     .then(async (data) => {
+      console.log(data);
+
       alerts = data.alerts;
 
       locations = data.locations;
