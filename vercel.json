@@ -1,15 +1,5 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "SQLVertion/server.js",
-      "use": "@vercel/node"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "SQLVertion/server.js"
-    }
-  ]
+  "builds": [{ "src": "SQLVertion/server.js", "use": "@vercel/node" }],
+  "routes": [{ "src": "/(.*)", "dest": "SQLVertion/server.js" }]
 }

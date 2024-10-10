@@ -46,7 +46,7 @@ if (setup) {
   convertToSql();
 }
 
-app.use(express.static("public"));
+app.use(express.static(path.join(__dirname, "public")));
 //api call for getting data
 // app.use(express.static("public"));
 
@@ -78,7 +78,7 @@ app.get("/start", async (req, res) => {
 });
 //api gives page
 // app.use(express.static(path.join(__dirname, "public")));
-app.get("/", (req, res) => {
+app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 //start server
