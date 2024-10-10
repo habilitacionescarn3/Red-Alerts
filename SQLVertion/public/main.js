@@ -76,6 +76,7 @@ async function getAlerts() {
       gotData = true;
       timeLine.style.display = "block";
       const today = new Date(now); //new Date();
+      console.log(today);
 
       const formattedDate =
         today.getFullYear() +
@@ -89,6 +90,7 @@ async function getAlerts() {
         today.getMinutes().toString().padStart(2, "0") +
         ":00";
       time.textContent = formattedTime;
+      console.log("timeline");
 
       updateBackground();
       if (gotData === true) {
