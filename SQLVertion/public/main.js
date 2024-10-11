@@ -1,13 +1,11 @@
 // network
 const currentUrl = window.location.href;
-// const currentUrl = `https://red-alerts-mauve.vercel.app/`;
 console.log(currentUrl);
 fetch(`/array`)
   .then((response) => response.json())
   .then(async (data) => {
-    console.log(data);
+    // console.log(data);
   });
-// const IP = "85.250.91.110"; //85.250.91.110 localhost
 //valuables
 let gotData = false; //maybe useless
 let alerts = [];
@@ -58,25 +56,19 @@ timeLine.addEventListener("input", async (event) => {
 });
 
 getAlerts();
-console.log(`${currentUrl}array`);
-
 //get alerts from server
 async function getAlerts() {
   fetch(`/array`)
     .then((response) => response.json())
     .then(async (data) => {
-      console.log(data);
-
       alerts = data.alerts;
 
       locations = data.locations;
-      console.log(alerts);
-      console.log(locations);
+
       gotData = true;
       timeLine.style.display = "block";
-      console.log(timeLine.style.display);
+
       const today = new Date(now); //new Date();
-      console.log(today);
 
       const formattedDate =
         today.getFullYear() +
@@ -90,7 +82,6 @@ async function getAlerts() {
         today.getMinutes().toString().padStart(2, "0") +
         ":00";
       time.textContent = formattedTime;
-      console.log("timeline");
 
       updateBackground();
       if (gotData === true) {
@@ -105,40 +96,20 @@ async function getAlerts() {
 //set scroll background
 function updateBackground() {
   const alertTimes = alerts;
-  console.log(now);
 
   const currentDate = now;
-  console.log(currentDate);
 
   const startOfDay = new Date(currentDate.setHours(0, 0, 0, 0));
-  console.log(startOfDay);
 
   const endOfDay = new Date(currentDate.setHours(23, 59, 59, 999));
-  console.log(endOfDay);
-
-  console.log(alertTimes);
 
   const highlightRanges = alertTimes
     .filter((alert) => {
-      console.log("filter", alert);
-      console.log(formatDate(alert.time));
-
       const alertTime = new Date(formatDate(alert.time));
-      console.log(formatDate(alertTime));
-      console.log("start", startOfDay);
-      console.log("end", endOfDay);
-
-      console.log(
-        alertTime >= startOfDay,
-        alertTime <= endOfDay,
-        alertTime >= startOfDay && alertTime <= endOfDay
-      );
 
       return alertTime >= startOfDay && alertTime <= endOfDay;
     })
     .map((alert) => {
-      console.log("map", alert);
-
       const alertTime = new Date(formatDate(alert.time));
       const start = new Date(alertTime.getTime() - 5 * 60000); // 5 minutes before
       const end = new Date(alertTime.getTime() + 5 * 60000); // 5 minutes after
@@ -147,7 +118,6 @@ function updateBackground() {
 
   let background = "linear-gradient(to right, ";
   let lastPosition = 0;
-  console.log(highlightRanges);
 
   highlightRanges.forEach((range, index) => {
     const startPercentage = ((range.start - startOfDay) / 86400000) * 100;
@@ -158,7 +128,6 @@ function updateBackground() {
     }
     background += `#ff4500 ${startPercentage}%, #ff4500 ${endPercentage}%`;
     lastPosition = endPercentage;
-    console.log(highlightRanges);
 
     if (index < highlightRanges.length - 1) {
       background += ", ";
@@ -168,11 +137,9 @@ function updateBackground() {
   if (lastPosition < 100) {
     background += `, #ddd ${lastPosition}%, #ddd 100%`;
   }
-  console.log(highlightRanges);
 
   background += ")";
   timeLine.style.background = background;
-  console.log(timeLine.style.background);
 }
 
 async function addMarkers(time, check) {
@@ -194,7 +161,7 @@ async function addMarkers(time, check) {
             })
           ) {
             //gpt
-            console.log("found");
+
             const { address, lon, lat } = locations[k];
             if (isNaN(lon) || isNaN(lat)) {
               console.error(`Invalid coordinates for ${locations[k].address}`);

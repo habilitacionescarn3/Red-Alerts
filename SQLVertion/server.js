@@ -15,15 +15,12 @@ const filePathData = path.join(__dirname, "data.json");
 const filePathCord = path.join(__dirname, "coordinates.json");
 const filePathError = path.join(__dirname, "errors.json");
 // const dates = new Date("10/9/2024 12:00");
-
 let running = false;
 //valuables
 const setup = false; //npm start not nodemon
 let test = true;
 const dates = new Date(); //"10/9/2024 12:00"
-
 dates.setDate(dates.getDate() - 1); //TODO understand ehy this is nessery
-console.log(dates);
 //DB config
 const dbConfig = {
   server: process.env.DB_SERVER,
@@ -47,14 +44,10 @@ const dbConfig = {
 if (setup) {
   convertToSql();
 }
-
 app.use(express.static(path.join(__dirname, "public")));
 //api call for getting data
-// app.use(express.static("public"));
-
 app.get("/array", async (req, res) => {
   try {
-    console.log(formatDate(dates));
     const fileData = await fetchEvents(formatDate(dates));
     const fileCord = await fetchCords(formatDate(dates));
     res.json({
@@ -65,6 +58,7 @@ app.get("/array", async (req, res) => {
     res.status(500).json({ message: "Error fetching data", error });
   }
 });
+//api call for start looking for data
 app.get("/start", async (req, res) => {
   if (!running) {
     fetchData();
@@ -78,16 +72,8 @@ app.get("/start", async (req, res) => {
     });
   }
 });
-// addNewAlert({
-//   id: "369",
-//   cat: "1",
-//   title: "TEST",
-//   data: ["כברי"],
-//   desc: "היכנסו למרחב המוגן ושהו בו 10 דקות",
-//   time: "2024/10/10 17:28:15",
-// });
+
 //api gives page
-// app.use(express.static(path.join(__dirname, "public")));
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
