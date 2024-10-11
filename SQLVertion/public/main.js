@@ -13,7 +13,7 @@ let gotData = false; //maybe useless
 let alerts = [];
 let locations = [];
 let checker = 0;
-const now = new Date("10/9/2024 12:00"); //"10/9/2024 9:00"// mm/dd/yyyy
+const now = new Date(); //"10/9/2024 9:00"// mm/dd/yyyy
 //elements
 const timeLine = document.getElementById("timeline");
 const time = document.getElementById("time");
