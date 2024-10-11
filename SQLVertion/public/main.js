@@ -114,8 +114,17 @@ function updateBackground() {
   const highlightRanges = alertTimes
     .filter((alert) => {
       console.log("filter", alert);
+      console.log(formatDate(alert.time));
 
       const alertTime = new Date(formatDate(alert.time));
+      console.log(formatDate(alertTime));
+
+      console.log(
+        alertTime >= startOfDay,
+        alertTime <= endOfDay,
+        alertTime >= startOfDay && alertTime <= endOfDay
+      );
+
       return alertTime >= startOfDay && alertTime <= endOfDay;
     })
     .map((alert) => {
