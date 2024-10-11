@@ -31,9 +31,7 @@ console.log(
   "year",
   dates.getFullYear()
 );
-dates.setMonth(dates.getMonth() - 1);
-
-dates.setMonth(dates.getMonth() + 1);
+dates.setDate(dates.getDate() - 1);
 console.log(dates);
 //DB config
 const dbConfig = {
