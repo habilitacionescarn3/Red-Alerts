@@ -42,7 +42,7 @@ timeLine.addEventListener("input", async (event) => {
   markers.clearLayers();
 
   // Get current date (for current day timeline scrolling)
-  const today = new Date(now);
+  const today = now;
   const formattedDate =
     today.getFullYear() +
     "/" +
@@ -105,10 +105,17 @@ async function getAlerts() {
 //set scroll background
 function updateBackground() {
   const alertTimes = alerts;
+  console.log(now);
+
   const currentDate = now;
+  console.log(currentDate);
 
   const startOfDay = new Date(currentDate.setHours(0, 0, 0, 0));
+  console.log(startOfDay);
+
   const endOfDay = new Date(currentDate.setHours(23, 59, 59, 999));
+  console.log(endOfDay);
+
   console.log(alertTimes);
 
   const highlightRanges = alertTimes
