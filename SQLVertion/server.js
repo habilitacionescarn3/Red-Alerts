@@ -22,6 +22,8 @@ const setup = false; //npm start not nodemon
 let test = true;
 const dates = new Date("10/9/2024 12:00"); //"10/9/2024 12:00"
 console.log(dates);
+
+console.log(dates);
 //DB config
 const dbConfig = {
   server: process.env.DB_SERVER,
@@ -107,7 +109,7 @@ const fetchData = async () => {
       console.log("Data received:", data);
 
       const now = new Date();
-      const formattedDate = date.format(now, "YYYY/MM/DD HH:mm:ss");
+      const formattedDate = dates.format(now, "YYYY/MM/DD HH:mm:ss");
       data.time = formattedDate;
       addNewAlert(data);
       console.log(1);
