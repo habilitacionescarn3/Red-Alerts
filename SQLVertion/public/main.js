@@ -118,6 +118,8 @@ function updateBackground() {
 
       const alertTime = new Date(formatDate(alert.time));
       console.log(formatDate(alertTime));
+      console.log("start", startOfDay);
+      console.log("end", endOfDay);
 
       console.log(
         alertTime >= startOfDay,
