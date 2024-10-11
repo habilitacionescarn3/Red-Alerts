@@ -73,10 +73,6 @@ async function getAlerts() {
       console.log(alerts);
       console.log(locations);
       gotData = true;
-      console.log(gotData);
-      gotData = false;
-      console.log(gotData);
-      gotData = true;
       timeLine.style.display = "block";
       console.log(timeLine.style.display);
       const today = new Date(now); //new Date();
@@ -117,10 +113,14 @@ function updateBackground() {
 
   const highlightRanges = alertTimes
     .filter((alert) => {
+      console.log("filter", alert);
+
       const alertTime = new Date(formatDate(alert.time));
       return alertTime >= startOfDay && alertTime <= endOfDay;
     })
     .map((alert) => {
+      console.log("map", alert);
+
       const alertTime = new Date(formatDate(alert.time));
       const start = new Date(alertTime.getTime() - 5 * 60000); // 5 minutes before
       const end = new Date(alertTime.getTime() + 5 * 60000); // 5 minutes after
