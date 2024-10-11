@@ -21,8 +21,18 @@ let running = false;
 const setup = false; //npm start not nodemon
 let test = true;
 const dates = new Date("10/9/2024 12:00"); //"10/9/2024 12:00"
-console.log(dates);
 
+console.log(dates);
+console.log(
+  "day",
+  dates.getDate(),
+  "mon",
+  dates.getMonth() + 1,
+  "year",
+  dates.getFullYear()
+);
+
+dates.setMonth(dates.getMonth() + 1);
 console.log(dates);
 //DB config
 const dbConfig = {
