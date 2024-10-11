@@ -42,7 +42,7 @@ timeLine.addEventListener("input", async (event) => {
   markers.clearLayers();
 
   // Get current date (for current day timeline scrolling)
-  const today = now;
+  const today = new Date(now);
   const formattedDate =
     today.getFullYear() +
     "/" +
