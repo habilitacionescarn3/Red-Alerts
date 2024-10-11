@@ -31,6 +31,7 @@ console.log(
   "year",
   dates.getFullYear()
 );
+dates.setMonth(dates.getMonth() - 1);
 
 dates.setMonth(dates.getMonth() + 1);
 console.log(dates);
