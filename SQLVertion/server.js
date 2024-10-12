@@ -20,7 +20,8 @@ let running = false;
 const setup = false; //npm start not nodemon
 let test = true;
 const dates = new Date(); //"10/9/2024 12:00"
-dates.setDate(dates.getDate() - 1); //TODO understand ehy this is nessery
+dates.setDate(dates.getDate()); // - 1TODO understand ehy this is nessery
+dates.setHours(dates.getHours() + 3);
 //DB config
 const dbConfig = {
   server: process.env.DB_SERVER,
