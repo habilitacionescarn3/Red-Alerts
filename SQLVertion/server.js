@@ -87,9 +87,9 @@ app.listen(PORT, () => {
 ////stand by functions
 //checks for alerts
 async function startFetch() {
-  for (let i = 0; i <= Number.MAX_VALUE; i++) {
+  setInterval(async () => {
     await fetchData();
-  }
+  }, 4700);
 }
 const fetchData = async () => {
   try {
@@ -107,12 +107,9 @@ const fetchData = async () => {
       data.time = formattedDate;
       addNewAlert(data);
       console.log(1);
-
-      await delay(4700);
     } else {
       // If the data is empty, retry after 4.7 seconds
       console.log("Received empty data, retrying in 4.7 seconds...");
-      await delay(4700);
     }
   } catch (error) {
     console.error(
@@ -121,7 +118,6 @@ const fetchData = async () => {
       error
     );
     // Wait for 2.49 seconds and retry
-    await delay(2490);
   }
 };
 // fetchData();
