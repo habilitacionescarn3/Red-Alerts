@@ -48,6 +48,8 @@ app.use(express.static(path.join(__dirname, "public")));
 //api call for getting data
 app.get("/array", async (req, res) => {
   try {
+    console.log(dates);
+
     const fileData = await fetchEvents(formatDate(dates));
     const fileCord = await fetchCords(formatDate(dates));
     res.json({
