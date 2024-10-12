@@ -94,6 +94,8 @@ const fetchData = async () => {
     );
 
     let data = response.data;
+    console.log(data);
+
     if (data && typeof data === "object" && Object.keys(data).length > 0) {
       console.log("Data received:", data);
 
@@ -112,7 +114,8 @@ const fetchData = async () => {
   } catch (error) {
     console.error(
       "Error fetching data, retrying in 2.49 seconds...",
-      error.message
+      error.message,
+      error
     );
     // Wait for 2.49 seconds and retry
     setTimeout(fetchData, 2490);
