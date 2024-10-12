@@ -98,7 +98,7 @@ const fetchData = async () => {
       console.log("Data received:", data);
 
       const now = new Date();
-      const formattedDate = dates.format(now, "YYYY/MM/DD HH:mm:ss");
+      const formattedDate = date.format(now, "YYYY/MM/DD HH:mm:ss");
       data.time = formattedDate;
       addNewAlert(data);
       console.log(1);
