@@ -178,6 +178,7 @@ async function getEventsByDate(date) {
           .format("YYYY-MM-DD HH:mm:ss")
           .toString(); // Correct format without 'T'
       }
+      console.log(events);
 
       // Transform the data field from array of objects to array of strings
       const transformedEvents = events.events.map((event) => {

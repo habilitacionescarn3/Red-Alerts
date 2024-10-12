@@ -61,9 +61,13 @@ async function getAlerts() {
   fetch(`/array`)
     .then((response) => response.json())
     .then(async (data) => {
+      console.log(data);
+
       alerts = data.alerts;
+      console.log(alerts);
 
       locations = data.locations;
+      console.log(locations);
 
       gotData = true;
       timeLine.style.display = "block";
