@@ -64,7 +64,9 @@ app.get("/array", async (req, res) => {
 //api call for start looking for data
 app.get("/start", async (req, res) => {
   if (!running) {
-    startFetch();
+    setInterval(async () => {
+      await fetchData();
+    }, 4700);
     running = true;
     res.json({
       status: "starting",
@@ -86,11 +88,7 @@ app.listen(PORT, () => {
 });
 ////stand by functions
 //checks for alerts
-async function startFetch() {
-  setInterval(async () => {
-    await fetchData();
-  }, 4700);
-}
+async function startFetch() {}
 const fetchData = async () => {
   try {
     console.log("Attempting to fetch data...");
