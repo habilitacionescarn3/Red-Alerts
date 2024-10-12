@@ -150,6 +150,7 @@ async function addNewAlert(eventData) {
 //gets from sql
 async function getEventsByDate(date) {
   let pool = null;
+  console.log(date);
 
   try {
     // Establish a new SQL connection pool
