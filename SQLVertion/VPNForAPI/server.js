@@ -1,24 +1,16 @@
-//to do add validate cord
+//TODO make sure location is inserted to database
 //libs
 require("dotenv").config();
 const axios = require("axios");
 const express = require("express");
-const fs = require("fs");
-const path = require("path");
 const date = require("date-and-time");
 const sql = require("mssql");
-const moment = require("moment-timezone");
 const app = express();
-//files and network
+//network
 const PORT = 3100;
-const filePathData = path.join(__dirname, "data.json");
-const filePathCord = path.join(__dirname, "coordinates.json");
-const filePathError = path.join(__dirname, "errors.json");
-// const dates = new Date("10/9/2024 12:00");
-let running = false;
 //valuables
 const setup = false; //npm start not nodemon
-let test = true;
+let test = false;
 const dates = new Date(); //"10/9/2024 12:00"
 dates.setDate(dates.getDate()); // - 1TODO understand ehy this is nessery
 dates.setHours(dates.getHours() + 3);
@@ -56,9 +48,6 @@ if (test) {
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
 });
-
-//checks for alerts
-
 const fetchData = async () => {
   try {
     console.log("Attempting to fetch data...");
@@ -90,29 +79,6 @@ const fetchData = async () => {
     // Wait for 2.49 seconds and retry
   }
 };
-// fetchData();
-
-async function insertCoordinate(location) {
-  const pool = await sql.connect(dbConfig);
-
-  const request = pool.request();
-
-  // Extract the address and coordinates from the location object
-  const { address, coordinates } = location;
-  const { lat, lon } = coordinates;
-
-  // Pass parameters to the stored procedure
-  request.input("address", sql.NVarChar(255), address);
-  request.input("lat", sql.Float, lat);
-  request.input("lon", sql.Float, lon);
-
-  try {
-    // Execute the stored procedure
-    const result = await request.execute("InsertOrUpdateCoordinates");
-  } catch (err) {
-    console.error("SQL error", err);
-  }
-}
 async function addNewAlert(eventData) {
   try {
     const pool = await sql.connect(dbConfig);
@@ -139,7 +105,119 @@ async function addNewAlert(eventData) {
     console.log(err);
   }
 }
-//gets from sql
+async function getAllAlerts() {
+  try {
+    let pool = await sql.connect(dbConfig);
+    let result = await pool.request().execute("GetAllAlerts");
+    if (result.recordset && result.recordset.length > 0) {
+      const jsonFieldName = "JSON_F52E2B61-18A1-11d1-B105-00805F49916B";
+      const alerts = result.recordset[0][jsonFieldName];
+      return alerts ? JSON.parse(alerts) : [];
+    } else {
+      console.log("No alerts found.");
+      return [];
+    }
+  } catch (err) {
+    console.error("SQL error", err);
+    return [];
+  }
+}
+async function getLocationFromAlert(alerts) {
+  const location = [];
+  for (let i = 0; i < alerts.length; i++) {
+    for (let j = 0; j < alerts[i].data.length; j++) {
+      if (!location.includes(alerts[i].data[j].location_name)) {
+        location.push(alerts[i].data[j].location_name);
+      }
+    }
+  }
+  return location;
+}
+async function getAllLocations() {
+  try {
+    let pool = await sql.connect(dbConfig);
+    let result = await pool.request().execute("GetAllLocations");
+    if (result.recordset && result.recordset.length > 0) {
+      // console.log("SQL Result:", result.recordset);
+      const jsonFieldName = "JSON_F52E2B61-18A1-11d1-B105-00805F49916B";
+      const locations = result.recordset[0][jsonFieldName];
+      return locations ? JSON.parse(locations).locations : [];
+    } else {
+      console.log("No locations found.");
+      return [];
+    }
+  } catch (err) {
+    console.error("SQL error", err);
+    return [];
+  }
+}
+async function updateOrInsertLocation(locationName, lat, lon) {
+  try {
+    let pool = await sql.connect(dbConfig);
+
+    await pool
+      .request()
+      .input("location_name", sql.NVarChar(255), locationName)
+      .input("lat", sql.Float, lat)
+      .input("lon", sql.Float, lon)
+      .execute("UpdateOrInsertLocationAndCoordinates");
+    console.log(`Location ${locationName} updated/inserted successfully.`);
+  } catch (err) {
+    console.error(
+      "SQL error while updating/inserting location and coordinates:",
+      err
+    );
+  }
+}
+async function testing() {
+  const al = await getAllAlerts();
+  const alerts = al.alerts;
+  console.log(alerts.length);
+  const alertsLocation = await getLocationFromAlert(alerts);
+  console.log(alertsLocation.length);
+  const locations = await getAllLocations();
+  console.log(locations.length);
+  const errorMissing = [];
+  let found = false;
+  for (let i = 0; i < alertsLocation.length; i++) {
+    found = false;
+    for (let j = 0; j < locations.length; j++) {
+      // console.log(alertsLocation[i]);
+      // console.log(locations[j].address);
+      if (alertsLocation[i].includes(locations[j].address)) {
+        found = true;
+      }
+    }
+    if (!found) {
+      errorMissing.push(alertsLocation[i]);
+    }
+  }
+  console.log(errorMissing.length);
+  const errorWrong = [];
+  for (let i = 0; i < locations.length; i++) {
+    if (
+      !(
+        //lay =y//lon=x
+        (
+          locations[i].lon < 33.35468927091694 &&
+          locations[i].lon > 29.489364393908087 &&
+          locations[i].lat < 35.93310954929203 &&
+          locations[i].lat > 34
+        )
+      )
+    ) {
+      errorWrong.push(locations[i].address);
+    }
+  }
+  console.log(errorWrong.length);
+  console.log(errorMissing);
+  console.log(errorWrong);
+  // await updateOrInsertLocation(`עספיא`, 35.0671011, 32.7152045);
+  return (errors = { missing: errorMissing, wrong: errorWrong });
+}
+if (setup) {
+  testing();
+}
 setInterval(async () => {
   await fetchData();
 }, 4700);
