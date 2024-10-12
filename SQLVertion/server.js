@@ -89,9 +89,7 @@ app.listen(PORT, () => {
 const fetchData = async () => {
   try {
     console.log("Attempting to fetch data...");
-    let response = await axios.get(
-      `https://www.oref.org.il/WarningMessages/alert/alerts.json`
-    );
+    let response = await axios.get(`http://85.250.91.110:3100/alert`);
 
     let data = response.data;
     console.log(data);
