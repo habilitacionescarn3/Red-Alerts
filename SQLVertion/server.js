@@ -61,22 +61,6 @@ app.get("/array", async (req, res) => {
     res.status(500).json({ message: "Error fetching data", error });
   }
 });
-//api call for start looking for data
-app.get("/start", async (req, res) => {
-  if (!running) {
-    setInterval(async () => {
-      await fetchData();
-    }, 4700);
-    running = true;
-    res.json({
-      status: "starting",
-    });
-  } else {
-    res.json({
-      status: "running",
-    });
-  }
-});
 
 //api gives page
 app.get("*", (req, res) => {
@@ -88,37 +72,7 @@ app.listen(PORT, () => {
 });
 ////stand by functions
 //checks for alerts
-async function startFetch() {}
-const fetchData = async () => {
-  try {
-    console.log("Attempting to fetch data...");
-    let response = await axios.get(`http://85.250.91.110:3100/alert`);
 
-    let data = response.data;
-    console.log(data);
-
-    if (data && typeof data === "object" && Object.keys(data).length > 0) {
-      console.log("Data received:", data);
-
-      const now = new Date();
-      const formattedDate = date.format(now, "YYYY/MM/DD HH:mm:ss");
-      data.time = formattedDate;
-      addNewAlert(data);
-      console.log(1);
-    } else {
-      // If the data is empty, retry after 4.7 seconds
-      console.log("Received empty data, retrying in 4.7 seconds...");
-    }
-  } catch (error) {
-    console.error(
-      "Error fetching data, retrying in 2.49 seconds...",
-      error.message,
-      error
-    );
-    // Wait for 2.49 seconds and retry
-  }
-};
-// fetchData();
 //convert existing alerts to sql
 async function convertToSql() {
   const dataArray = await readJsonFile(filePathData);
@@ -312,9 +266,6 @@ function formatDate(dateString) {
   const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are zero-indexed, so we add 1
   const day = String(date.getDate() + 1).padStart(2, "0");
   return `${year}/${month}/${day}`;
-}
-function delay(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 module.exports = app;
