@@ -87,7 +87,7 @@ app.listen(PORT, () => {
 ////stand by functions
 //checks for alerts
 async function startFetch() {
-  while (true) {
+  for (let i = 0; i <= Number.MAX_VALUE; i++) {
     await fetchData();
   }
 }
