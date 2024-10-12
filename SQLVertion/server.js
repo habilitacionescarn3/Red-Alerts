@@ -64,7 +64,7 @@ app.get("/array", async (req, res) => {
 //api call for start looking for data
 app.get("/start", async (req, res) => {
   if (!running) {
-    fetchData();
+    startFetch();
     running = true;
     res.json({
       status: "starting",
@@ -86,6 +86,11 @@ app.listen(PORT, () => {
 });
 ////stand by functions
 //checks for alerts
+async function startFetch() {
+  while (true) {
+    await fetchData();
+  }
+}
 const fetchData = async () => {
   try {
     console.log("Attempting to fetch data...");
@@ -103,11 +108,11 @@ const fetchData = async () => {
       addNewAlert(data);
       console.log(1);
 
-      setTimeout(fetchData, 4700);
+      await delay(4700);
     } else {
       // If the data is empty, retry after 4.7 seconds
       console.log("Received empty data, retrying in 4.7 seconds...");
-      setTimeout(fetchData, 4700);
+      await delay(4700);
     }
   } catch (error) {
     console.error(
@@ -116,7 +121,7 @@ const fetchData = async () => {
       error
     );
     // Wait for 2.49 seconds and retry
-    setTimeout(fetchData, 2490);
+    await delay(2490);
   }
 };
 // fetchData();
@@ -313,6 +318,9 @@ function formatDate(dateString) {
   const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are zero-indexed, so we add 1
   const day = String(date.getDate() + 1).padStart(2, "0");
   return `${year}/${month}/${day}`;
+}
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 module.exports = app;

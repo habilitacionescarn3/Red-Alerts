@@ -33,11 +33,11 @@ const fetchData = async () => {
     if (data && typeof data === "object" && Object.keys(data).length > 0) {
       console.log("Data received:", data);
       alert = data;
-      setTimeout(fetchData, 4700);
+      await delay(4700);
     } else {
       alert = undefined;
       console.log("Received empty data, retrying in 4.7 seconds...");
-      setTimeout(fetchData, 4700);
+      await delay(4700);
     }
   } catch (error) {
     console.error(
@@ -46,8 +46,16 @@ const fetchData = async () => {
       error
     );
     // Wait for 2.49 seconds and retry
-    setTimeout(fetchData, 2490);
+    await delay(2490);
   }
 };
-fetchData();
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+async function startFetch() {
+  while (true) {
+    await fetchData();
+  }
+}
+startFetch();
 module.exports = app;
