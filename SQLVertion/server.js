@@ -63,7 +63,9 @@ app.get("/array", async (req, res) => {
 });
 //error handle
 app.post("/send-error", async (req, res) => {
-  const errorObject = req.body;
+  console.log(req.body);
+
+  const errorObject = JSON.stringify(req.body);
 
   console.log("Received Error Object:", errorObject); // Log to verify
 

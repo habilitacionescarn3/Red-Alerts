@@ -18,7 +18,8 @@ const dates = new Date(); //"10/9/2024 12:00"
 dates.setDate(dates.getDate()); // - 1TODO understand ehy this is nessery
 dates.setHours(dates.getHours() + 3);
 //DB config
-app.use(express.json());
+app.use(express.json()); // Ensure this is placed at the top, before routes
+
 const dbConfig = {
   server: process.env.DB_SERVER,
   database: process.env.DB_DATABASE,

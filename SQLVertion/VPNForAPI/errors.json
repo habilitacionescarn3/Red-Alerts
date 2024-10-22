@@ -1,3 +1,7 @@
 [
-  {}
+  {
+    "code": "1234",
+    "message": "An example error",
+    "timestamp": "2024-10-22T18:00:00Z"
+  }
 ]
