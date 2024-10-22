@@ -256,9 +256,9 @@ function formatDate(dateString) {
 }
 //erroe handeling
 const errorObject = {
-  code: document.getElementById("code").value,
-  message: document.getElementById("message").value,
-  timestamp: document.getElementById("timestamp").value,
+  code: "1234",
+  message: "5678",
+  timestamp: "910",
 };
 async function reportWrongLoc() {
   try {
