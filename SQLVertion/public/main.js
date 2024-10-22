@@ -255,14 +255,15 @@ function formatDate(dateString) {
   return `${year}/${month}/${day} ${hours}:${minutes}:${seconds}`;
 }
 //erroe handeling
-const errorObject = {
-  code: "1234",
-  message: "5678",
-  timestamp: "00",
-};
 
 async function reportWrongLoc() {
   try {
+    console.log(JSON.stringify({
+      code: "1234",
+      message: "5678",
+      timestamp: "00",
+    });
+    
     const response = await fetch(
       "https://red-alerts-project.vercel.app/send-error",
       {
@@ -270,10 +271,15 @@ async function reportWrongLoc() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(errorObject),
+        body: JSON.stringify({
+          code: "1234",
+          message: "5678",
+          timestamp: "00",
+        }),
       }
     );
-
+    console.log(response);
+    
     const data = await response.json();
     console.log("Response:", data.message);
   } catch (error) {
