@@ -260,23 +260,25 @@ const errorObject = {
   message: document.getElementById("message").value,
   timestamp: document.getElementById("timestamp").value,
 };
+async function reportWrongLoc() {
+  try {
+    const response = await fetch(
+      "https://red-alerts-project.vercel.app/send-error",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(errorObject),
+      }
+    );
 
-try {
-  const response = await fetch(
-    "https://red-alerts-project.vercel.app/send-error",
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(errorObject),
-    }
-  );
-
-  const data = await response.json();
-  document.getElementById("responseMessage").textContent = data.message;
-} catch (error) {
-  document.getElementById("responseMessage").textContent =
-    "Failed to send the error object.";
-  console.error("Error:", error);
+    const data = await response.json();
+    document.getElementById("responseMessage").textContent = data.message;
+  } catch (error) {
+    document.getElementById("responseMessage").textContent =
+      "Failed to send the error object.";
+    console.error("Error:", error);
+  }
 }
+reportWrongLoc();
