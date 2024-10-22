@@ -258,29 +258,25 @@ function formatDate(dateString) {
 
 async function reportWrongLoc() {
   try {
-    console.log(
-      JSON.stringify({
-        code: "1234",
-        message: "5678",
-        timestamp: "00",
-      })
-    );
+    const errorObject = {
+      code: "1234",
+      message: "5678",
+      timestamp: "00",
+    };
 
-    const response = await fetch(
-      "https://red-alerts-project.vercel.app/send-error",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          code: "1234",
-          message: "5678",
-          timestamp: "00",
-        }),
-      }
-    );
-    console.log(response);
+    console.log("Sending:", JSON.stringify(errorObject));
+
+    const response = await fetch("/send-error", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(errorObject),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed with status: ${response.status}`);
+    }
 
     const data = await response.json();
     console.log("Response:", data.message);
