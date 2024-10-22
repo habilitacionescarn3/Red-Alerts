@@ -48,30 +48,28 @@ if (test) {
     time: "2024-10-12T18:09:20",
   });
 }
+
 // POST endpoint to receive the object and add it to errors.json if unique
 app.post("/add-error", (req, res) => {
-  const newError = req.body;
-
   try {
-    const errors = readErrorsFile();
+    const newError = req.body;
+    const existingErrors = readErrorsFile();
 
-    // Check if the object already exists (based on identical properties)
-    const isDuplicate = errors.some(
+    // Check for identical error object
+    const isDuplicate = existingErrors.some(
       (error) => JSON.stringify(error) === JSON.stringify(newError)
     );
 
-    if (isDuplicate) {
-      return res.status(409).json({ message: "Duplicate object. Not added." });
+    if (!isDuplicate) {
+      existingErrors.push(newError);
+      writeErrorsFile(existingErrors);
+      res.json({ message: "Error successfully added." });
+    } else {
+      res.json({ message: "Duplicate error. Not added." });
     }
-
-    // Add the new object to the errors array
-    errors.push(newError);
-    writeErrorsFile(errors);
-
-    res.status(201).json({ message: "Object added successfully." });
   } catch (error) {
     console.error("Error handling the object:", error.message);
-    res.status(500).json({ message: "Failed to process the object." });
+    res.status(500).json({ message: "Error processing the request." });
   }
 });
 //start server
