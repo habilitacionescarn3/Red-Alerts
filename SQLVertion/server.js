@@ -69,7 +69,7 @@ app.post("/send-error", async (req, res) => {
 
   try {
     const response = await axios.post(
-      "https://85.250.91.110:3100/add-error", // Assuming it's local for now
+      "http://85.250.91.110:3100/add-error", // Assuming it's local for now
       errorObject
     );
 

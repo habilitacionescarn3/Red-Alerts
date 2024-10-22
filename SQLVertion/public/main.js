@@ -258,7 +258,7 @@ function formatDate(dateString) {
 const errorObject = {
   code: "1234",
   message: "5678",
-  timestamp: new Date().toISOString(),
+  timestamp: "00",
 };
 
 async function reportWrongLoc() {
@@ -278,8 +278,6 @@ async function reportWrongLoc() {
     console.log("Response:", data.message);
   } catch (error) {
     console.error("Error:", error);
-
-    ("Failed to send the error object.");
   }
 }
 
