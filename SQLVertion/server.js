@@ -9,6 +9,7 @@ const date = require("date-and-time");
 const sql = require("mssql");
 const moment = require("moment-timezone");
 const app = express();
+app.use(express.json());
 //files and network
 const PORT = 3000;
 const filePathData = path.join(__dirname, "data.json");
