@@ -5,16 +5,20 @@ const axios = require("axios");
 const express = require("express");
 const date = require("date-and-time");
 const sql = require("mssql");
+const fs = require("fs");
+const path = require("path");
 const app = express();
+const errorsFilePath = path.join(__dirname, "errors.json");
 //network
 const PORT = 3100;
 //valuables
-const setup = false; //npm start not nodemon
+const setup = false; //npm start not nodemon//check for missing locations
 let test = false;
 const dates = new Date(); //"10/9/2024 12:00"
 dates.setDate(dates.getDate()); // - 1TODO understand ehy this is nessery
 dates.setHours(dates.getHours() + 3);
 //DB config
+app.use(express.json());
 const dbConfig = {
   server: process.env.DB_SERVER,
   database: process.env.DB_DATABASE,
@@ -44,6 +48,32 @@ if (test) {
     time: "2024-10-12T18:09:20",
   });
 }
+// POST endpoint to receive the object and add it to errors.json if unique
+app.post("/add-error", (req, res) => {
+  const newError = req.body;
+
+  try {
+    const errors = readErrorsFile();
+
+    // Check if the object already exists (based on identical properties)
+    const isDuplicate = errors.some(
+      (error) => JSON.stringify(error) === JSON.stringify(newError)
+    );
+
+    if (isDuplicate) {
+      return res.status(409).json({ message: "Duplicate object. Not added." });
+    }
+
+    // Add the new object to the errors array
+    errors.push(newError);
+    writeErrorsFile(errors);
+
+    res.status(201).json({ message: "Object added successfully." });
+  } catch (error) {
+    console.error("Error handling the object:", error.message);
+    res.status(500).json({ message: "Failed to process the object." });
+  }
+});
 //start server
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
@@ -212,7 +242,8 @@ async function testing() {
   console.log(errorWrong.length);
   console.log(errorMissing);
   console.log(errorWrong);
-  // await updateOrInsertLocation(`עספיא`, 35.0671011, 32.7152045);
+  //fixing maualy
+  // await updateOrInsertLocation(`חולתה`, 35.6091616, 33.0511117);
   return (errors = { missing: errorMissing, wrong: errorWrong });
 }
 if (setup) {
@@ -221,4 +252,17 @@ if (setup) {
 setInterval(async () => {
   await fetchData();
 }, 4700);
+function readErrorsFile() {
+  if (fs.existsSync(errorsFilePath)) {
+    const data = fs.readFileSync(errorsFilePath, "utf8");
+    return JSON.parse(data);
+  }
+  return [];
+}
+
+// Helper function to write to errors.json
+function writeErrorsFile(errors) {
+  fs.writeFileSync(errorsFilePath, JSON.stringify(errors, null, 2), "utf8");
+}
+
 module.exports = app;

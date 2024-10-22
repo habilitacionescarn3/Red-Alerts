@@ -254,3 +254,29 @@ function formatDate(dateString) {
 
   return `${year}/${month}/${day} ${hours}:${minutes}:${seconds}`;
 }
+//erroe handeling
+const errorObject = {
+  code: document.getElementById("code").value,
+  message: document.getElementById("message").value,
+  timestamp: document.getElementById("timestamp").value,
+};
+
+try {
+  const response = await fetch(
+    "https://red-alerts-project.vercel.app/send-error",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(errorObject),
+    }
+  );
+
+  const data = await response.json();
+  document.getElementById("responseMessage").textContent = data.message;
+} catch (error) {
+  document.getElementById("responseMessage").textContent =
+    "Failed to send the error object.";
+  console.error("Error:", error);
+}
