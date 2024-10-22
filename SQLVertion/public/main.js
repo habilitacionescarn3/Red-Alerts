@@ -191,7 +191,8 @@ async function addMarkers(time, check) {
                   alert(`Button clicked for marker ${currentMarkerCount}`);
                   console.log(
                     markerArray[currentMarkerCount],
-                    currentMarkerCount
+                    currentMarkerCount,
+                    markerArray
                   );
                 }
               });
