@@ -175,6 +175,9 @@ async function addMarkers(time, check) {
             const marker = L.marker([lon, lat]).addTo(markers);
 
             const currentMarkerCount = markerCount;
+            const currentLocation = alerts[i].data[j];
+            console.log(currentLocation);
+
             console.log(markerCount);
 
             marker
@@ -183,12 +186,13 @@ async function addMarkers(time, check) {
               )
               .openPopup();
             marker.on("popupopen", function (e) {
-              var button = document.getElementById(
+              const button = document.getElementById(
                 `reportButton${currentMarkerCount}`
               );
               button.addEventListener("click", function () {
                 if (true) {
                   alert(`Button clicked for marker ${currentMarkerCount}`);
+                  reportWrongLoc(currentLocation);
                   console.log(
                     markerArray[currentMarkerCount],
                     currentMarkerCount,
@@ -256,22 +260,16 @@ function formatDate(dateString) {
 }
 //erroe handeling
 
-async function reportWrongLoc() {
+async function reportWrongLoc(obj) {
   try {
-    const errorObject = {
-      code: "1234",
-      message: "5678",
-      timestamp: "00",
-    };
-
-    console.log("Sending:", JSON.stringify(errorObject));
+    console.log("Sending:", JSON.stringify(obj));
 
     const response = await fetch("/send-error", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(errorObject),
+      body: JSON.stringify(obj),
     });
 
     if (!response.ok) {
@@ -285,4 +283,4 @@ async function reportWrongLoc() {
   }
 }
 
-reportWrongLoc();
+// reportWrongLoc();
