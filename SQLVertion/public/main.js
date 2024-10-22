@@ -202,8 +202,8 @@ async function addMarkers(time, check) {
               lon: locations[k].lon,
               lat: locations[k].lat,
             });
+            markerCount++;
           }
-          markerCount++;
         }
       }
     }
