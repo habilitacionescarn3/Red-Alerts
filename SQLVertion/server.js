@@ -69,7 +69,7 @@ app.post("/send-error", async (req, res) => {
 
   try {
     const response = await axios.post(
-      "https://red-alerts-project.vercel.app/add-error", // Assuming it's local for now
+      "https://85.250.91.110:3100/add-error", // Assuming it's local for now
       errorObject
     );
 
