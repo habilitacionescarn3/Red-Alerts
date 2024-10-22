@@ -173,7 +173,7 @@ async function addMarkers(time, check) {
             }
 
             const marker = L.marker([lon, lat]).addTo(markers);
-            markerCount++;
+
             const currentMarkerCount = markerCount;
             console.log(markerCount);
 
@@ -199,6 +199,7 @@ async function addMarkers(time, check) {
               lat: locations[k].lat,
             });
           }
+          markerCount++;
         }
       }
     }
