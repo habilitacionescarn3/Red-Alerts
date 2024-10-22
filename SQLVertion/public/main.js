@@ -276,11 +276,10 @@ async function reportWrongLoc() {
 
     const data = await response.json();
     console.log("Response:", data.message);
-    document.getElementById("responseMessage").textContent = data.message;
   } catch (error) {
     console.error("Error:", error);
-    document.getElementById("responseMessage").textContent =
-      "Failed to send the error object.";
+
+    ("Failed to send the error object.");
   }
 }
 
