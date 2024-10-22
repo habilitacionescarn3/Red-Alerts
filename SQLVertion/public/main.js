@@ -176,13 +176,12 @@ async function addMarkers(time, check) {
 
             const currentMarkerCount = markerCount;
             const currentLocation = alerts[i].data[j];
-            console.log(currentLocation);
-
-            console.log(markerCount);
 
             marker
               .bindPopup(
-                `<b>${alerts[i].data[j]}</b><br>${alerts[i].title}</br><button id="reportButton${currentMarkerCount}">Report Wrong location</button><br>${alerts[i].time}</br><br>${currentMarkerCount}</br>`
+                `<b>${alerts[i].data[j]}</b><br>${alerts[i].title}</br><button id="reportButton${currentMarkerCount}">Report Wrong location</button>
+                <br>${alerts[i].time}</br>`
+                //<br>${currentMarkerCount}</br>`
               )
               .openPopup();
             marker.on("popupopen", function (e) {
@@ -193,11 +192,6 @@ async function addMarkers(time, check) {
                 if (true) {
                   alert(`Button clicked for marker ${currentMarkerCount}`);
                   reportWrongLoc(currentLocation);
-                  console.log(
-                    markerArray[currentMarkerCount],
-                    currentMarkerCount,
-                    markerArray
-                  );
                 }
               });
             });
@@ -263,7 +257,6 @@ function formatDate(dateString) {
 async function reportWrongLoc(location) {
   try {
     const obj = { address: location };
-    console.log("Sending:", JSON.stringify(obj));
 
     const response = await fetch("/send-error", {
       method: "POST",
@@ -278,7 +271,7 @@ async function reportWrongLoc(location) {
     }
 
     const data = await response.json();
-    console.log("Response:", data.message);
+    // console.log("Response:", data.message);
   } catch (error) {
     console.error("Error:", error);
   }
