@@ -63,6 +63,8 @@ app.get("/array", async (req, res) => {
 });
 //error handle
 app.post("/send-error", async (req, res) => {
+  console.log(req);
+
   console.log(req.body);
 
   const errorObject = JSON.stringify(req.body);
