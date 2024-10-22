@@ -260,8 +260,9 @@ function formatDate(dateString) {
 }
 //erroe handeling
 
-async function reportWrongLoc(obj) {
+async function reportWrongLoc(location) {
   try {
+    const obj = { address: location };
     console.log("Sending:", JSON.stringify(obj));
 
     const response = await fetch("/send-error", {
