@@ -174,19 +174,22 @@ async function addMarkers(time, check) {
 
             const marker = L.marker([lon, lat]).addTo(markers);
             markerCount++;
+            const currentMarkerCount = markerCount;
+            console.log(markerCount);
+
             marker
               .bindPopup(
-                `<b>${alerts[i].data[j]}</b><br>${alerts[i].title}</br><button id=reportButton${markerCount}>Click me</button>"<br>${alerts[i].time}</br>`
+                `<b>${alerts[i].data[j]}</b><br>${alerts[i].title}</br><button id="reportButton${currentMarkerCount}">Report Wrong location</button><br>${alerts[i].time}</br>`
               )
               .openPopup();
             marker.on("popupopen", function (e) {
               var button = document.getElementById(
-                `reportButton${markerCount}`
+                `reportButton${currentMarkerCount}`
               );
               button.addEventListener("click", function () {
                 if (true) {
-                  alert(`Button clicked for marker ${markerCount}`);
-                  console.log(markerArray[markerCount]);
+                  alert(`Button clicked for marker ${currentMarkerCount}`);
+                  console.log(markerArray[currentMarkerCount]);
                 }
               });
             });
