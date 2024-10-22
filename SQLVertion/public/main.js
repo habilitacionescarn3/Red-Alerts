@@ -175,7 +175,7 @@ async function addMarkers(time, check) {
             const marker = L.marker([lon, lat]).addTo(markers);
 
             const currentMarkerCount = markerCount;
-            const currentLocation = alerts[i].data[j];
+            const currentLocation = locations[k];
 
             marker
               .bindPopup(
@@ -256,7 +256,7 @@ function formatDate(dateString) {
 
 async function reportWrongLoc(location) {
   try {
-    const obj = { address: location };
+    const obj = location;
 
     const response = await fetch("/send-error", {
       method: "POST",
