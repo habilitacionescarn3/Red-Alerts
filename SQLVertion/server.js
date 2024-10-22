@@ -65,12 +65,14 @@ app.get("/array", async (req, res) => {
 app.post("/send-error", async (req, res) => {
   const errorObject = req.body;
 
+  console.log("Received Error Object:", errorObject); // Log to verify
+
   try {
-    // Send the object to the second server
     const response = await axios.post(
-      "http://85.250.91.110:3100/add-error",
+      "https://red-alerts-project.vercel.app/add-error", // Assuming it's local for now
       errorObject
-    ); //my ip
+    );
+
     res.status(response.status).json(response.data);
   } catch (error) {
     console.error("Error sending object to second server:", error.message);
@@ -79,6 +81,7 @@ app.post("/send-error", async (req, res) => {
       .json({ message: "Failed to send the object to the second server." });
   }
 });
+
 //api gives page
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));

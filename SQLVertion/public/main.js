@@ -258,24 +258,27 @@ function formatDate(dateString) {
 const errorObject = {
   code: "1234",
   message: "5678",
-  timestamp: "910",
+  timestamp: new Date().toISOString(),
 };
+
 async function reportWrongLoc() {
   try {
-    const response = await fetch(
-      "https://red-alerts-project.vercel.app/send-error",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(errorObject),
-      }
-    );
+    const response = await fetch("http://localhost:3000/send-error", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(errorObject),
+    });
 
     const data = await response.json();
+    console.log("Response:", data.message);
+    document.getElementById("responseMessage").textContent = data.message;
   } catch (error) {
     console.error("Error:", error);
+    document.getElementById("responseMessage").textContent =
+      "Failed to send the error object.";
   }
 }
+
 reportWrongLoc();

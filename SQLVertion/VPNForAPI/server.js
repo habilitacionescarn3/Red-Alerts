@@ -51,25 +51,27 @@ if (test) {
 
 // POST endpoint to receive the object and add it to errors.json if unique
 app.post("/add-error", (req, res) => {
-  try {
-    const newError = req.body;
-    const existingErrors = readErrorsFile();
+  const newError = req.body;
 
-    // Check for identical error object
-    const isDuplicate = existingErrors.some(
-      (error) => JSON.stringify(error) === JSON.stringify(newError)
-    );
+  // Verify the request body is received correctly
+  console.log("Received New Error:", newError);
 
-    if (!isDuplicate) {
-      existingErrors.push(newError);
-      writeErrorsFile(existingErrors);
-      res.json({ message: "Error successfully added." });
-    } else {
-      res.json({ message: "Duplicate error. Not added." });
-    }
-  } catch (error) {
-    console.error("Error handling the object:", error.message);
-    res.status(500).json({ message: "Error processing the request." });
+  if (!newError || Object.keys(newError).length === 0) {
+    return res.status(400).json({ message: "Invalid error object received." });
+  }
+
+  const existingErrors = readErrorsFile();
+
+  const isDuplicate = existingErrors.some(
+    (error) => JSON.stringify(error) === JSON.stringify(newError)
+  );
+
+  if (!isDuplicate) {
+    existingErrors.push(newError);
+    writeErrorsFile(existingErrors);
+    res.json({ message: "Error successfully added." });
+  } else {
+    res.json({ message: "Duplicate error. Not added." });
   }
 });
 //start server
@@ -251,11 +253,13 @@ setInterval(async () => {
   await fetchData();
 }, 4700);
 function readErrorsFile() {
-  if (fs.existsSync(errorsFilePath)) {
+  try {
     const data = fs.readFileSync(errorsFilePath, "utf8");
-    return JSON.parse(data);
+    return data ? JSON.parse(data) : [];
+  } catch (error) {
+    console.error("Error reading errors.json:", error.message);
+    return []; // Return empty array on error
   }
-  return [];
 }
 
 // Helper function to write to errors.json
