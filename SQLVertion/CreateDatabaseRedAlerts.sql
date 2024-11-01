@@ -326,7 +326,7 @@ EXEC AddNewEvent
     @category = '1',
     @title = 'test',
     @description = N'היכנסו למרחב המוגן ושהו בו 10 דקות',
-    @event_time = '2024-10-02T00:21:00',
+    @event_time = '2024-10-23T03:21:00',
     @locations = N'["שומרה","עכו"]';
 
 -- Test GetEventsByDate stored procedure
@@ -337,3 +337,11 @@ EXEC GetCoordinatesByEventDate '2024-10-08';
 
 EXEC GetAllAlerts
 EXEC RemoveLocation @location_name = N'מלון אחוזת הירדן';
+
+select * FROM Events
+where id='3967'
+
+delete  from Event_Location
+where event_id='3599'
+DELETE   FROM Events
+where id='3967'

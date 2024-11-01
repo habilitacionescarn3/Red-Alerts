@@ -244,7 +244,7 @@ async function testing() {
   console.log(errorMissing);
   console.log(errorWrong);
   //fixing maualy
-  // await updateOrInsertLocation(`חולתה`, 35.6091616, 33.0511117);
+  // await updateOrInsertLocation(`ביר אלמכסור`, 35.220564, 32.778219);
   return (errors = { missing: errorMissing, wrong: errorWrong });
 }
 if (setup) {
