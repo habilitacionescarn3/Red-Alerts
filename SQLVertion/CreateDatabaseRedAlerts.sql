@@ -330,7 +330,7 @@ EXEC AddNewEvent
     @locations = N'["שומרה","עכו"]';
 
 -- Test GetEventsByDate stored procedure
-EXEC GetEventsByDate '2024-10-12';
+EXEC GetEventsByDate '2024-11-10';
 
 -- Test GetCoordinatesByEventDate stored procedure
 EXEC GetCoordinatesByEventDate '2024-10-08';

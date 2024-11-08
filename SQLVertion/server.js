@@ -22,9 +22,12 @@ let running = false;
 //valuables
 const setup = false; //npm start not nodemon
 let test = true;
-const dates = new Date(); //"10/9/2024 12:00"
-dates.setDate(dates.getDate()); // - 1TODO understand ehy this is nessery
-dates.setHours(dates.getHours() + 3);
+// const dates = new Date(); //"10/9/2024 12:00"
+const dates = moment().tz("Asia/Jerusalem").startOf("day").toDate();
+console.log(`Query Date (set to start of day): ${dates}`);
+
+// dates.setDate(dates.getDate()); // - 1TODO understand ehy this is nessery
+// dates.setHours(dates.getHours() + 3);
 //DB config
 const dbConfig = {
   server: process.env.DB_SERVER,
@@ -292,13 +295,8 @@ function readJsonFile(filePathData) {
   });
 }
 //format date
-function formatDate(dateString) {
-  const date = new Date(dateString); // Create a Date object from the string
-
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are zero-indexed, so we add 1
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}/${month}/${day}`;
+function formatDate(date) {
+  return moment(date).tz("Asia/Jerusalem").format("YYYY/MM/DD");
 }
 
 module.exports = app;

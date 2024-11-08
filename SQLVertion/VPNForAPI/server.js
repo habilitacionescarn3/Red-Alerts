@@ -16,9 +16,12 @@ const PORT = 3100;
 //valuables
 const setup = false; //npm start not nodemon//check for missing locations
 let test = false;
-const dates = new Date(); //"10/9/2024 12:00"
-dates.setDate(dates.getDate()); // - 1TODO understand ehy this is nessery
-dates.setHours(dates.getHours() + 3);
+// const dates = new Date(); //"10/9/2024 12:00"
+// dates.setDate(dates.getDate()); // - 1TODO understand ehy this is nessery
+const moment = require("moment-timezone");
+const dates = moment().tz("Asia/Jerusalem").toDate();
+
+// dates.setHours(dates.getHours() + 3); //dates.setHours(dates.getHours() + 3);
 //DB config
 app.use(express.json()); // Ensure this is placed at the top, before routes
 
