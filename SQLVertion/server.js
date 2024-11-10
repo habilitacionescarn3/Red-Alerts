@@ -10,6 +10,8 @@ const sql = require("mssql");
 const moment = require("moment-timezone");
 const app = express();
 app.use(express.json());
+process.env.TZ = "Asia/Jerusalem";
+
 //files and network
 const PORT = 3000;
 const filePathData = path.join(__dirname, "data.json");
@@ -50,6 +52,8 @@ app.use(express.static(path.join(__dirname, "public")));
 //api call for getting data
 app.get("/array", async (req, res) => {
   try {
+    console.log(`Current Server Time: ${new Date()}`);
+    console.log(`Query Date (dates variable): ${dates}`);
     console.log(dates);
 
     const fileData = await fetchEvents(formatDate(dates));
@@ -115,12 +119,14 @@ async function convertToSql() {
   }
 }
 async function fetchEvents(date) {
+  console.log(`Fetching events for date: ${date}`);
   const arr = await getEventsByDate(date);
 
   return arr;
 }
 
 async function fetchCords(date) {
+  console.log(`Fetching coordinates for date: ${date}`);
   const arr = await getCoordinatesByDate(date);
   return arr;
 }

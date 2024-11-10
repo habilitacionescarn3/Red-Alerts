@@ -9,6 +9,8 @@ const fs = require("fs");
 const path = require("path");
 const app = express();
 const errorsFilePath = path.join(__dirname, "errors.json");
+process.env.TZ = "Asia/Jerusalem";
+
 //network
 const PORT = 3100;
 //valuables
@@ -136,6 +138,7 @@ async function addNewAlert(eventData) {
     console.log(err);
   }
 }
+
 async function getAllAlerts() {
   try {
     let pool = await sql.connect(dbConfig);
@@ -244,7 +247,7 @@ async function testing() {
   console.log(errorMissing);
   console.log(errorWrong);
   //fixing maualy
-  // await updateOrInsertLocation(`ביר אלמכסור`, 35.220564, 32.778219);
+  // await updateOrInsertLocation("נחף", 35.31763, 32.9345686);
   return (errors = { missing: errorMissing, wrong: errorWrong });
 }
 if (setup) {
