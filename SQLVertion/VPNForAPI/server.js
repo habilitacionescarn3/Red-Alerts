@@ -1,24 +1,30 @@
-//TODO make sure location is inserted to database
-//libs
-require("dotenv").config();
-const axios = require("axios");
-const express = require("express");
-const date = require("date-and-time");
-const sql = require("mssql");
-const fs = require("fs");
-const path = require("path");
+// Import environment configuration
+import dotenv from "dotenv";
+dotenv.config();
+
+import axios from "axios";
+import express from "express";
+import date from "date-and-time";
+import sql from "mssql";
+import fs from "fs";
+import path from "path";
+
 const app = express();
+const __dirname = path.resolve();
 const errorsFilePath = path.join(__dirname, "errors.json");
-//network
+
+// Network configuration
 const PORT = 3100;
-//valuables
-const setup = false; //npm start not nodemon//check for missing locations
-let test = false;
-const dates = new Date(); //"10/9/2024 12:00"
-dates.setDate(dates.getDate()); // - 1TODO understand ehy this is nessery
-dates.setHours(dates.getHours() + 3);
-//DB config
-app.use(express.json()); // Ensure this is placed at the top, before routes
+
+// Global variables
+const setup = false;
+
+const dates = new Date();
+dates.setDate(dates.getDate());
+dates.setHours(dates.getHours() + 2);
+
+// Database configuration
+app.use(express.json());
 
 const dbConfig = {
   server: process.env.DB_SERVER,
@@ -38,23 +44,10 @@ const dbConfig = {
     connectTimeout: 30000,
   },
 };
-if (test) {
-  test = false;
-  addNewAlert({
-    id: "393",
-    cat: "1",
-    title: "TEST",
-    data: ["מרום גולן"],
-    desc: "היכנסו למרחב המוגן ושהו בו 10 דקות",
-    time: "2024-10-12T18:09:20",
-  });
-}
 
-// POST endpoint to receive the object and add it to errors.json if unique
+// POST endpoint to receive and add unique errors
 app.post("/add-error", (req, res) => {
   const newError = req.body;
-
-  // Verify the request body is received correctly
   console.log("Received New Error:", newError);
 
   if (!newError || Object.keys(newError).length === 0) {
@@ -62,7 +55,6 @@ app.post("/add-error", (req, res) => {
   }
 
   const existingErrors = readErrorsFile();
-
   const isDuplicate = existingErrors.some(
     (error) => JSON.stringify(error) === JSON.stringify(newError)
   );
@@ -75,45 +67,42 @@ app.post("/add-error", (req, res) => {
     res.json({ message: "Duplicate error. Not added." });
   }
 });
-//start server
+
+// Start server
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
 });
+
+// Functions for fetching, updating, and handling alerts
 const fetchData = async () => {
   try {
     console.log("Attempting to fetch data...");
-    let response = await axios.get(
+    const response = await axios.get(
       `https://www.oref.org.il/WarningMessages/alert/alerts.json`
     );
 
-    let data = response.data;
+    const data = response.data;
     console.log(data);
 
     if (data && typeof data === "object" && Object.keys(data).length > 0) {
-      console.log("Data received:", data);
-
       const now = new Date();
       const formattedDate = date.format(now, "YYYY/MM/DD HH:mm:ss");
       data.time = formattedDate;
-      addNewAlert(data);
-      console.log(1);
+      await addNewAlert(data);
     } else {
-      // If the data is empty, retry after 4.7 seconds
       console.log("Received empty data, retrying in 4.7 seconds...");
     }
   } catch (error) {
     console.error(
       "Error fetching data, retrying in 2.49 seconds...",
-      error.message,
-      error
+      error.message
     );
-    // Wait for 2.49 seconds and retry
   }
 };
+
 async function addNewAlert(eventData) {
   try {
     const pool = await sql.connect(dbConfig);
-
     const request = pool.request();
 
     request.input("id", sql.VarChar(50), eventData.id);
@@ -126,6 +115,7 @@ async function addNewAlert(eventData) {
       sql.NVarChar(sql.MAX),
       JSON.stringify(eventData.data)
     );
+
     try {
       const result = await request.execute("AddNewEvent");
       console.log(result);
@@ -136,56 +126,51 @@ async function addNewAlert(eventData) {
     console.log(err);
   }
 }
+
+// Additional utility functions
 async function getAllAlerts() {
   try {
-    let pool = await sql.connect(dbConfig);
-    let result = await pool.request().execute("GetAllAlerts");
-    if (result.recordset && result.recordset.length > 0) {
-      const jsonFieldName = "JSON_F52E2B61-18A1-11d1-B105-00805F49916B";
-      const alerts = result.recordset[0][jsonFieldName];
-      return alerts ? JSON.parse(alerts) : [];
-    } else {
-      console.log("No alerts found.");
-      return [];
-    }
+    const pool = await sql.connect(dbConfig);
+    const result = await pool.request().execute("GetAllAlerts");
+    const jsonFieldName = "JSON_F52E2B61-18A1-11d1-B105-00805F49916B";
+    return result.recordset.length > 0
+      ? JSON.parse(result.recordset[0][jsonFieldName])
+      : [];
   } catch (err) {
     console.error("SQL error", err);
     return [];
   }
 }
+
 async function getLocationFromAlert(alerts) {
-  const location = [];
-  for (let i = 0; i < alerts.length; i++) {
-    for (let j = 0; j < alerts[i].data.length; j++) {
-      if (!location.includes(alerts[i].data[j].location_name)) {
-        location.push(alerts[i].data[j].location_name);
+  const locations = [];
+  for (const alert of alerts) {
+    for (const loc of alert.data) {
+      if (!locations.includes(loc.location_name)) {
+        locations.push(loc.location_name);
       }
     }
   }
-  return location;
+  return locations;
 }
+
 async function getAllLocations() {
   try {
-    let pool = await sql.connect(dbConfig);
-    let result = await pool.request().execute("GetAllLocations");
-    if (result.recordset && result.recordset.length > 0) {
-      // console.log("SQL Result:", result.recordset);
-      const jsonFieldName = "JSON_F52E2B61-18A1-11d1-B105-00805F49916B";
-      const locations = result.recordset[0][jsonFieldName];
-      return locations ? JSON.parse(locations).locations : [];
-    } else {
-      console.log("No locations found.");
-      return [];
-    }
+    const pool = await sql.connect(dbConfig);
+    const result = await pool.request().execute("GetAllLocations");
+    const jsonFieldName = "JSON_F52E2B61-18A1-11d1-B105-00805F49916B";
+    return result.recordset.length > 0
+      ? JSON.parse(result.recordset[0][jsonFieldName]).locations
+      : [];
   } catch (err) {
     console.error("SQL error", err);
     return [];
   }
 }
+//importent
 async function updateOrInsertLocation(locationName, lat, lon) {
   try {
-    let pool = await sql.connect(dbConfig);
-
+    const pool = await sql.connect(dbConfig);
     await pool
       .request()
       .input("location_name", sql.NVarChar(255), locationName)
@@ -200,72 +185,57 @@ async function updateOrInsertLocation(locationName, lat, lon) {
     );
   }
 }
+
 async function testing() {
-  const al = await getAllAlerts();
-  const alerts = al.alerts;
-  console.log(alerts.length);
+  const alerts = await getAllAlerts();
   const alertsLocation = await getLocationFromAlert(alerts);
-  console.log(alertsLocation.length);
   const locations = await getAllLocations();
-  console.log(locations.length);
   const errorMissing = [];
-  let found = false;
-  for (let i = 0; i < alertsLocation.length; i++) {
-    found = false;
-    for (let j = 0; j < locations.length; j++) {
-      // console.log(alertsLocation[i]);
-      // console.log(locations[j].address);
-      if (alertsLocation[i].includes(locations[j].address)) {
-        found = true;
-      }
-    }
-    if (!found) {
-      errorMissing.push(alertsLocation[i]);
+  const errorWrong = [];
+
+  for (const alertLoc of alertsLocation) {
+    if (!locations.some((loc) => alertLoc.includes(loc.address))) {
+      errorMissing.push(alertLoc);
     }
   }
-  console.log(errorMissing.length);
-  const errorWrong = [];
-  for (let i = 0; i < locations.length; i++) {
+
+  for (const loc of locations) {
     if (
       !(
-        //lay =y//lon=x
-        (
-          locations[i].lon < 33.35468927091694 &&
-          locations[i].lon > 29.489364393908087 &&
-          locations[i].lat < 35.93310954929203 &&
-          locations[i].lat > 34
-        )
+        loc.lon < 33.35468927091694 &&
+        loc.lon > 29.489364393908087 &&
+        loc.lat < 35.93310954929203 &&
+        loc.lat > 34
       )
     ) {
-      errorWrong.push(locations[i].address);
+      errorWrong.push(loc.address);
     }
   }
-  console.log(errorWrong.length);
-  console.log(errorMissing);
-  console.log(errorWrong);
-  //fixing maualy
-  // await updateOrInsertLocation(`ביר אלמכסור`, 35.220564, 32.778219);
-  return (errors = { missing: errorMissing, wrong: errorWrong });
+
+  console.log(errorMissing, errorWrong);
+  return { missing: errorMissing, wrong: errorWrong };
 }
+
 if (setup) {
   testing();
 }
+
 setInterval(async () => {
   await fetchData();
 }, 4700);
+
 function readErrorsFile() {
   try {
     const data = fs.readFileSync(errorsFilePath, "utf8");
     return data ? JSON.parse(data) : [];
   } catch (error) {
     console.error("Error reading errors.json:", error.message);
-    return []; // Return empty array on error
+    return [];
   }
 }
 
-// Helper function to write to errors.json
 function writeErrorsFile(errors) {
   fs.writeFileSync(errorsFilePath, JSON.stringify(errors, null, 2), "utf8");
 }
 
-module.exports = app;
+export default app;

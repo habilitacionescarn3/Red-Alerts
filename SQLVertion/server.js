@@ -1,29 +1,28 @@
-//to do add validate cord
-//libs
-require("dotenv").config();
-const axios = require("axios");
-const express = require("express");
-const fs = require("fs");
-const path = require("path");
-const date = require("date-and-time");
-const sql = require("mssql");
-const moment = require("moment-timezone");
+// Import environment configuration
+import dotenv from "dotenv";
+dotenv.config();
+
+import axios from "axios";
+import express from "express";
+import fs from "fs";
+import path from "path";
+import date from "date-and-time";
+import sql from "mssql";
+import moment from "moment-timezone";
+
 const app = express();
 app.use(express.json());
-//files and network
+
+// File paths and network configurations
 const PORT = 3000;
-const filePathData = path.join(__dirname, "data.json");
-const filePathCord = path.join(__dirname, "coordinates.json");
-const filePathError = path.join(__dirname, "errors.json");
-// const dates = new Date("10/9/2024 12:00");
-let running = false;
-//valuables
-const setup = false; //npm start not nodemon
-let test = true;
-const dates = new Date(); //"10/9/2024 12:00"
-dates.setDate(dates.getDate()); // - 1TODO understand ehy this is nessery
-dates.setHours(dates.getHours() + 3);
-//DB config
+const __dirname = path.resolve();
+
+// Global variables
+const dates = new Date();
+dates.setDate(dates.getDate());
+dates.setHours(dates.getHours() + 2); // Ensure correct timezone offset
+
+// Database configuration
 const dbConfig = {
   server: process.env.DB_SERVER,
   database: process.env.DB_DATABASE,
@@ -42,18 +41,18 @@ const dbConfig = {
     connectTimeout: 30000,
   },
 };
-//in setup mode
-if (setup) {
-  convertToSql();
-}
+
 app.use(express.static(path.join(__dirname, "public")));
-//api call for getting data
+
+// API endpoint for fetching data
 app.get("/array", async (req, res) => {
   try {
-    console.log(dates);
+    console.log("Request date:", dates);
 
-    const fileData = await fetchEvents(formatDate(dates));
-    const fileCord = await fetchCords(formatDate(dates));
+    const formattedDate = formatDate(dates);
+    const fileData = await fetchEvents(formattedDate);
+    const fileCord = await fetchCords(formattedDate);
+
     res.json({
       alerts: fileData,
       locations: fileCord,
@@ -62,22 +61,19 @@ app.get("/array", async (req, res) => {
     res.status(500).json({ message: "Error fetching data", error });
   }
 });
-//error handle
-app.post("/send-error", async (req, res) => {
-  console.log(req);
 
+// Error handling endpoint
+app.post("/send-error", async (req, res) => {
   console.log(req.body);
 
   const errorObject = JSON.stringify(req.body);
-
-  console.log("Received Error Object:", errorObject); // Log to verify
+  console.log("Received Error Object:", errorObject);
 
   try {
     const response = await axios.post(
-      "http://85.250.91.110:3100/add-error", // Assuming it's local for now
+      "http://85.250.91.110:3100/add-error",
       req.body
     );
-
     res.status(response.status).json(response.data);
   } catch (error) {
     console.error("Error sending object to second server:", error.message);
@@ -87,69 +83,46 @@ app.post("/send-error", async (req, res) => {
   }
 });
 
-//api gives page
+// Serve index.html for any other routes
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
-//start server
+
+// Start server
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
 });
-////stand by functions
-//checks for alerts
 
-//convert existing alerts to sql
-async function convertToSql() {
-  const dataArray = await readJsonFile(filePathData);
-  for (let i = 0; i < dataArray.length; i++) {
-    dataArray[i].time = moment
-      .tz(dataArray[i].time, "Asia/Jerusalem")
-      .utc()
-      .format("YYYY-MM-DDTHH:mm:ss");
-    await addNewAlert(dataArray[i]);
-    console.log(i);
-  }
-  const cordArray = await readJsonFile(filePathCord);
-  for (let i = 0; i < cordArray.length; i++) {
-    await insertCoordinate(cordArray[i]);
-  }
-}
+// Helper functions
+
 async function fetchEvents(date) {
-  const arr = await getEventsByDate(date);
-
-  return arr;
+  return await getEventsByDate(date);
 }
 
 async function fetchCords(date) {
-  const arr = await getCoordinatesByDate(date);
-  return arr;
+  return await getCoordinatesByDate(date);
 }
-//insert to sql
+
 async function insertCoordinate(location) {
   const pool = await sql.connect(dbConfig);
-
   const request = pool.request();
-
-  // Extract the address and coordinates from the location object
   const { address, coordinates } = location;
   const { lat, lon } = coordinates;
 
-  // Pass parameters to the stored procedure
   request.input("address", sql.NVarChar(255), address);
   request.input("lat", sql.Float, lat);
   request.input("lon", sql.Float, lon);
 
   try {
-    // Execute the stored procedure
-    const result = await request.execute("InsertOrUpdateCoordinates");
+    await request.execute("InsertOrUpdateCoordinates");
   } catch (err) {
     console.error("SQL error", err);
   }
 }
+
 async function addNewAlert(eventData) {
   try {
     const pool = await sql.connect(dbConfig);
-
     const request = pool.request();
 
     request.input("id", sql.VarChar(50), eventData.id);
@@ -162,6 +135,7 @@ async function addNewAlert(eventData) {
       sql.NVarChar(sql.MAX),
       JSON.stringify(eventData.data)
     );
+
     try {
       const result = await request.execute("AddNewEvent");
       console.log(result);
@@ -172,23 +146,15 @@ async function addNewAlert(eventData) {
     console.log(err);
   }
 }
-//gets from sql
+
 async function getEventsByDate(date) {
   let pool = null;
-  console.log(date);
-
   try {
-    // Establish a new SQL connection pool
     pool = await sql.connect(dbConfig);
-
-    // Prepare and execute the stored procedure with the given date
     const request = pool.request();
     request.input("input_date", sql.Date, date);
 
     const result = await request.execute("GetEventsByDate");
-    console.log("SQL Result: ", result.recordset);
-
-    // Check if we have valid data in the recordset
     if (
       result.recordset.length > 0 &&
       result.recordset[0]["JSON_F52E2B61-18A1-11d1-B105-00805F49916B"]
@@ -197,66 +163,18 @@ async function getEventsByDate(date) {
         result.recordset[0]["JSON_F52E2B61-18A1-11d1-B105-00805F49916B"];
       const events = JSON.parse(eventsJson);
 
-      for (let i = 0; i < events.events.length; i++) {
-        events.events[i].time = moment
-          .utc(events.events[i].time) // Parse as UTC
-          .tz("Asia/Jerusalem") // Convert to local timezone
-          .format("YYYY-MM-DD HH:mm:ss")
-          .toString(); // Correct format without 'T'
-      }
-      console.log(events);
-
-      // Transform the data field from array of objects to array of strings
-      const transformedEvents = events.events.map((event) => {
-        return {
-          ...event,
-          data: event.data.map((locationObj) => locationObj.location_name), // Convert to array of strings
-        };
-      });
-
-      return transformedEvents; // Return the transformed events array
+      const transformedEvents = events.events.map((event) => ({
+        ...event,
+        time: moment
+          .utc(event.time)
+          .tz("Asia/Jerusalem")
+          .format("YYYY-MM-DD HH:mm:ss"),
+        data: event.data.map((locationObj) => ({
+          location_name: locationObj.location_name,
+        })),
+      }));
+      return transformedEvents;
     } else {
-      console.log("No events found for the given date.");
-      return []; // Return an empty array if no events found
-    }
-  } catch (err) {
-    console.error("SQL error", err);
-    return []; // Return an empty array if an error occurs
-  } finally {
-    // Ensure the connection is closed after use
-    if (pool) {
-      pool.close();
-    }
-  }
-}
-async function getCoordinatesByDate(inputDate) {
-  const pool = await sql.connect(dbConfig);
-  const request = pool.request();
-
-  request.input("input_date", sql.Date, inputDate);
-
-  try {
-    const result = await request.execute("GetCoordinatesByEventDate");
-
-    const coordinatesJson =
-      result.recordset[0]["JSON_F52E2B61-18A1-11d1-B105-00805F49916B"];
-    if (coordinatesJson) {
-      const coordinatesArray = JSON.parse(coordinatesJson);
-
-      // Deduplicate the array based on the address
-      const uniqueCoordinates = [];
-      const addressSet = new Set();
-
-      coordinatesArray.coordinates.forEach((coordinate) => {
-        if (!addressSet.has(coordinate.address)) {
-          uniqueCoordinates.push(coordinate);
-          addressSet.add(coordinate.address);
-        }
-      });
-
-      return uniqueCoordinates;
-    } else {
-      console.log("No valid JSON returned.");
       return [];
     }
   } catch (err) {
@@ -268,31 +186,47 @@ async function getCoordinatesByDate(inputDate) {
     }
   }
 }
-//red json for setup
-function readJsonFile(filePathData) {
-  return new Promise((resolve, reject) => {
-    fs.readFile(filePathData, "utf8", (err, data) => {
-      if (err) {
-        reject(err);
-      } else {
-        try {
-          const jsonArray = data ? JSON.parse(data) : [];
-          resolve(jsonArray);
-        } catch (parseErr) {
-          reject(parseErr);
+
+async function getCoordinatesByDate(inputDate) {
+  const pool = await sql.connect(dbConfig);
+  const request = pool.request();
+  request.input("input_date", sql.Date, inputDate);
+
+  try {
+    const result = await request.execute("GetCoordinatesByEventDate");
+    const coordinatesJson =
+      result.recordset[0]["JSON_F52E2B61-18A1-11d1-B105-00805F49916B"];
+    if (coordinatesJson) {
+      const coordinatesArray = JSON.parse(coordinatesJson);
+      const uniqueCoordinates = [];
+      const addressSet = new Set();
+
+      coordinatesArray.coordinates.forEach((coordinate) => {
+        if (!addressSet.has(coordinate.address)) {
+          uniqueCoordinates.push(coordinate);
+          addressSet.add(coordinate.address);
         }
-      }
-    });
-  });
+      });
+      return uniqueCoordinates;
+    } else {
+      return [];
+    }
+  } catch (err) {
+    console.error("SQL error", err);
+    return [];
+  } finally {
+    if (pool) {
+      pool.close();
+    }
+  }
 }
-//format date
-function formatDate(dateString) {
-  const date = new Date(dateString); // Create a Date object from the string
 
+// Utility to format dates
+function formatDate(date) {
   const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are zero-indexed, so we add 1
+  const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
-  return `${year}/${month}/${day}`;
+  return `${year}-${month}-${day}`;
 }
 
-module.exports = app;
+export default app;

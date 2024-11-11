@@ -27,6 +27,8 @@ midnight.setSeconds(0);
 timeLine.value = getTimeDifference(midnight, now) * 60 + 60 * 3;
 //add event listener
 timeLine.addEventListener("input", async (event) => {
+  console.log(timeLine.value);
+
   const secondsInDay = 86400;
   const value = event.target.value;
   const hours = Math.floor(value / 3600);
