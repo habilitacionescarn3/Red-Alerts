@@ -12,7 +12,7 @@ import moment from "moment-timezone";
 
 const app = express();
 app.use(express.json());
-app.use(express.static("public"));
+app.use(express.static(path.join(__dirname, "public")));
 
 // File paths and network configurations
 const PORT = 3000;
