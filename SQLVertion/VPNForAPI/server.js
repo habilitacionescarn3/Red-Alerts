@@ -1,5 +1,5 @@
 //TODO make sure location is inserted to database
-//libs
+//libs//
 require("dotenv").config();
 const axios = require("axios");
 const express = require("express");
