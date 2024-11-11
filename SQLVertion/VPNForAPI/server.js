@@ -9,14 +9,19 @@ const fs = require("fs");
 const path = require("path");
 const app = express();
 const errorsFilePath = path.join(__dirname, "errors.json");
+process.env.TZ = "Asia/Jerusalem";
+
 //network
 const PORT = 3100;
 //valuables
 const setup = false; //npm start not nodemon//check for missing locations
 let test = false;
-const dates = new Date(); //"10/9/2024 12:00"
-dates.setDate(dates.getDate()); // - 1TODO understand ehy this is nessery
-dates.setHours(dates.getHours() + 3);
+// const dates = new Date(); //"10/9/2024 12:00"
+// dates.setDate(dates.getDate()); // - 1TODO understand ehy this is nessery
+const moment = require("moment-timezone");
+const dates = moment().tz("Asia/Jerusalem").toDate();
+
+// dates.setHours(dates.getHours() + 3); //dates.setHours(dates.getHours() + 3);
 //DB config
 app.use(express.json()); // Ensure this is placed at the top, before routes
 
@@ -136,6 +141,7 @@ async function addNewAlert(eventData) {
     console.log(err);
   }
 }
+
 async function getAllAlerts() {
   try {
     let pool = await sql.connect(dbConfig);
@@ -244,7 +250,7 @@ async function testing() {
   console.log(errorMissing);
   console.log(errorWrong);
   //fixing maualy
-  // await updateOrInsertLocation(`ביר אלמכסור`, 35.220564, 32.778219);
+  // await updateOrInsertLocation("נחף", 35.31763, 32.9345686);
   return (errors = { missing: errorMissing, wrong: errorWrong });
 }
 if (setup) {

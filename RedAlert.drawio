@@ -1,0 +1,116 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0" version="24.8.4">
+  <diagram name="Page-1" id="hXxNa8u7Wz6-ZzR3xPGs">
+    <mxGraphModel dx="2066" dy="1107" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="2" value="LocalHost" style="whiteSpace=wrap;strokeWidth=2;verticalAlign=top;fillColor=none;" parent="1" vertex="1">
+          <mxGeometry x="1240" y="44" width="397" height="206" as="geometry" />
+        </mxCell>
+        <mxCell id="M39vP-aTBrYG8Oi-O_8C-30" value="SQL Server" style="strokeWidth=2;html=1;shape=mxgraph.flowchart.database;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="1520" y="115" width="70" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="M39vP-aTBrYG8Oi-O_8C-32" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="M39vP-aTBrYG8Oi-O_8C-31" target="M39vP-aTBrYG8Oi-O_8C-43">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1110" y="230" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="1230" y="180" />
+              <mxPoint x="1230" y="180" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M39vP-aTBrYG8Oi-O_8C-33" value="GET /Array" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="M39vP-aTBrYG8Oi-O_8C-32">
+          <mxGeometry x="0.0151" relative="1" as="geometry">
+            <mxPoint x="-1" y="-20" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M39vP-aTBrYG8Oi-O_8C-34" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="M39vP-aTBrYG8Oi-O_8C-31" target="M39vP-aTBrYG8Oi-O_8C-30">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="M39vP-aTBrYG8Oi-O_8C-40" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="M39vP-aTBrYG8Oi-O_8C-31" target="M39vP-aTBrYG8Oi-O_8C-36">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1340" y="330" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M39vP-aTBrYG8Oi-O_8C-41" value="GET /Alerts" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="M39vP-aTBrYG8Oi-O_8C-40">
+          <mxGeometry x="-0.0945" y="2" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M39vP-aTBrYG8Oi-O_8C-31" value="node.js Server" style="verticalLabelPosition=middle;verticalAlign=top;html=1;shape=process;whiteSpace=wrap;rounded=1;size=0.14;arcSize=6;labelPosition=center;align=center;" vertex="1" parent="1">
+          <mxGeometry x="1290" y="120" width="100" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="M39vP-aTBrYG8Oi-O_8C-35" value="Home Front Command" style="whiteSpace=wrap;strokeWidth=2;verticalAlign=top;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="1240" y="362" width="397" height="206" as="geometry" />
+        </mxCell>
+        <mxCell id="M39vP-aTBrYG8Oi-O_8C-36" value="Alerts API" style="verticalLabelPosition=middle;verticalAlign=top;html=1;shape=process;whiteSpace=wrap;rounded=1;size=0.14;arcSize=6;labelPosition=center;align=center;" vertex="1" parent="1">
+          <mxGeometry x="1290" y="439" width="100" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="M39vP-aTBrYG8Oi-O_8C-38" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="M39vP-aTBrYG8Oi-O_8C-37" target="M39vP-aTBrYG8Oi-O_8C-36">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="M39vP-aTBrYG8Oi-O_8C-37" value="Current Alert .Json" style="shape=parallelogram;html=1;strokeWidth=2;perimeter=parallelogramPerimeter;whiteSpace=wrap;rounded=1;arcSize=12;size=0.23;" vertex="1" parent="1">
+          <mxGeometry x="1470" y="427" width="140" height="84" as="geometry" />
+        </mxCell>
+        <mxCell id="M39vP-aTBrYG8Oi-O_8C-42" value="Versel" style="whiteSpace=wrap;strokeWidth=2;verticalAlign=top;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="720" y="44" width="397" height="206" as="geometry" />
+        </mxCell>
+        <mxCell id="M39vP-aTBrYG8Oi-O_8C-47" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="960" y="450" as="sourcePoint" />
+            <mxPoint x="960" y="180" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="960" y="260" />
+              <mxPoint x="960" y="260" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M39vP-aTBrYG8Oi-O_8C-48" value="GET /Array" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="M39vP-aTBrYG8Oi-O_8C-47">
+          <mxGeometry x="-0.163" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M39vP-aTBrYG8Oi-O_8C-43" value="node.js Server" style="verticalLabelPosition=middle;verticalAlign=top;html=1;shape=process;whiteSpace=wrap;rounded=1;size=0.14;arcSize=6;labelPosition=center;align=center;" vertex="1" parent="1">
+          <mxGeometry x="960" y="120" width="100" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="M39vP-aTBrYG8Oi-O_8C-44" value="Client" style="whiteSpace=wrap;strokeWidth=2;verticalAlign=top;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="720" y="362" width="397" height="206" as="geometry" />
+        </mxCell>
+        <mxCell id="M39vP-aTBrYG8Oi-O_8C-46" value="HTML, JS, CSS&lt;div&gt;&lt;br&gt;&lt;/div&gt;" style="verticalLabelPosition=middle;verticalAlign=top;html=1;shape=card;whiteSpace=wrap;size=20;arcSize=12;labelPosition=center;align=center;" vertex="1" parent="1">
+          <mxGeometry x="960" y="450" width="100" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="M39vP-aTBrYG8Oi-O_8C-49" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0;exitDx=0;exitDy=0;exitPerimeter=0;" edge="1" parent="1" source="M39vP-aTBrYG8Oi-O_8C-46">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1020" y="460" as="sourcePoint" />
+            <mxPoint x="1060" y="180" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="1060" y="180" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M39vP-aTBrYG8Oi-O_8C-50" value="POST /send-errors" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="M39vP-aTBrYG8Oi-O_8C-49">
+          <mxGeometry x="-0.163" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M39vP-aTBrYG8Oi-O_8C-52" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0;entryDx=0;entryDy=0;exitX=1;exitY=0;exitDx=0;exitDy=0;" edge="1" parent="1" source="M39vP-aTBrYG8Oi-O_8C-43" target="M39vP-aTBrYG8Oi-O_8C-31">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1290" y="90" as="targetPoint" />
+            <mxPoint x="1060" y="90" as="sourcePoint" />
+            <Array as="points">
+              <mxPoint x="1180" y="120" />
+              <mxPoint x="1180" y="120" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="M39vP-aTBrYG8Oi-O_8C-53" value="POST /add-error&lt;span style=&quot;color: rgba(0, 0, 0, 0); font-family: monospace; font-size: 0px; text-align: start; background-color: rgb(251, 251, 251);&quot;&gt;%//3CmxGraphModel%3E%3Croot%3E%3CmxCell%20id%3D%220%22%2F%3E%3CmxCell%20id%3D%221%22%20parent%3D%220%22%2F%3E%3CmxCell%20id%3D%222%22%20style%3D%22edgeStyle%3DorthogonalEdgeStyle%3Brounded%3D0%3BorthogonalLoop%3D1%3BjettySize%3Dauto%3Bhtml%3D1%3BentryX%3D1%3BentryY%3D0.5%3BentryDx%3D0%3BentryDy%3D0%3B%22%20edge%3D%221%22%20parent%3D%221%22%3E%3CmxGeometry%20relative%3D%221%22%20as%3D%22geometry%22%3E%3CmxPoint%20x%3D%221060%22%20y%3D%22150%22%20as%3D%22targetPoint%22%2F%3E%3CmxPoint%20x%3D%221290%22%20y%3D%22150%22%20as%3D%22sourcePoint%22%2F%3E%3C%2FmxGeometry%3E%3C%2FmxCell%3E%3CmxCell%20id%3D%223%22%20value%3D%22GET%20%2FArray%22%20style%3D%22edgeLabel%3Bhtml%3D1%3Balign%3Dcenter%3BverticalAlign%3Dmiddle%3Bresizable%3D0%3Bpoints%3D%5B%5D%3B%22%20vertex%3D%221%22%20connectable%3D%220%22%20parent%3D%222%22%3E%3CmxGeometry%20x%3D%220.0151%22%20relative%3D%221%22%20as%3D%22geometry%22%3E%3CmxPoint%20x%3D%22-1%22%20y%3D%22-20%22%20as%3D%22offset%22%2F%3E%3C%2FmxGeometry%3E%3C%2FmxCell%3E%3C%2Froot%3E%3C%2FmxGraphModel%3E/a&lt;/span&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="M39vP-aTBrYG8Oi-O_8C-52">
+          <mxGeometry x="0.0151" relative="1" as="geometry">
+            <mxPoint x="-1" y="-20" as="offset" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
