@@ -15,6 +15,8 @@ const app = express();
 app.use(express.json());
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+console.log(__filename);
+console.log(__dirname);
 
 app.use(express.static(path.join(__dirname, "public")));
 
@@ -46,8 +48,6 @@ const dbConfig = {
     connectTimeout: 30000,
   },
 };
-
-app.use(express.static(path.join(__dirname, "public")));
 
 // API endpoint for fetching data
 app.get("/array", async (req, res) => {
@@ -90,6 +90,8 @@ app.post("/send-error", async (req, res) => {
 
 // Serve index.html for any other routes
 app.get("*", (req, res) => {
+  console.log(path.join(__dirname, "public", "index.html"));
+
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
