@@ -27,8 +27,6 @@ midnight.setSeconds(0);
 timeLine.value = getTimeDifference(midnight, now) * 60 + 60 * 3;
 //add event listener
 timeLine.addEventListener("input", async (event) => {
-  console.log(timeLine.value);
-
   const secondsInDay = 86400;
   const value = event.target.value;
   const hours = Math.floor(value / 3600);
@@ -157,7 +155,8 @@ async function addMarkers(time, check) {
     for (let j = 0; j < alerts[i].data.length; j++) {
       for (let k = 0; k < locations.length; k++) {
         if (
-          alerts[i].data[j].toString() === locations[k].address.toString() &&
+          alerts[i].data[j].location_name.toString() ===
+            locations[k].address.toString() &&
           getTimeDifference(alerts[i].time, time) < 10
         ) {
           if (
@@ -181,7 +180,7 @@ async function addMarkers(time, check) {
 
             marker
               .bindPopup(
-                `<b>${alerts[i].data[j]}</b><br>${alerts[i].title}</br><button id="reportButton${currentMarkerCount}">Report Wrong location</button>
+                `<b>${alerts[i].data[j].location_name}</b><br>${alerts[i].title}</br><button id="reportButton${currentMarkerCount}">Report Wrong location</button>
                 <br>${alerts[i].time}</br>`
                 //<br>${currentMarkerCount}</br>`
               )
