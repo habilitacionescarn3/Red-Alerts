@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "A simple Node.js server that connects to SQL Server and executes a query.",
   "mains": "server.js",
+  "type": "module",
   "scripts": {
     "startss": "vercel dev",
     "start": "node server.js",
