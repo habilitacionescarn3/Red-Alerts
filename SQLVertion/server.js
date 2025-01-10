@@ -76,7 +76,7 @@ app.post("/send-error", async (req, res) => {
 
   try {
     const response = await axios.post(
-      "http://85.250.95.96/add-error",
+      "http://shalevpc.servehttp.com/add-error",
       req.body
     );
     res.status(response.status).json(response.data);
