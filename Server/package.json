@@ -1,0 +1,25 @@
+{
+  "name": "red-alerts-backend",
+  "version": "1.0.0",
+  "description": "Red Alerts serverless backend",
+  "scripts": {
+    "deploy:dev": "serverless deploy --stage dev",
+    "deploy:prod": "serverless deploy --stage prod",
+    "clean": "rimraf .serverless/",
+    "dev": "serverless offline --stage local"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3",
+    "rimraf": "^5.0.10",
+    "serverless": "^4.17.2",
+    "serverless-offline": "^14.4.0"
+  },
+  "keywords": [
+    "serverless",
+    "aws",
+    "lambda",
+    "go"
+  ],
+  "author": "",
+  "license": "MIT"
+}
