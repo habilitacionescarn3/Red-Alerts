@@ -1,25 +1,34 @@
 {
-  "name": "red-alerts-backend",
+  "name": "red-alerts-server",
   "version": "1.0.0",
-  "description": "Red Alerts serverless backend",
-  "scripts": {
-    "deploy:dev": "serverless deploy --stage dev",
-    "deploy:prod": "serverless deploy --stage prod",
-    "clean": "rimraf .serverless/",
-    "dev": "serverless offline --stage local"
-  },
+  "description": "Red Alerts Backend (ECS + Terraform)",
   "devDependencies": {
-    "cross-env": "^7.0.3",
-    "rimraf": "^5.0.10",
-    "serverless": "^4.17.2",
-    "serverless-offline": "^14.4.0"
+    "cross-var": "^1.1.0",
+    "dotenv-cli": "^10.0.0",
+    "cross-env": "^7.0.3"
   },
-  "keywords": [
-    "serverless",
-    "aws",
-    "lambda",
-    "go"
-  ],
-  "author": "",
-  "license": "MIT"
+  "scripts": {
+    "init": "cd terraform && terraform init",
+    "workspace:create": "cd terraform && terraform workspace new dev && terraform workspace new prod",
+    "workspace:list": "cd terraform && terraform workspace list",
+    "deploy:infrastructure:dev": "cd terraform && terraform workspace select dev && terraform apply -var-file=\"terraform-dev.tfvars\" -auto-approve",
+    "deploy:infrastructure:prod": "cd terraform && terraform workspace select prod && terraform apply -var-file=\"terraform-prod.tfvars\" -auto-approve",
+    "_docker:build": "cd app && docker buildx build --platform linux/arm64 --load -t red-alerts-api .",
+    "_docker:tag:dev": "dotenv -e .env cross-env-shell \"docker tag red-alerts-api:latest $ECR_REPOSITORY_URL_DEV:latest\"",
+    "_docker:tag:prod": "dotenv -e .env cross-env-shell \"docker tag red-alerts-api:latest $ECR_REPOSITORY_URL_PROD:latest\"",
+    "_docker:push:dev": "dotenv -e .env cross-env-shell \"docker push $ECR_REPOSITORY_URL_DEV:latest\"",
+    "_docker:push:prod": "dotenv -e .env cross-env-shell \"docker push $ECR_REPOSITORY_URL_PROD:latest\"",
+    "_ecs:update:dev": "dotenv -e .env cross-env-shell \"aws ecs update-service --cluster $ECS_CLUSTER_DEV --service $ECS_SERVICE_DEV --force-new-deployment --region $AWS_REGION --no-cli-pager\"",
+    "_ecs:update:prod": "dotenv -e .env cross-env-shell \"aws ecs update-service --cluster $ECS_CLUSTER_PROD --service $ECS_SERVICE_PROD --force-new-deployment --region $AWS_REGION --no-cli-pager\"",
+    "deploy:docker:dev": "npm run _docker:build && npm run _docker:tag:dev && npm run _docker:push:dev && npm run _ecs:update:dev",
+    "deploy:docker:prod": "npm run _docker:build && npm run _docker:tag:prod && npm run _docker:push:prod && npm run _ecs:update:prod",
+    "good": "echo 'good'",
+    "docker:login:dev": "dotenv -e .env cross-env-shell \"aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com\"",
+    "docker:login:prod": "dotenv -e .env cross-env-shell \"aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com\"",
+    "deploy:dev": "npm run deploy:infrastructure:dev && npm run deploy:docker:dev",
+    "deploy:prod": "npm run deploy:infrastructure:prod && npm run deploy:docker:prod",
+    "install": "cd app && pip install -r requirements.txt",
+    "update:pip": "cd app && python -m pip install --upgrade pip",
+    "dev": "cd app && python main.py"
+  }
 }

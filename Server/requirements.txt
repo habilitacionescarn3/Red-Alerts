@@ -1,8 +1,0 @@
-# Lambda function dependencies
-# No additional dependencies needed for basic Lambda functions
-# All required libraries (json, logging, datetime) are part of Python standard library
-
-# If you need additional libraries in the future, add them here
-# Example:
-# boto3==1.26.137
-# requests==2.31.0
