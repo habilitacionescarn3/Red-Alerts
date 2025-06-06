@@ -89,19 +89,11 @@ jobs:
           keys-case: bypass # Preserves original variable case
           mask-variables: true # Masks sensitive values in logs
 
-      - name: 📝 Load variables from terraform prod secret
+      - name: 📝 Load terraform variables for selected environment
         uses: falti/dotenv-action@v1.1.4
         with:
-          path: Server/terraform/terraform-prod.tfvars
-          # export-variables: true # Makes variables available to subsequent steps
-          keys-case: bypass # Preserves original variable case
-          mask-variables: true # Masks sensitive values in logs
-
-      - name: 📝 Load variables from terraform dev secret
-        uses: falti/dotenv-action@v1.1.4
-        with:
-          path: Server/terraform/terraform-dev.tfvars
-          # export-variables: true # Makes variables available to subsequent steps
+          path: Server/terraform/terraform-${{ steps.env.outputs.environment }}.tfvars
+          export-variables: true # Makes variables available to subsequent steps
           keys-case: bypass # Preserves original variable case
           mask-variables: true # Masks sensitive values in logs
 
