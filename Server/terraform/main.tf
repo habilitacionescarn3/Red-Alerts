@@ -7,6 +7,15 @@ terraform {
       version = "~> 5.0"
     }
   }
+  
+  # S3 Backend for Remote State Management
+  backend "s3" {
+    bucket = "red-alerts-terraform-state"
+    key    = "deployment/${terraform.workspace}/terraform.tfstate"
+    region = "il-central-1"
+    # Workspace-aware state management: dev and prod will have separate state files
+    # No encryption or DynamoDB locking specified for minimal setup
+  }
 }
 
 provider "aws" {
