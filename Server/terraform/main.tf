@@ -11,7 +11,7 @@ terraform {
   # S3 Backend for Remote State Management  
   backend "s3" {
     bucket = "red-alerts-terraform-state"
-    key    = "deployment/terraform.tfstate"
+    key    = "env:/prod/deployment/prod/terraform.tfstate"
     region = "il-central-1"
     # Note: Backend config cannot use variables directly
     # We'll use different state keys per environment via CI/CD environment variables
