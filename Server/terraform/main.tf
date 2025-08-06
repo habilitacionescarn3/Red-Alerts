@@ -8,12 +8,13 @@ terraform {
     }
   }
   
-  # S3 Backend for Remote State Management
+  # S3 Backend for Remote State Management  
   backend "s3" {
     bucket = "red-alerts-terraform-state"
-    key    = "deployment/${terraform.workspace}/terraform.tfstate"
+    key    = "deployment/terraform.tfstate"
     region = "il-central-1"
-    # Workspace-aware state management: dev and prod will have separate state files
+    # Note: Backend config cannot use variables directly
+    # We'll use different state keys per environment via CI/CD environment variables
     # No encryption or DynamoDB locking specified for minimal setup
   }
 }

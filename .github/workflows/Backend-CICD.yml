@@ -119,10 +119,15 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       # =================================================================
-      # STEP 3: TERRAFORM WORKSPACE SETUP
+      # STEP 3: TERRAFORM WORKSPACE SETUP WITH ENVIRONMENT-SPECIFIC STATE
       # =================================================================
-      - name: 🛠️ Initialize Terraform
-        run: npm run init
+      - name: 🛠️ Initialize Terraform with environment-specific state
+        run: |
+          if [[ "${{ steps.env.outputs.environment }}" == "prod" ]]; then
+            npm run init:prod
+          else
+            npm run init:dev
+          fi
         working-directory: Server
 
       - name: 🏗️ Create Terraform workspace if it doesn't exist
