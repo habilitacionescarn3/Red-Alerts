@@ -130,10 +130,6 @@ jobs:
           fi
         working-directory: Server
 
-      - name: 🏗️ Create Terraform workspace if it doesn't exist
-        run: npm run workspace:create
-        working-directory: Server
-
       # =================================================================
       # STEP 4: DEPLOY USING NPM SCRIPTS
       # =================================================================

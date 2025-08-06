@@ -11,8 +11,6 @@
     "init": "cd terraform && terraform init",
     "init:dev": "cd terraform && terraform init -backend-config=\"key=deployment/dev/terraform.tfstate\"",
     "init:prod": "cd terraform && terraform init -backend-config=\"key=deployment/prod/terraform.tfstate\"",
-    "workspace:create": "cd terraform && terraform workspace new dev && terraform workspace new prod",
-    "workspace:list": "cd terraform && terraform workspace list",
     "deploy:infrastructure:dev": "cd terraform && terraform init -backend-config=\"key=deployment/dev/terraform.tfstate\" -reconfigure && terraform apply -var-file=\"terraform-dev.tfvars\" -auto-approve",
     "deploy:infrastructure:prod": "cd terraform && terraform init -backend-config=\"key=deployment/prod/terraform.tfstate\" -reconfigure && terraform apply -var-file=\"terraform-prod.tfvars\" -auto-approve",
     "_docker:build": "cd app && docker buildx build --platform linux/arm64 --load -t red-alerts-api .",
