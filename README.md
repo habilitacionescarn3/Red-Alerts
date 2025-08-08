@@ -2,6 +2,31 @@
 
 A modern full-stack application that monitors Israeli alert systems with real-time updates. Built with FastAPI backend, React frontend, and deployed on AWS using Terraform.
 
+## 🚀 **NEW: Local & CI/CD Deployment Synchronization**
+
+**Quick Deploy**: Run `npm run deploy` locally for instant full-stack deployment!
+
+### ✨ Key Features
+
+- **🔒 State Locking**: DynamoDB prevents conflicts between local and CI/CD deployments
+- **🔄 Perfect Sync**: Local deployments and CI/CD use identical npm scripts
+- **⚡ One Command**: `npm run deploy` handles infrastructure + backend + frontend
+- **🏗️ Zero Conflicts**: Multiple developers can work safely with automatic state locking
+
+### 🎯 How It Works
+
+1. **Local Development**: `npm run deploy` → Terraform checks state lock → Deploys everything
+2. **Git Push**: CI/CD triggers → Uses same npm scripts → DynamoDB prevents conflicts
+3. **Always Synchronized**: S3 bucket, infrastructure, and deployments stay perfectly in sync
+
+### 🛡️ State Management
+
+- **S3 Backend**: Terraform state in `red-alerts-terraform-state` bucket
+- **DynamoDB Locking**: `red-alerts-terraform-locks` table prevents race conditions
+- **Environment Isolation**: Separate state keys for dev/prod environments
+
+---
+
 ## 🏗️ Architecture Overview
 
 - **Frontend**: React + TypeScript + Tailwind CSS (deployed to S3 + CloudFront)

@@ -26,7 +26,7 @@ router = APIRouter()
 async def health_check():
     """Health check endpoint with secret from environment"""
     return HealthResponse(
-        status="healthy",
+        status="healthy V1",
         message="Red Alerts Backend is running",
         timestamp=datetime.utcnow().isoformat() + "Z",
         service="Red Alerts Backend",

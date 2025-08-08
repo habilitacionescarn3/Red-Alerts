@@ -107,80 +107,27 @@ output "docker_build_commands" {
   }
 }
 
-# ========================
-# CloudFront + S3 Outputs
-# ========================
+## Frontend/CloudFront/Route53/ACM outputs removed as requested.
 
-# S3 Bucket Outputs
-output "s3_bucket_name" {
-  description = "The name of the S3 bucket for frontend assets"
-  value       = var.enable_custom_domain ? aws_s3_bucket.frontend[0].bucket : "N/A - Custom domain disabled"
+# DynamoDB State Lock Table
+output "terraform_state_lock_table" {
+  description = "DynamoDB table used for Terraform state locking"
+  value       = aws_dynamodb_table.terraform_locks.name
 }
 
-output "s3_bucket_arn" {
-  description = "The ARN of the S3 bucket"
-  value       = var.enable_custom_domain ? aws_s3_bucket.frontend[0].arn : "N/A - Custom domain disabled"
+output "terraform_state_lock_table_arn" {
+  description = "ARN of the DynamoDB table used for Terraform state locking"
+  value       = aws_dynamodb_table.terraform_locks.arn
 }
 
-output "s3_bucket_website_endpoint" {
-  description = "The website endpoint of the S3 bucket"
-  value       = var.enable_custom_domain ? aws_s3_bucket_website_configuration.frontend[0].website_endpoint : "N/A - Custom domain disabled"
-}
 
-# CloudFront Outputs
-output "cloudfront_distribution_id" {
-  description = "The identifier for the CloudFront distribution"
-  value       = var.enable_custom_domain ? aws_cloudfront_distribution.frontend[0].id : "N/A - Custom domain disabled"
-}
 
-output "cloudfront_distribution_domain_name" {
-  description = "The domain name corresponding to the CloudFront distribution"
-  value       = var.enable_custom_domain ? aws_cloudfront_distribution.frontend[0].domain_name : "N/A - Custom domain disabled"
-}
-
-output "cloudfront_distribution_hosted_zone_id" {
-  description = "The CloudFront Route 53 zone ID"
-  value       = var.enable_custom_domain ? aws_cloudfront_distribution.frontend[0].hosted_zone_id : "N/A - Custom domain disabled"
-}
-
-# ACM Certificate Outputs
-output "acm_certificate_arn" {
-  description = "The ARN of the ACM certificate"
-  value       = var.enable_custom_domain ? aws_acm_certificate.frontend[0].arn : "N/A - Custom domain disabled"
-}
-
-output "acm_certificate_status" {
-  description = "The status of the ACM certificate"
-  value       = var.enable_custom_domain ? aws_acm_certificate.frontend[0].status : "N/A - Custom domain disabled"
-}
-
-# Route53 Outputs
-output "route53_record_name" {
-  description = "The name of the Route53 record"
-  value       = var.enable_custom_domain ? aws_route53_record.frontend[0].name : "N/A - Custom domain disabled"
-}
-
-output "route53_record_fqdn" {
-  description = "The FQDN built using the zone domain and name"
-  value       = var.enable_custom_domain ? aws_route53_record.frontend[0].fqdn : "N/A - Custom domain disabled"
-}
-
-# Frontend URL
-output "frontend_url" {
-  description = "The frontend URL (CloudFront or S3 website endpoint)"
-  value       = var.enable_custom_domain ? "https://${var.domain_name}" : "N/A - Custom domain disabled"
-}
-
-# S3 Sync Commands for Frontend Deployment
-output "frontend_deployment_commands" {
-  description = "Commands to deploy frontend to S3"
-  value = var.enable_custom_domain ? {
-    build_react = "cd Client && npm run build"
-    sync_to_s3  = "aws s3 sync Client/dist/ s3://${aws_s3_bucket.frontend[0].bucket}/ --delete"
-    invalidate_cloudfront = "aws cloudfront create-invalidation --distribution-id ${aws_cloudfront_distribution.frontend[0].id} --paths '/*'"
-  } : {
-    build_react = "N/A - Custom domain disabled"
-    sync_to_s3  = "N/A - Custom domain disabled"
-    invalidate_cloudfront = "N/A - Custom domain disabled"
+# Deployment Status Commands
+output "deployment_status_commands" {
+  description = "Useful commands for checking deployment status and logs"
+  value = {
+    check_ecs_status = "aws ecs describe-services --cluster ${aws_ecs_cluster.main.name} --services ${aws_ecs_service.api.name} --region ${data.aws_region.current.name}"
+    view_ecs_logs = "aws logs tail ${aws_cloudwatch_log_group.ecs_logs.name} --follow --region ${data.aws_region.current.name}"
+    view_api_logs = "aws logs tail ${aws_cloudwatch_log_group.api_gateway_logs.name} --follow --region ${data.aws_region.current.name}"
   }
 }

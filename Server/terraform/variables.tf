@@ -34,24 +34,6 @@ variable "ecs_desired_count" {
   default     = 1
 }
 
-# Domain Configuration
-variable "enable_custom_domain" {
-  description = "Whether to enable custom domain for API Gateway"
-  type        = bool
-  default     = false
-}
-
-variable "domain_name" {
-  description = "Custom domain name for the API"
-  type        = string
-  default     = ""
-}
-
-variable "hosted_zone_id" {
-  description = "Route53 hosted zone ID for the domain"
-  type        = string
-  default     = ""
-}
 
 # CloudWatch Configuration
 variable "log_retention_days" {
@@ -95,34 +77,4 @@ variable "ssh_allowed_cidr_blocks" {
   default     = ["0.0.0.0/0"]  # Change this in production!
 }
 
-# Certificate Configuration
-variable "certificate_domain_name" {
-  description = "Primary domain name for the SSL certificate"
-  type        = string
-  default     = ""
-}
-
-variable "certificate_subject_alternative_names" {
-  description = "Additional domain names for the SSL certificate"
-  type        = list(string)
-  default     = []
-}
-
-# CloudFront Configuration
-variable "cloudfront_price_class" {
-  description = "CloudFront price class"
-  type        = string
-  default     = "PriceClass_100"
-}
-
-variable "client_bucket_name" {
-  description = "S3 bucket name for client assets"
-  type        = string
-  default     = ""
-}
-
-variable "cloudfront_distribution_comment" {
-  description = "Comment/description for the CloudFront distribution"
-  type        = string
-  default     = ""
-}
+## Frontend/CloudFront/Certificate variables removed as requested.
