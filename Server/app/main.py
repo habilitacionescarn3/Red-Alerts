@@ -63,16 +63,6 @@ app.add_middleware(
 app.include_router(health_router)
 
 
-# Simple hello world endpoint
-@app.get("/", response_model=Dict[str, str])
-async def hello_world():
-    """Hello World endpoint"""
-    return {
-        "message": "Hello World from Red Alerts Backend!",
-        "service": "Red Alerts Backend",
-        "version": "2.0.0",
-        "timestamp": datetime.utcnow().isoformat() + "Z"
-    }
 
 
 # Lifespan events now handled by the @asynccontextmanager above

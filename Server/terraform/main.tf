@@ -527,4 +527,202 @@ resource "aws_cloudwatch_log_group" "api_gateway_logs" {
   tags              = local.common_tags
 }
 
-## Frontend, CloudFront, ACM, and Route53 resources removed as requested.
+# Additional AWS Provider for US-East-1 (required for CloudFront certificates)
+provider "aws" {
+  alias  = "us_east_1"
+  region = "us-east-1"
+}
+
+# S3 bucket for static content
+resource "aws_s3_bucket" "static_content" {
+  bucket = var.bucket_name
+  tags   = local.common_tags
+}
+
+# S3 bucket public access block
+resource "aws_s3_bucket_public_access_block" "static_content" {
+  bucket = aws_s3_bucket.static_content.id
+
+  block_public_acls       = false
+  block_public_policy     = false
+  ignore_public_acls      = false
+  restrict_public_buckets = false
+}
+
+# S3 bucket policy for CloudFront access
+resource "aws_s3_bucket_policy" "static_content" {
+  bucket = aws_s3_bucket.static_content.id
+  depends_on = [aws_s3_bucket_public_access_block.static_content]
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid       = "PublicReadGetObject"
+        Effect    = "Allow"
+        Principal = "*"
+        Action    = "s3:GetObject"
+        Resource  = "${aws_s3_bucket.static_content.arn}/*"
+      }
+    ]
+  })
+}
+
+# S3 bucket website configuration
+resource "aws_s3_bucket_website_configuration" "static_content" {
+  bucket = aws_s3_bucket.static_content.id
+
+  index_document {
+    suffix = "index.html"
+  }
+
+  error_document {
+    key = "404.html"
+  }
+}
+
+# Data source for Route 53 hosted zone
+data "aws_route53_zone" "main" {
+  name         = var.route53_zone_name
+  private_zone = false
+}
+
+# ACM Certificate in us-east-1 for CloudFront
+resource "aws_acm_certificate" "cloudfront" {
+  provider          = aws.us_east_1
+  domain_name       = var.domain_name
+  validation_method = "DNS"
+
+  tags = local.common_tags
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+# Route 53 record for certificate validation
+resource "aws_route53_record" "cert_validation" {
+  for_each = {
+    for dvo in aws_acm_certificate.cloudfront.domain_validation_options : dvo.domain_name => {
+      name   = dvo.resource_record_name
+      record = dvo.resource_record_value
+      type   = dvo.resource_record_type
+    }
+  }
+
+  allow_overwrite = true
+  name            = each.value.name
+  records         = [each.value.record]
+  ttl             = 60
+  type            = each.value.type
+  zone_id         = data.aws_route53_zone.main.zone_id
+}
+
+# Certificate validation
+resource "aws_acm_certificate_validation" "cloudfront" {
+  provider                = aws.us_east_1
+  certificate_arn         = aws_acm_certificate.cloudfront.arn
+  validation_record_fqdns = [for record in aws_route53_record.cert_validation : record.fqdn]
+}
+
+# CloudFront Origin Access Identity (deprecated but still works)
+resource "aws_cloudfront_origin_access_identity" "main" {
+  comment = "OAI for ${local.name_prefix}"
+}
+
+# CloudFront Distribution
+resource "aws_cloudfront_distribution" "main" {
+  enabled             = true
+  is_ipv6_enabled     = true
+  default_root_object = "index.html"
+  aliases             = [var.domain_name]
+  comment             = "Red Alerts Production"
+
+  # Origin for S3 (static content)
+  origin {
+    domain_name = aws_s3_bucket.static_content.bucket_regional_domain_name
+    origin_id   = "ClientFilesOrigin"
+
+    s3_origin_config {
+      origin_access_identity = aws_cloudfront_origin_access_identity.main.cloudfront_access_identity_path
+    }
+  }
+
+  # Origin for API Gateway
+  origin {
+    domain_name = replace(aws_apigatewayv2_api.main.api_endpoint, "https://", "")
+    origin_id   = "ApiGatewayOrigin"
+
+    custom_origin_config {
+      http_port              = 443
+      https_port             = 443
+      origin_protocol_policy = "https-only"
+      origin_ssl_protocols   = ["TLSv1.2"]
+    }
+  }
+
+  # Default behavior (everything goes to S3)
+  default_cache_behavior {
+    allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+    cached_methods         = ["GET", "HEAD"]
+    target_origin_id       = "ClientFilesOrigin"
+    compress               = true
+    viewer_protocol_policy = "redirect-to-https"
+    cache_policy_id        = "658327ea-f89d-4fab-a63d-7e88639e58f6"  # Managed-CachingOptimized
+    origin_request_policy_id = "88a5eaf4-2fd4-4709-b370-b4c650ea3fcf"  # Managed-CORS-S3Origin
+
+    min_ttl     = 0
+    default_ttl = 3600
+    max_ttl     = 86400
+  }
+
+  # Behavior for /api/* (routes to API Gateway)
+  ordered_cache_behavior {
+    path_pattern           = "/api/*"
+    allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+    cached_methods         = ["GET", "HEAD", "OPTIONS"]
+    target_origin_id       = "ApiGatewayOrigin"
+    compress               = true
+    viewer_protocol_policy = "redirect-to-https"
+    cache_policy_id        = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad"  # Managed-CachingDisabled
+    origin_request_policy_id = "b689b0a8-53d0-40ab-baf2-68738e2966ac"  # Managed-AllViewerExceptHostHeader
+
+    min_ttl     = 0
+    default_ttl = 0
+    max_ttl     = 0
+  }
+
+  # Price class (use all edge locations for better performance)
+  price_class = "PriceClass_All"
+
+  # Restrictions
+  restrictions {
+    geo_restriction {
+      restriction_type = "none"
+    }
+  }
+
+  # SSL Certificate
+  viewer_certificate {
+    acm_certificate_arn      = aws_acm_certificate_validation.cloudfront.certificate_arn
+    ssl_support_method       = "sni-only"
+    minimum_protocol_version = "TLSv1.2_2021"
+  }
+
+  tags = local.common_tags
+
+  depends_on = [aws_acm_certificate_validation.cloudfront]
+}
+
+# Route 53 record for CloudFront distribution
+resource "aws_route53_record" "cloudfront" {
+  zone_id = data.aws_route53_zone.main.zone_id
+  name    = var.domain_name
+  type    = "A"
+
+  alias {
+    name                   = aws_cloudfront_distribution.main.domain_name
+    zone_id                = aws_cloudfront_distribution.main.hosted_zone_id
+    evaluate_target_health = false
+  }
+}

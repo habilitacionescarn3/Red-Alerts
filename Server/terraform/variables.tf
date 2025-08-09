@@ -77,4 +77,21 @@ variable "ssh_allowed_cidr_blocks" {
   default     = ["0.0.0.0/0"]  # Change this in production!
 }
 
-## Frontend/CloudFront/Certificate variables removed as requested.
+# CloudFront and S3 Configuration
+variable "bucket_name" {
+  description = "S3 bucket name for static content"
+  type        = string
+  sensitive   = true
+}
+
+variable "domain_name" {
+  description = "Domain name for CloudFront distribution"
+  type        = string
+  sensitive   = true
+}
+
+variable "route53_zone_name" {
+  description = "Route 53 hosted zone name (e.g., example.com)"
+  type        = string
+  sensitive   = true
+}

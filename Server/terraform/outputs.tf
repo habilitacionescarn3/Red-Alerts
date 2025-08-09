@@ -107,7 +107,70 @@ output "docker_build_commands" {
   }
 }
 
-## Frontend/CloudFront/Route53/ACM outputs removed as requested.
+# CloudFront Distribution Outputs
+output "cloudfront_distribution_id" {
+  description = "The ID of the CloudFront distribution"
+  value       = aws_cloudfront_distribution.main.id
+}
+
+output "cloudfront_distribution_domain_name" {
+  description = "The domain name of the CloudFront distribution"
+  value       = aws_cloudfront_distribution.main.domain_name
+}
+
+output "cloudfront_distribution_url" {
+  description = "The HTTPS URL of the CloudFront distribution"
+  value       = "https://${aws_cloudfront_distribution.main.domain_name}"
+}
+
+output "custom_domain_url" {
+  description = "The custom domain URL"
+  value       = "https://${var.domain_name}"
+  sensitive   = true
+}
+
+output "custom_domain_api_url" {
+  description = "The custom domain API URL"
+  value       = "https://${var.domain_name}/api"
+  sensitive   = true
+}
+
+# S3 Bucket Outputs
+output "s3_bucket_name" {
+  description = "The name of the S3 bucket for static content"
+  value       = aws_s3_bucket.static_content.bucket
+  sensitive   = true
+}
+
+output "s3_bucket_domain_name" {
+  description = "The bucket domain name"
+  value       = aws_s3_bucket.static_content.bucket_domain_name
+  sensitive   = true
+}
+
+output "s3_bucket_website_endpoint" {
+  description = "The website endpoint of the S3 bucket"
+  value       = aws_s3_bucket_website_configuration.static_content.website_endpoint
+  sensitive   = true
+}
+
+# ACM Certificate Outputs
+output "acm_certificate_arn" {
+  description = "The ARN of the ACM certificate"
+  value       = aws_acm_certificate_validation.cloudfront.certificate_arn
+}
+
+# Route 53 Outputs
+output "route53_zone_id" {
+  description = "The Route 53 hosted zone ID"
+  value       = data.aws_route53_zone.main.zone_id
+}
+
+output "route53_zone_name" {
+  description = "The Route 53 hosted zone name"
+  value       = data.aws_route53_zone.main.name
+  sensitive   = true
+}
 
 # DynamoDB State Lock Table
 output "terraform_state_lock_table" {
