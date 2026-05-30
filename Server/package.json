@@ -1,43 +1,29 @@
 {
   "name": "red-alerts-server",
-  "version": "1.0.0",
-  "description": "Red Alerts Backend (ECS + Terraform)",
-  "devDependencies": {
-    "cross-var": "^1.1.0",
-    "dotenv-cli": "^10.0.0",
-    "cross-env": "^7.0.3"
+  "version": "2.0.0",
+  "description": "Red Alerts Backend (AWS CDK - TypeScript)",
+  "bin": {
+    "red-alerts": "bin/red-alerts.js"
   },
   "scripts": {
-    "init": "cd terraform && terraform init",
-    "init:dev": "cd terraform && terraform init -backend-config=\"key=env/dev/deployment/terraform.tfstate\" -reconfigure",
-    "init:prod": "cd terraform && terraform init -backend-config=\"key=env/prod/deployment/terraform.tfstate\" -reconfigure",
-    "init:dev:lock": "cd terraform && terraform init -backend-config=\"key=env/dev/deployment/terraform.tfstate\" -backend-config=\"dynamodb_table=terraform-state-locks\" -reconfigure",
-    "init:prod:lock": "cd terraform && terraform init -backend-config=\"key=env/prod/deployment/terraform.tfstate\" -backend-config=\"dynamodb_table=terraform-state-locks\" -reconfigure",
-    "apply:lock-table:dev": "cd terraform && terraform apply -target=aws_dynamodb_table.terraform_locks -var-file=\"terraform-dev.tfvars\" -auto-approve",
-    "apply:lock-table:prod": "cd terraform && terraform apply -target=aws_dynamodb_table.terraform_locks -var-file=\"terraform-prod.tfvars\" -auto-approve",
-    "deploy:infrastructure:dev": "npm run init:dev && npm run apply:lock-table:dev && npm run init:dev:lock && cd terraform && terraform apply -var-file=\"terraform-dev.tfvars\" -auto-approve",
-    "deploy:infrastructure:prod": "npm run init:prod && npm run apply:lock-table:prod && npm run init:prod:lock && cd terraform && terraform apply -var-file=\"terraform-prod.tfvars\" -auto-approve",
-    "_docker:build": "cd app && docker buildx build --platform linux/arm64 --load -t red-alerts-api .",
-    "_docker:tag:dev": "dotenv -e .env cross-env-shell \"docker tag red-alerts-api:latest $ECR_REPOSITORY_URL_DEV:latest\"",
-    "_docker:tag:prod": "dotenv -e .env cross-env-shell \"docker tag red-alerts-api:latest $ECR_REPOSITORY_URL_PROD:latest\"",
-    "_docker:push:dev": "dotenv -e .env cross-env-shell \"docker push $ECR_REPOSITORY_URL_DEV:latest\"",
-    "_docker:push:prod": "dotenv -e .env cross-env-shell \"docker push $ECR_REPOSITORY_URL_PROD:latest\"",
-    "_ecs:update:dev": "dotenv -e .env cross-env-shell \"aws ecs update-service --cluster $ECS_CLUSTER_DEV --service $ECS_SERVICE_DEV --force-new-deployment --region $AWS_REGION --no-cli-pager\"",
-    "_ecs:update:prod": "dotenv -e .env cross-env-shell \"aws ecs update-service --cluster $ECS_CLUSTER_PROD --service $ECS_SERVICE_PROD --force-new-deployment --region $AWS_REGION --no-cli-pager\"",
-    "deploy:docker:dev": "npm run docker:login:dev && npm run _docker:build && npm run _docker:tag:dev && npm run _docker:push:dev && npm run _ecs:update:dev",
-    "deploy:docker:prod": "npm run docker:login:prod && npm run _docker:build && npm run _docker:tag:prod && npm run _docker:push:prod && npm run _ecs:update:prod",
-    "deploy:dev": "npm run deploy:infrastructure:dev && npm run deploy:docker:dev",
-    "deploy:prod": "npm run deploy:infrastructure:prod && npm run deploy:docker:prod",
-    "deploy": "npm run deploy:dev",
-    "docker:login:dev": "dotenv -e .env cross-env-shell \"aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com\"",
-    "docker:login:prod": "dotenv -e .env cross-env-shell \"aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com\"",
-    "plan:dev": "cd terraform && terraform plan -var-file=\"terraform-dev.tfvars\"",
-    "plan:prod": "cd terraform && terraform plan -var-file=\"terraform-prod.tfvars\"",
-    "destroy:dev": "cd terraform && terraform destroy -var-file=\"terraform-dev.tfvars\" -auto-approve",
-    "destroy:prod": "cd terraform && terraform destroy -var-file=\"terraform-prod.tfvars\" -auto-approve",
-    "good": "echo 'good'",
-    "install": "cd app && pip install -r requirements.txt",
-    "update:pip": "cd app && python -m pip install --upgrade pip",
-    "dev": "cd app && python main.py"
+    "build": "tsc",
+    "watch": "tsc -w",
+    "synth": "cdk synth",
+    "diff": "cdk diff",
+    "deploy": "cdk deploy",
+    "destroy": "cdk destroy",
+    "bootstrap": "cdk bootstrap",
+    "cdk": "cdk"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.0",
+    "aws-cdk": "^2.1016.0",
+    "ts-node": "^10.9.2",
+    "typescript": "~5.6.3"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "^2.199.0",
+    "constructs": "^10.3.0",
+    "source-map-support": "^0.5.21"
   }
 }

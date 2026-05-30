@@ -7,8 +7,9 @@ permissions:
 on:
   push:
     branches:
-      - "main" # Production deployment
-      - "dev" # Development deployment
+      - "main"
+      - "qa"
+      - "dev"
     paths:
       - "Client/**"
       - ".github/workflows/Frontend-CICD.yml"
@@ -17,6 +18,23 @@ jobs:
   deploy-frontend:
     name: Deploy Frontend
     runs-on: ubuntu-latest
+    # Branch -> environment: main=prod, qa=qa, everything else (dev)=dev.
+    # (Same mapping as Backend-CICD so both pipelines target the same account.)
+    environment: ${{ (github.ref == 'refs/heads/main' && 'prod') || (github.ref == 'refs/heads/qa' && 'qa') || (github.ref == 'refs/heads/dev' && 'dev') }}
+
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      # Environment-scoped: each environment (dev/qa/prod) is a separate AWS
+      # account, so this selects which account we deploy the client into. Matches
+      # how Backend-CICD assumes the role.
+      AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+      # Environment name (matches `environment:` above) - used to build the
+      # per-environment stack name below.
+      ENV: ${{ (github.ref == 'refs/heads/main' && 'prod') || (github.ref == 'refs/heads/qa' && 'qa') || (github.ref == 'refs/heads/dev' && 'dev') }}
+      # BASE stack name - keep in sync with APPLICATION.APP_NAME in
+      # Server/constants.ts. Each environment deploys its OWN stack named
+      # "<base>-<env>" (e.g. RedAlerts-prod), built in the resolve step.
+      STACK_BASE_NAME: RedAlerts
 
     steps:
       - name: Checkout code
@@ -27,19 +45,6 @@ jobs:
         with:
           node-version: 22
 
-      - name: Load environment variables from ENV
-        run: |
-          echo '${{ secrets.ENV }}' > .env
-        working-directory: Client
-
-      - name: Export .env variables
-        uses: falti/dotenv-action@v1.1.4
-        with:
-          path: Client/.env
-          export-variables: true
-          keys-case: bypass
-          mask-variables: true
-
       - name: Install dependencies
         run: npm install --legacy-peer-deps
         working-directory: Client
@@ -48,20 +53,36 @@ jobs:
         run: npm run build
         working-directory: Client
 
-      - name: Configure AWS credentials
+      - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ${{ env.AWS_REGION }}
           role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/my-github-actions-role
 
-      - name: Deploy to Dev S3 and CloudFront
-        if: github.ref == 'refs/heads/dev'
+      # Bucket name + CloudFront distribution id come straight from the deployed
+      # CDK stack's outputs, so the frontend always targets THIS environment's
+      # bucket/distribution (resolved in the environment's own AWS account).
+      - name: Resolve stack outputs (bucket + distribution)
+        id: stack
         run: |
-          aws s3 sync ./Client/dist s3://${{ env.S3_BUCKET_NAME_DEV }}/ --delete
-          aws cloudfront create-invalidation --distribution-id ${{ env.CLOUDFRONT_DISTRIBUTION_ID_DEV }} --paths "/*"
+          STACK_NAME="$STACK_BASE_NAME-$ENV"
+          echo "Reading outputs from stack '$STACK_NAME'"
+          BUCKET=$(aws cloudformation describe-stacks --stack-name "$STACK_NAME" \
+            --query "Stacks[0].Outputs[?OutputKey=='ClientBucketName'].OutputValue" \
+            --output text)
+          DIST=$(aws cloudformation describe-stacks --stack-name "$STACK_NAME" \
+            --query "Stacks[0].Outputs[?OutputKey=='DistributionId'].OutputValue" \
+            --output text)
+          if [ -z "$BUCKET" ] || [ "$BUCKET" = "None" ] || [ -z "$DIST" ] || [ "$DIST" = "None" ]; then
+            echo "::error::Could not resolve ClientBucketName / DistributionId from stack '$STACK_NAME'. Is the backend deployed in this environment's account?"
+            exit 1
+          fi
+          echo "bucket=$BUCKET" >> "$GITHUB_OUTPUT"
+          echo "distribution=$DIST" >> "$GITHUB_OUTPUT"
+          echo "Resolved bucket=$BUCKET, distribution=$DIST"
 
-      - name: Deploy to Prod S3 and CloudFront
-        if: github.ref == 'refs/heads/main'
+      - name: Deploy to S3 and invalidate CloudFront
         run: |
-          aws s3 sync ./Client/dist s3://${{ env.S3_BUCKET_NAME_PROD }}/ --delete
-          aws cloudfront create-invalidation --distribution-id ${{ env.CLOUDFRONT_DISTRIBUTION_ID_PROD }} --paths "/*"
+          aws s3 sync ./Client/dist "s3://${{ steps.stack.outputs.bucket }}/" --delete
+          aws cloudfront create-invalidation \
+            --distribution-id "${{ steps.stack.outputs.distribution }}" --paths "/*"

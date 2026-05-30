@@ -1,39 +1,11 @@
-# Dependencies
-node_modules/
-
-# Build outputs  
-dist/
-dist-ssr/
-
-# Python
-__pycache__/
-
-# Environment variables
-.env
-.env.*
-
-# Terraform
-*.tfstate
-*.tfstate.*
-*.tfstate.backup
-.terraform/
-.terraform.lock.hcl
-terraform-dev.tfvars
-terraform-prod.tfvars
-
-# Logs
-logs/
-*.log
-
-# Editor files
-.vscode/*
-!.vscode/extensions.json
-.idea/
-
-# OS files
-.DS_Store
-
-# Local/temporary files
-*.local
-deploy-*.ps1
-docker-deploy-*.ps1
+*node_modules
+*.venv
+*__pycache__
+*dist
+*cdk.out
+*.env
+*.env.*
+!.env.example
+*.DS_Store
+*cdk.context.json
+*note.md
