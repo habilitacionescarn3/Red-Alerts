@@ -8,6 +8,7 @@ import * as ecs from "aws-cdk-lib/aws-ecs";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as logs from "aws-cdk-lib/aws-logs";
 import * as CONSTANTS from "../constants";
+import { resourceName } from "./naming";
 
 export interface EcsServiceProps {
   /** The existing VPC that hosts the (private) MySQL database. */
@@ -46,7 +47,7 @@ export class EcsService extends Construct {
     // instance. Compute lives in the private-with-egress (NAT) subnets so it
     // still has outbound internet access (Oref, IoT, ECR, SSM).
     this.cluster = new ecs.Cluster(this, "cluster", {
-      clusterName: CONSTANTS.ECS.CLUSTER_NAME,
+      clusterName: resourceName(this, CONSTANTS.ECS.CLUSTER_NAME),
       vpc: props.vpc,
     });
 
@@ -66,7 +67,7 @@ export class EcsService extends Construct {
     capacity.addSecurityGroup(props.securityGroup);
 
     const taskDefinition = new ecs.Ec2TaskDefinition(this, "workerTask", {
-      family: CONSTANTS.ECS.TASK_FAMILY,
+      family: resourceName(this, CONSTANTS.ECS.TASK_FAMILY),
       networkMode: ecs.NetworkMode.BRIDGE,
       taskRole: props.taskRole,
       executionRole: props.executionRole,
@@ -80,7 +81,7 @@ export class EcsService extends Construct {
     );
 
     taskDefinition.addContainer("worker", {
-      containerName: CONSTANTS.ECS.CONTAINER_NAME,
+      containerName: resourceName(this, CONSTANTS.ECS.CONTAINER_NAME),
       image: ecs.ContainerImage.fromEcrRepository(
         workerRepository,
         props.imageTag
@@ -89,7 +90,7 @@ export class EcsService extends Construct {
       memoryReservationMiB: 256,
       memoryLimitMiB: 400,
       logging: ecs.LogDrivers.awsLogs({
-        streamPrefix: "red-alerts-worker",
+        streamPrefix: resourceName(this, "worker"),
         logRetention: logs.RetentionDays.ONE_WEEK,
       }),
       environment: {
@@ -104,7 +105,7 @@ export class EcsService extends Construct {
     });
 
     this.service = new ecs.Ec2Service(this, "workerService", {
-      serviceName: CONSTANTS.ECS.SERVICE_NAME,
+      serviceName: resourceName(this, CONSTANTS.ECS.SERVICE_NAME),
       cluster: this.cluster,
       taskDefinition,
       desiredCount: 1,

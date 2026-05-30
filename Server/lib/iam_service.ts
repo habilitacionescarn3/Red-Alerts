@@ -7,6 +7,7 @@
 import { Stack } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import * as iam from "aws-cdk-lib/aws-iam";
+import { resourceName } from "./naming";
 
 export interface IamServiceProps {
   /** Broadcast topic name the worker is allowed to publish to. */
@@ -30,7 +31,7 @@ export class IamService extends Construct {
     // The DB connection is provided directly via the DATABASE_URL env var, so
     // the API needs no data-plane permissions - just logs + VPC ENIs.
     this.lambdaApiRole = new iam.Role(this, "lambdaApiRole", {
-      roleName: "red-alerts-lambda-api-role",
+      roleName: resourceName(this, "lambda-api-role"),
       assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
       managedPolicies: [
         // VPC access policy is a superset of the basic execution role (logs)
@@ -43,7 +44,7 @@ export class IamService extends Construct {
 
     // [WORKER TASK ROLE] - runtime permissions for the poller container
     this.workerTaskRole = new iam.Role(this, "workerTaskRole", {
-      roleName: "red-alerts-worker-task-role",
+      roleName: resourceName(this, "worker-task-role"),
       assumedBy: new iam.ServicePrincipal("ecs-tasks.amazonaws.com"),
     });
     // Resolving the IoT data endpoint does not support resource-level scoping.
@@ -76,7 +77,7 @@ export class IamService extends Construct {
       this,
       "workerTaskExecutionRole",
       {
-        roleName: "red-alerts-worker-execution-role",
+        roleName: resourceName(this, "worker-execution-role"),
         assumedBy: new iam.ServicePrincipal("ecs-tasks.amazonaws.com"),
         managedPolicies: [
           iam.ManagedPolicy.fromAwsManagedPolicyName(

@@ -85,7 +85,8 @@ else
 endif
 
 # --- Config (env file wins; these are fallbacks; override inline too) --------
-IOT_TOPIC  ?= alerts
+# Per-env topic for parity with the deployed name (red-alerts-<env>-alerts).
+IOT_TOPIC  ?= red-alerts-$(ENV)-alerts
 AWS_REGION ?= il-central-1
 API_PORT   ?= 8000
 
@@ -97,8 +98,9 @@ ifeq ($(IMAGE_TAG),)
   IMAGE_TAG := latest
 endif
 
-# ECR repository for the worker image. Must match CONSTANTS.ECR.WORKER_REPO.
-ECR_REPO     := red-alerts-worker
+# ECR repository for the worker image. Per-env so each stack has its own repo;
+# must match the CDK name `resourceName(this, ECR.WORKER_REPO)` = red-alerts-<env>-worker.
+ECR_REPO     := red-alerts-$(ENV)-worker
 ECR_REGISTRY := $(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com
 ECR_IMAGE    := $(ECR_REGISTRY)/$(ECR_REPO)
 
@@ -243,8 +245,8 @@ deploy:
 
 # Convenience: push the image, then deploy referencing that exact tag.
 release:
-	$(MAKE) push-docker ENV=$(ENV) IMAGE_TAG=$(IMAGE_TAG)
-	$(MAKE) deploy ENV=$(ENV) IMAGE_TAG=$(IMAGE_TAG)
+	$(MAKE) push-docker $(ENV) IMAGE_TAG=$(IMAGE_TAG)
+	$(MAKE) deploy $(ENV) IMAGE_TAG=$(IMAGE_TAG)
 
 # Tear down the stack for the selected env. Passes the same context as `deploy`
 # (cdk synthesizes the app even for destroy, so the app's required-context checks

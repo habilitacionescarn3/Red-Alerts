@@ -5,6 +5,7 @@ import { Construct } from "constructs";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as cognito from "aws-cdk-lib/aws-cognito";
 import * as CONSTANTS from "../constants";
+import { resourceName } from "./naming";
 
 export interface CognitoServiceProps {
   /** IAM statements (from IotService) the unauth role is granted. */
@@ -18,13 +19,13 @@ export class CognitoService extends Construct {
     super(scope, id);
 
     const identityPool = new cognito.CfnIdentityPool(this, "identityPool", {
-      identityPoolName: CONSTANTS.COGNITO.IDENTITY_POOL_NAME,
+      identityPoolName: resourceName(this, CONSTANTS.COGNITO.IDENTITY_POOL_NAME),
       allowUnauthenticatedIdentities: true,
     });
 
     // Trust policy is scoped to THIS identity pool's unauthenticated identities.
     const unauthRole = new iam.Role(this, "unauthRole", {
-      roleName: "red-alerts-cognito-unauth-role",
+      roleName: resourceName(this, "cognito-unauth-role"),
       assumedBy: new iam.FederatedPrincipal(
         "cognito-identity.amazonaws.com",
         {

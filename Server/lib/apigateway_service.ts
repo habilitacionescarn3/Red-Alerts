@@ -6,6 +6,7 @@ import * as apigwv2 from "aws-cdk-lib/aws-apigatewayv2";
 import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as CONSTANTS from "../constants";
+import { resourceName } from "./naming";
 
 export interface ApiGatewayServiceProps {
   /** The API Lambda to route all requests to. */
@@ -27,7 +28,7 @@ export class ApiGatewayService extends Construct {
 
     // $default route forwards everything to the Lambda; FastAPI/Mangum routes by path.
     this.httpApi = new apigwv2.HttpApi(this, "httpApi", {
-      apiName: CONSTANTS.API_GATEWAY.API_NAME,
+      apiName: resourceName(this, CONSTANTS.API_GATEWAY.API_NAME),
       defaultIntegration: integration,
     });
 

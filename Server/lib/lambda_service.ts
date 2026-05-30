@@ -7,6 +7,7 @@ import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as ec2 from "aws-cdk-lib/aws-ec2";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as CONSTANTS from "../constants";
+import { resourceName } from "./naming";
 
 export interface LambdaServiceProps {
   /** Execution role for the API Lambda. */
@@ -41,7 +42,7 @@ export class LambdaService extends Construct {
       code: lambda.Code.fromAsset(path.join(SERVER_ROOT, "layer")),
       compatibleRuntimes: [lambda.Runtime.PYTHON_3_11],
       compatibleArchitectures: [lambda.Architecture.ARM_64],
-      layerVersionName: "red-alerts-backend-code-layer",
+      layerVersionName: resourceName(this, "backend-code-layer"),
       description: "Shared Red Alerts backend codebase (Python).",
     });
 
@@ -50,7 +51,7 @@ export class LambdaService extends Construct {
     // image (so arm64 wheels match the runtime). Requires Docker at deploy time
     // (already needed for the worker image asset).
     const commonLayer = new lambda.LayerVersion(this, "commonLayer", {
-      layerVersionName: CONSTANTS.LAMBDA_CONFIG.COMMON_LAYER_NAME,
+      layerVersionName: resourceName(this, CONSTANTS.LAMBDA_CONFIG.COMMON_LAYER_NAME),
       compatibleRuntimes: [lambda.Runtime.PYTHON_3_11],
       compatibleArchitectures: [lambda.Architecture.ARM_64],
       description: "Red Alerts third-party Python deps (fastapi, mangum, pymysql, ...).",
@@ -70,7 +71,7 @@ export class LambdaService extends Construct {
     const layers: lambda.ILayerVersion[] = [commonLayer, backendCodeLayer];
 
     this.apiFunction = new lambda.Function(this, "api", {
-      functionName: "red-alerts-api",
+      functionName: resourceName(this, "api"),
       runtime: lambda.Runtime.PYTHON_3_11,
       architecture: lambda.Architecture.ARM_64,
       code: lambda.Code.fromAsset(

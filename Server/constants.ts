@@ -35,31 +35,33 @@ export function stackName(env: string): string {
   return `${APPLICATION.APP_NAME}-${env}`;
 }
 
-export const S3 = Object.freeze({
-  /** Bucket that holds the React client build (served via CloudFront). */
-  CLIENT_BUCKET: "red-alerts-client",
-});
+// NOTE: physical resource names are no longer hardcoded here. The constants
+// below hold only the bare <base> portion; the per-stack/per-env prefix
+// (`red-alerts-<env>-`) is added at construction time by `resourceName()` in
+// lib/naming.ts. The S3 client bucket is named after the app domain instead
+// (see s3_service.ts), so it has no constant here.
 
 export const ECR = Object.freeze({
   /**
-   * Repository that holds the worker container image. The image is built and
-   * pushed by `make push-docker` (NOT by CDK), then referenced here by tag, so
-   * we control retention/rollback. Keep this in sync with the Makefile ECR_REPO.
+   * Base name of the repository that holds the worker container image. The image
+   * is built and pushed by `make push-docker` (NOT by CDK), then referenced here
+   * by tag, so we control retention/rollback. The Makefile derives the same
+   * per-env name (`red-alerts-$(ENV)-worker`) from this base - keep them in sync.
    */
-  WORKER_REPO: "red-alerts-worker",
+  WORKER_REPO: "worker",
   /** Lifecycle keeps only the most recent N images (rollback headroom). */
   MAX_IMAGES: 5,
 });
 
 export const ECS = Object.freeze({
-  /** ECS cluster that runs the always-on Oref poller. */
-  CLUSTER_NAME: "red-alerts-worker-cluster",
-  /** ECS service name. */
-  SERVICE_NAME: "red-alerts-worker-service",
-  /** Task definition family. */
-  TASK_FAMILY: "red-alerts-worker",
-  /** Container name inside the task definition. */
-  CONTAINER_NAME: "RedAlertsWorker",
+  /** ECS cluster (base name) that runs the always-on Oref poller. */
+  CLUSTER_NAME: "worker-cluster",
+  /** ECS service base name. */
+  SERVICE_NAME: "worker-service",
+  /** Task definition family base name. */
+  TASK_FAMILY: "worker",
+  /** Container base name inside the task definition. */
+  CONTAINER_NAME: "worker",
   /** Cheapest ARM instance for the single-instance ECS capacity. */
   INSTANCE_TYPE: "t4g.nano",
 });
@@ -70,30 +72,31 @@ export const LAMBDA_CONFIG = Object.freeze({
   /** Default timeout (seconds) for the API Lambda. */
   DEFAULT_TIMEOUT: 30,
   /**
-   * Name of the deps layer that CDK builds from
+   * Base name of the deps layer that CDK builds from
    * resources/dependencies_layers/common-layer/requirements.txt.
    */
-  COMMON_LAYER_NAME: "red-alerts-common-layer",
+  COMMON_LAYER_NAME: "common-layer",
 });
 
 export const API_GATEWAY = Object.freeze({
-  /** Name of the HTTP API in front of the API Lambda. */
-  API_NAME: "red-alerts-api",
+  /** Base name of the HTTP API in front of the API Lambda. */
+  API_NAME: "api",
 });
 
 export const IOT = Object.freeze({
   /**
-   * Single broadcast topic. The worker publishes every new alert here ONCE and
-   * all subscribed browsers receive it (not personalized).
+   * Base name of the single broadcast topic. The worker publishes every new
+   * alert here ONCE and all subscribed browsers receive it (not personalized).
+   * The deployed topic is per-env (`red-alerts-<env>-alerts`).
    */
   BROADCAST_TOPIC: "alerts",
-  /** IoT policy name granted to anonymous (Cognito unauth) browser subscribers. */
-  SUBSCRIBER_POLICY_NAME: "red-alerts-subscriber-policy",
+  /** IoT policy base name granted to anonymous (Cognito unauth) browser subscribers. */
+  SUBSCRIBER_POLICY_NAME: "subscriber-policy",
 });
 
 export const COGNITO = Object.freeze({
-  /** Identity pool that hands anonymous browsers temp creds to subscribe to IoT. */
-  IDENTITY_POOL_NAME: "red_alerts_identity_pool",
+  /** Identity pool (base name) that hands anonymous browsers temp creds for IoT. */
+  IDENTITY_POOL_NAME: "identity-pool",
 });
 
 export const EXTERNAL = Object.freeze({

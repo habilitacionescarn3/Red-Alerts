@@ -5,6 +5,7 @@ import * as ec2 from "aws-cdk-lib/aws-ec2";
 import { Construct } from "constructs";
 
 import * as CONSTANTS from "../../constants";
+import { resourceName } from "../naming";
 import { AcmService } from "../acm_service";
 import { IamService } from "../iam_service";
 import { S3Service } from "../s3_service";
@@ -43,6 +44,12 @@ export class RedAlertsStack extends cdk.Stack {
 
     // resourceInfo carries created resources between services (kept clean & organized).
     const resourceInfo: Record<string, unknown> = {};
+
+    // Per-env physical names (so dev/qa/prod can coexist in one account). The IoT
+    // topic and ECR repo are namespaced per stack just like the CDK resources;
+    // the worker reads the topic via env and the Makefile derives the same repo.
+    const iotTopic = resourceName(this, CONSTANTS.IOT.BROADCAST_TOPIC);
+    const workerRepositoryName = resourceName(this, CONSTANTS.ECR.WORKER_REPO);
 
     // --- Certificate (imported) ---
     const acmService = new AcmService(this, "AcmService", {
@@ -96,12 +103,14 @@ export class RedAlertsStack extends cdk.Stack {
 
     // --- IAM roles ---
     const iamService = new IamService(this, "IamService", {
-      iotTopic: CONSTANTS.IOT.BROADCAST_TOPIC,
+      iotTopic,
     });
     resourceInfo.iamRoles = iamService;
 
     // --- S3 (client build bucket) ---
-    const s3Service = new S3Service(this, "S3Service");
+    const s3Service = new S3Service(this, "S3Service", {
+      domain: props.domain,
+    });
     resourceInfo.clientBucket = s3Service.clientBucket;
 
     // --- API Lambda ---
@@ -138,7 +147,7 @@ export class RedAlertsStack extends cdk.Stack {
 
     // --- IoT (broadcast topic + subscriber permissions) ---
     const iotService = new IotService(this, "IotService", {
-      topic: CONSTANTS.IOT.BROADCAST_TOPIC,
+      topic: iotTopic,
     });
     resourceInfo.iot = iotService;
 
@@ -156,8 +165,8 @@ export class RedAlertsStack extends cdk.Stack {
       taskRole: iamService.workerTaskRole,
       executionRole: iamService.workerTaskExecutionRole,
       databaseUrl: props.databaseUrl,
-      iotTopic: CONSTANTS.IOT.BROADCAST_TOPIC,
-      imageRepositoryName: CONSTANTS.ECR.WORKER_REPO,
+      iotTopic,
+      imageRepositoryName: workerRepositoryName,
       imageTag: props.imageTag,
     });
 
@@ -187,7 +196,7 @@ export class RedAlertsStack extends cdk.Stack {
       description: "Cognito identity pool id for anonymous IoT subscribers.",
     });
     new cdk.CfnOutput(this, "IotBroadcastTopic", {
-      value: CONSTANTS.IOT.BROADCAST_TOPIC,
+      value: iotTopic,
       description: "IoT topic clients subscribe to for live alerts.",
     });
     new cdk.CfnOutput(this, "AppSecurityGroupId", {
