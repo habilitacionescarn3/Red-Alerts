@@ -6,6 +6,12 @@ import { cityKey, resolveCity } from '@/lib/geo';
 import { useAlertsStore } from '@/store/alertsStore';
 import type { CityFeatureCollection } from '@/types/geo';
 import { DARK_STYLE, LIGHT_STYLE } from './mapStyle';
+import {
+  ensurePinImages,
+  PIN_ACTIVE_IMAGE,
+  PIN_RECENT_IMAGE,
+  PIN_SELECTED_IMAGE,
+} from './pin';
 
 const SOURCE_ID = 'cities';
 const LAYER_RECENT = 'alerts-recent-fill';
@@ -57,64 +63,6 @@ function pointsInNames(keys: string[], exclude: string[] = []): FilterSpecificat
   ];
   if (exclude.length) parts.push(['!', ['in', ['get', 'name'], ['literal', exclude]]]);
   return parts as unknown as FilterSpecification;
-}
-
-const PIN_ACTIVE_IMAGE = 'alert-pin-active';
-const PIN_RECENT_IMAGE = 'alert-pin-recent';
-const PIN_SELECTED_IMAGE = 'alert-pin-selected';
-
-/** Draw a Google-Maps-style teardrop pin (colored body, outline + hole). */
-function makePinImage(fill: string, stroke = '#ffffff', hole = '#ffffff'): ImageData {
-  const pr = 2; // render at 2x for crisp edges (addImage uses pixelRatio: 2)
-  const w = 30 * pr;
-  const h = 40 * pr;
-  const canvas = document.createElement('canvas');
-  canvas.width = w;
-  canvas.height = h;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return new ImageData(w, h);
-
-  const cx = w / 2;
-  const r = w * 0.32;
-  const lw = w * 0.06;
-  const cy = r + lw;
-  const tipY = h - lw;
-
-  // Teardrop silhouette: top semicircle with straight sides meeting at the tip.
-  ctx.beginPath();
-  ctx.arc(cx, cy, r, Math.PI, 2 * Math.PI, false);
-  ctx.lineTo(cx, tipY);
-  ctx.closePath();
-  ctx.fillStyle = fill;
-  ctx.fill();
-  ctx.lineJoin = 'round';
-  ctx.lineWidth = lw;
-  ctx.strokeStyle = stroke;
-  ctx.stroke();
-
-  // Hole in the head.
-  ctx.beginPath();
-  ctx.arc(cx, cy, r * 0.42, 0, 2 * Math.PI);
-  ctx.fillStyle = hole;
-  ctx.fill();
-
-  return ctx.getImageData(0, 0, w, h);
-}
-
-/** Register the pin images on the map (idempotent; images are wiped by setStyle). */
-function ensurePinImages(map: maplibregl.Map) {
-  if (!map.hasImage(PIN_ACTIVE_IMAGE)) {
-    map.addImage(PIN_ACTIVE_IMAGE, makePinImage('#ef4444'), { pixelRatio: 2 });
-  }
-  if (!map.hasImage(PIN_RECENT_IMAGE)) {
-    map.addImage(PIN_RECENT_IMAGE, makePinImage('#f59e0b'), { pixelRatio: 2 });
-  }
-  // Selected pin: white body + dark outline + red hole, distinct on any basemap.
-  if (!map.hasImage(PIN_SELECTED_IMAGE)) {
-    map.addImage(PIN_SELECTED_IMAGE, makePinImage('#ffffff', '#1f2937', '#ef4444'), {
-      pixelRatio: 2,
-    });
-  }
 }
 
 /** Per-city display info for the hover popup + click-to-select (keyed by cityKey). */

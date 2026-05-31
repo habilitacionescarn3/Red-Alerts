@@ -3,6 +3,8 @@
 export const ROUTES = {
   HOME: '',
   ANALYTICS: 'analytics',
+  /** Local-only geocoding correction tool (gated behind isLocalhost()). */
+  ADMIN_GEO: 'admin/geo',
 } as const;
 
 export type RouteSegment = (typeof ROUTES)[keyof typeof ROUTES];

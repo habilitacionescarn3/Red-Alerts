@@ -16,7 +16,7 @@ import type { MapCityMeta } from '@/components/map/AlertMap';
 
 export default function HomePage() {
   const { t } = useTranslation();
-  const { events, activeEvents, isLoading, isError, refetch } = useAlertEvents();
+  const { events, activeEvents, cityCoords, isLoading, isError, refetch } = useAlertEvents();
   const selectedEventId = useAlertsStore((s) => s.selectedEventId);
   const selectEvent = useAlertsStore((s) => s.selectEvent);
 
@@ -27,12 +27,19 @@ export default function HomePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Build the map geometry from every event's per-city points (server-provided,
-  // with a bundled-centroid fallback while a city is still being geocoded).
-  const featureCollection = useMemo(() => buildAlertFeatureCollection(events), [events]);
+  // Build the map geometry from every event's cities + the shared per-city
+  // points map (server-provided, with a bundled-centroid fallback while a city
+  // is still being geocoded).
+  const featureCollection = useMemo(
+    () => buildAlertFeatureCollection(events, cityCoords),
+    [events, cityCoords],
+  );
   const activeKeys = useMemo(() => alertKeys(activeEvents), [activeEvents]);
   const recentKeys = useMemo(() => alertKeys(events), [events]);
-  const unmatchedActive = useMemo(() => unmatchedAlertNames(activeEvents), [activeEvents]);
+  const unmatchedActive = useMemo(
+    () => unmatchedAlertNames(activeEvents, cityCoords),
+    [activeEvents, cityCoords],
+  );
 
   // Per-city popup/selection info keyed by cityKey. Events are newest-first, so
   // the first one seen for a city wins (its most recent alert).

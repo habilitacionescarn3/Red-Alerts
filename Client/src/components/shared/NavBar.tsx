@@ -1,8 +1,9 @@
 import { NavLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { BarChart3, Map as MapIcon, TriangleAlert } from 'lucide-react';
+import { BarChart3, Map as MapIcon, MapPin, TriangleAlert } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { ROUTES, pathTo } from '@/router/routes';
+import { isLocalhost } from '@/lib/env';
 import { cn } from '@/lib/utils';
 import { LanguageSwitcher } from '@/components/shared/LanguageSwitcher';
 import { ModeToggle } from '@/components/shared/ModeToggle';
@@ -15,6 +16,10 @@ export function NavBar() {
   const links = [
     { to: pathTo(ROUTES.HOME, language), label: t('nav.home'), icon: MapIcon, end: true },
     { to: pathTo(ROUTES.ANALYTICS, language), label: t('nav.analytics'), icon: BarChart3, end: false },
+    // Local-only geocoding correction tool (hidden in the deployed site).
+    ...(isLocalhost()
+      ? [{ to: pathTo(ROUTES.ADMIN_GEO, language), label: 'Geo', icon: MapPin, end: false }]
+      : []),
   ];
 
   return (

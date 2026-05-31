@@ -1,6 +1,6 @@
 """Recent alerts route (reads normalized events from MySQL via controllers)."""
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Query
 
@@ -17,7 +17,7 @@ router = APIRouter()
 @router.get("/api/alerts/last-24h")
 async def list_alerts_last_24h(
     limit: int = Query(500, ge=1, le=500),
-) -> List[Dict[str, Any]]:
+) -> Dict[str, Any]:
     """Return every event received in the last 24 hours, newest first."""
     return list_last_24h(limit=limit)
 
@@ -31,7 +31,7 @@ async def list_alerts(
     category: Optional[str] = Query(
         None, description="Filter to events of this category (code or UUID)."
     ),
-) -> List[Dict[str, Any]]:
+) -> Dict[str, Any]:
     """Return recent events, newest first.
 
     Optionally filter by ``city`` or ``category`` (city takes precedence if

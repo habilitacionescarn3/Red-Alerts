@@ -186,18 +186,22 @@ function cityToFeature(id: number, key: string, points: LngLat[] | null): CityFe
 }
 
 /**
- * Build the map's FeatureCollection from the events' per-city points. Each
- * distinct city (by `cityKey`) becomes one feature: many points -> polygon area,
- * a single point -> marker, no points yet -> bundled circle fallback (dropped if
- * the city isn't in the bundled dataset). An entry with points wins over one
- * without, so a city upgrades from fallback to real geometry as it resolves.
+ * Build the map's FeatureCollection from the events' cities + the shared
+ * `cityCoords` map (city id -> points). Each distinct city (by `cityKey`)
+ * becomes one feature: many points -> polygon area, a single point -> marker,
+ * no points yet -> bundled circle fallback (dropped if the city isn't in the
+ * bundled dataset). An entry with points wins over one without, so a city
+ * upgrades from fallback to real geometry as it resolves.
  */
-export function buildAlertFeatureCollection(events: AlertEvent[]): CityFeatureCollection {
+export function buildAlertFeatureCollection(
+  events: AlertEvent[],
+  cityCoords: Map<string, LngLat[] | null>,
+): CityFeatureCollection {
   const byKey = new Map<string, LngLat[] | null>();
   for (const event of events) {
-    for (const coord of event.coordinates ?? []) {
-      const key = cityKey(coord.name);
-      const points = coord.points ?? null;
+    for (const city of event.cities) {
+      const key = cityKey(city.name);
+      const points = cityCoords.get(city.id) ?? null;
       const existing = byKey.get(key);
       const existingHasPoints = !!(existing && existing.length);
       if (!byKey.has(key) || (!existingHasPoints && points && points.length)) {
@@ -219,16 +223,20 @@ export function buildAlertFeatureCollection(events: AlertEvent[]): CityFeatureCo
 }
 
 /** Active-event city names that can't be drawn (no points and not in the dataset). */
-export function unmatchedAlertNames(events: AlertEvent[]): string[] {
+export function unmatchedAlertNames(
+  events: AlertEvent[],
+  cityCoords: Map<string, LngLat[] | null>,
+): string[] {
   const seen = new Set<string>();
   const unmatched: string[] = [];
   for (const event of events) {
-    for (const coord of event.coordinates ?? []) {
-      const key = cityKey(coord.name);
+    for (const city of event.cities) {
+      const key = cityKey(city.name);
       if (seen.has(key)) continue;
       seen.add(key);
-      const hasPoints = !!(coord.points && coord.points.length);
-      if (!hasPoints && !CITY_CENTROIDS[key]) unmatched.push(coord.name);
+      const points = cityCoords.get(city.id);
+      const hasPoints = !!(points && points.length);
+      if (!hasPoints && !CITY_CENTROIDS[key]) unmatched.push(city.name);
     }
   }
   return unmatched;

@@ -145,8 +145,9 @@ def run() -> None:
                         )
                     try:
                         # Broadcast the full result wrapper
-                        # ({status, added_cities, event}) - the shape the browser
-                        # client expects (it reads broadcast.event / added_cities).
+                        # ({status, added_cities, event, cities}) - the shape the
+                        # browser client expects (it reads broadcast.event /
+                        # added_cities and joins per-city points from cities).
                         publish_alert(result)
                     except Exception as exc:  # noqa: BLE001
                         logger.error(

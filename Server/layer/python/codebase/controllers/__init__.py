@@ -12,6 +12,7 @@ from codebase.controllers.categories_controller import (
 from codebase.controllers.cities_controller import (
     get_or_create_city,
     list_cities,
+    set_city_coordinates,
 )
 from codebase.controllers.descriptions_controller import (
     get_or_create_description,
@@ -23,6 +24,7 @@ from codebase.controllers.events_controller import (
     list_by_city,
     list_last_24h,
     list_recent,
+    serialize_alerts,
 )
 from codebase.controllers.geocoding_controller import (
     enqueue_city,
@@ -41,6 +43,7 @@ __all__ = [
     "list_by_city",
     "list_last_24h",
     "list_recent",
+    "serialize_alerts",
     # geocoding
     "enqueue_city",
     "resolve_next_unresolved",
@@ -50,6 +53,7 @@ __all__ = [
     "list_categories",
     "get_or_create_city",
     "list_cities",
+    "set_city_coordinates",
     "get_or_create_description",
     "list_descriptions",
     "get_or_create_title",

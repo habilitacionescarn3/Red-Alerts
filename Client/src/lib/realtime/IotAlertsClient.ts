@@ -1,7 +1,8 @@
 import mqtt, { type MqttClient } from 'mqtt';
 import { buildPresignedIotUrl } from './signer';
 import { iotConfig } from './config';
-import type { AlertBroadcast } from '@/types/alerts';
+import { hydrateEvent } from '@/lib/alerts';
+import type { AlertBroadcast, AlertBroadcastWire } from '@/types/alerts';
 
 export type RealtimeStatus = 'connecting' | 'connected' | 'offline';
 
@@ -81,9 +82,14 @@ export class IotAlertsClient {
 
     client.on('message', (_topic, payload) => {
       try {
-        const parsed = JSON.parse(payload.toString()) as AlertBroadcast;
+        const parsed = JSON.parse(payload.toString()) as AlertBroadcastWire;
         if (parsed?.event?.id) {
-          this.callbacks.onBroadcast(parsed);
+          // Join city names back onto the id-only event refs before emitting.
+          const broadcast: AlertBroadcast = {
+            ...parsed,
+            event: hydrateEvent(parsed.event, parsed.cities ?? []),
+          };
+          this.callbacks.onBroadcast(broadcast);
         }
       } catch {
         // Ignore malformed payloads.

@@ -1,4 +1,5 @@
 import axios, { type AxiosInstance, type AxiosError } from 'axios';
+import { isLocalhost } from '@/lib/env';
 
 /**
  * Public, read-only API client. There is no authentication in Red Alerts, so
@@ -10,9 +11,7 @@ import axios, { type AxiosInstance, type AxiosError } from 'axios';
  *  - anything else    -> <origin>/api               (CloudFront -> API Gateway)
  */
 function resolveApiBaseUrl(): string {
-  const { origin } = window.location;
-  const isLocal = origin.includes('localhost') || origin.includes('127.0.0.1');
-  const root = isLocal ? 'http://localhost:8000' : origin;
+  const root = isLocalhost() ? 'http://localhost:8000' : window.location.origin;
   return `${root}/api`;
 }
 
@@ -36,6 +35,7 @@ export function toErrorMessage(error: unknown, fallback = 'Request failed'): str
 export const api = {
   get: <T = unknown>(url: string, params?: Record<string, unknown>) =>
     axiosInstance.get<T>(url, { params }),
+  put: <T = unknown>(url: string, data?: unknown) => axiosInstance.put<T>(url, data),
 };
 
 export default axiosInstance;

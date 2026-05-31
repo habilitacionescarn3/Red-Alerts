@@ -4,10 +4,12 @@ import { LanguageLayout } from '@/router/LanguageLayout';
 import { RootRedirect } from '@/router/RootRedirect';
 import { AppLayout } from '@/components/layouts/AppLayout';
 import { ROUTES } from '@/router/routes';
+import { isLocalhost } from '@/lib/env';
 
 const HomePage = lazy(() => import('@/pages/HomePage'));
 const AnalyticsPage = lazy(() => import('@/pages/AnalyticsPage'));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
+const GeoAdminPage = lazy(() => import('@/pages/admin/GeoAdminPage'));
 
 function PageLoader() {
   return (
@@ -25,6 +27,9 @@ export default function AppRouter() {
           <Route element={<AppLayout />}>
             <Route index element={<HomePage />} />
             <Route path={ROUTES.ANALYTICS} element={<AnalyticsPage />} />
+            {isLocalhost() && (
+              <Route path={ROUTES.ADMIN_GEO} element={<GeoAdminPage />} />
+            )}
             <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Route>

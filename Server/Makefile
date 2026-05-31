@@ -212,6 +212,9 @@ dev qa prod local:
 	@cd .
 
 # --- Individual instances (run inside .venv) ---
+# GEO_ADMIN_ENABLED mounts the local-only geocoding correction tool (Part of the
+# admin routes). It is set ONLY here, so it is never on in the deployed Lambda.
+run-api: export GEO_ADMIN_ENABLED := 1
 run-api:
 	$(VENV_PY) -m uvicorn api:app --app-dir resources/lambda/api --reload --port $(API_PORT)
 

@@ -121,24 +121,19 @@ def _points_from_result(result: Dict[str, Any]) -> PointList:
     return []
 
 
-def geocode_city(name: str) -> PointList:
-    """Resolve a Hebrew city name to a list of ``[lng, lat]`` points.
+def _query_nominatim(query: str, limit: int) -> List[Dict[str, Any]]:
+    """Run one Nominatim search and return the raw result list (may be empty).
 
-    Returns the points (one for a marker, many for an area), or an empty list
-    when Nominatim has no match for the name. Raises :class:`NominatimError` on a
-    transient network/HTTP failure so the caller can retry later.
+    Raises :class:`NominatimError` on a transient network/HTTP failure so the
+    caller can decide whether to retry or surface the error.
     """
-    query = clean_name(name)
-    if not query:
-        return []
-
     params = {
         "q": query,
         "format": "jsonv2",
         "accept-language": "he",
         "countrycodes": "il",
         "polygon_geojson": 1,
-        "limit": 1,
+        "limit": max(1, int(limit)),
     }
     try:
         response = requests.get(
@@ -151,7 +146,21 @@ def geocode_city(name: str) -> PointList:
         results: Optional[List[Dict[str, Any]]] = response.json()
     except (requests.RequestException, ValueError) as exc:
         raise NominatimError(f"Nominatim lookup failed for '{query}': {exc}") from exc
+    return results or []
 
+
+def geocode_city(name: str) -> PointList:
+    """Resolve a Hebrew city name to a list of ``[lng, lat]`` points.
+
+    Returns the points (one for a marker, many for an area), or an empty list
+    when Nominatim has no match for the name. Raises :class:`NominatimError` on a
+    transient network/HTTP failure so the caller can retry later.
+    """
+    query = clean_name(name)
+    if not query:
+        return []
+
+    results = _query_nominatim(query, limit=1)
     if not results:
         logger.info("Nominatim found no match for '%s'", query)
         return []
@@ -159,3 +168,39 @@ def geocode_city(name: str) -> PointList:
     points = _points_from_result(results[0])
     logger.info("Nominatim resolved '%s' to %d point(s)", query, len(points))
     return points
+
+
+def geocode_search(query: str, limit: int = 10) -> List[Dict[str, Any]]:
+    """Return MULTIPLE Nominatim candidates for a free-text query (no DB write).
+
+    Used by the local-only correction tool so a human can pick the right match
+    when the automatic top-hit (``geocode_city``) lands a city in the wrong spot.
+    The raw ``query`` is sent as-typed (not run through ``clean_name``) so the
+    operator can refine the search freely. Each candidate is::
+
+        {"display_name", "type", "category", "point_count",
+         "points": [[lng, lat], ...]}
+
+    ``points`` is one point for a locality centre or many for a polygon ring -
+    the same shape stored on ``City.coordinates``. Raises :class:`NominatimError`
+    on a transient failure.
+    """
+    query = (query or "").strip()
+    if not query:
+        return []
+
+    results = _query_nominatim(query, limit=limit)
+    candidates: List[Dict[str, Any]] = []
+    for result in results:
+        points = _points_from_result(result)
+        candidates.append(
+            {
+                "display_name": result.get("display_name"),
+                "type": result.get("type"),
+                "category": result.get("category") or result.get("class"),
+                "point_count": len(points),
+                "points": points,
+            }
+        )
+    logger.info("Nominatim search '%s' returned %d candidate(s)", query, len(candidates))
+    return candidates
