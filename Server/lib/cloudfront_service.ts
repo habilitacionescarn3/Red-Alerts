@@ -27,12 +27,13 @@ export class CloudfrontService extends Construct {
       protocolPolicy: cloudfront.OriginProtocolPolicy.HTTPS_ONLY,
     });
 
-    // Default origin = the PRIVATE client bucket, reached via Origin Access
-    // Control. CDK auto-creates the OAC and attaches a bucket policy allowing
-    // ONLY this distribution, so the bucket never needs public access.
-    const clientOrigin = origins.S3BucketOrigin.withOriginAccessControl(
-      props.clientBucket as s3.Bucket
-    );
+    // Default origin = the client bucket's S3 STATIC WEBSITE endpoint, reached
+    // as a plain HTTP origin (the website endpoint only speaks HTTP). The bucket
+    // is public-read and its error document is index.html (see s3_service.ts),
+    // so S3 itself serves index.html for any unknown key - i.e. SPA deep-link
+    // refreshes (e.g. /he/...) just work, with NO CloudFront Function and NO
+    // distribution-wide error responses (so /api/* status codes stay intact).
+    const clientOrigin = new origins.S3StaticWebsiteOrigin(props.clientBucket);
 
     this.distribution = new cloudfront.Distribution(this, "distribution", {
       comment: `${props.domain} - Red Alerts client + API`,
@@ -40,8 +41,8 @@ export class CloudfrontService extends Construct {
       certificate: props.certificate,
       domainNames: [props.domain],
       minimumProtocolVersion: cloudfront.SecurityPolicyProtocol.TLS_V1_2_2021,
-      // Default behavior -> everything WITHOUT an /api prefix goes to the private
-      // S3 client build (OAC).
+      // Default behavior -> everything WITHOUT an /api prefix goes to the S3
+      // client website (which handles SPA deep-link fallback itself).
       defaultBehavior: {
         origin: clientOrigin,
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
