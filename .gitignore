@@ -9,3 +9,4 @@
 *.DS_Store
 *cdk.context.json
 *note.md
+*Server/historical/

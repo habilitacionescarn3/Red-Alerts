@@ -143,7 +143,7 @@ class Event(UUIDMixin, TimestampMixin, Base):
 
     @classmethod
     def ingest(
-        cls, session: "Session", raw: Dict[str, Any]
+        cls, session: "Session", raw: Dict[str, Any], now: Optional[datetime] = None
     ) -> Optional[IngestResult]:
         """Fold a raw Oref alert into the right event, applying the grouping rules.
 
@@ -176,6 +176,11 @@ class Event(UUIDMixin, TimestampMixin, Base):
         we lean on time, exactly as the lifecycle (start -> end -> new start)
         implies. Widen/narrow EVENT_MERGE_WINDOW_SECONDS to taste.
 
+        ``now`` is the timestamp used both for the grouping window and for the
+        stored ``received_at``/``last_seen_at``. It defaults to the current UTC
+        time (live ingest); a historical backfill passes each row's own
+        timestamp so episodes group and are dated exactly as they happened.
+
         Returns an :class:`IngestResult`, or ``None`` if the id was already
         absorbed or the payload had no usable id.
         """
@@ -188,7 +193,8 @@ class Event(UUIDMixin, TimestampMixin, Base):
         if session.get(EventOrefId, oref_id) is not None:
             return None
 
-        now = _utcnow()
+        if now is None:
+            now = _utcnow()
 
         # Resolve the category and cities up front (each get_or_create may
         # autoflush); the open-event lookup needs the category id.

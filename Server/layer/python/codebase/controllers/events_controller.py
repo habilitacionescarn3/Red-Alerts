@@ -6,6 +6,7 @@ to plain dicts inside the session so callers get JSON-ready data with no lazy
 loads escaping the session.
 """
 
+from datetime import datetime
 from typing import Any, Dict, Iterable, List, Optional
 
 from codebase.database.engine import session_scope
@@ -49,8 +50,14 @@ def serialize_alerts(events: Iterable[Event]) -> Dict[str, Any]:
     }
 
 
-def ingest_alert(raw: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+def ingest_alert(
+    raw: Dict[str, Any], now: Optional[datetime] = None
+) -> Optional[Dict[str, Any]]:
     """Fold a raw Oref alert into its event (see ``Event.ingest`` for grouping).
+
+    ``now`` (UTC) is passed straight through to ``Event.ingest``; it defaults to
+    the current time for live ingest, while a historical backfill supplies each
+    row's own timestamp so events group and are dated as they originally were.
 
     Returns a publishable result, or ``None`` when nothing worth broadcasting
     happened (the id was already absorbed, or the alert only repeated/removed
@@ -68,7 +75,7 @@ def ingest_alert(raw: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     event (every city accumulated so far) to clients.
     """
     with session_scope() as session:
-        result = Event.ingest(session, raw)
+        result = Event.ingest(session, raw, now=now)
         if result is None or result.status == "unchanged":
             return None
         return {
