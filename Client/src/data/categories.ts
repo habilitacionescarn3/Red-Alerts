@@ -42,3 +42,11 @@ export const SEVERITY_CLASSES: Record<AlertSeverity, string> = {
   medium: 'text-amber-600 dark:text-amber-400 border-amber-500/40 bg-amber-500/10',
   info: 'text-sky-600 dark:text-sky-400 border-sky-500/40 bg-sky-500/10',
 };
+
+/** Raw hex per severity, for non-Tailwind contexts (e.g. the map popup DOM). */
+export const SEVERITY_HEX: Record<AlertSeverity, string> = {
+  critical: '#ef4444',
+  high: '#f97316',
+  medium: '#f59e0b',
+  info: '#0ea5e9',
+};

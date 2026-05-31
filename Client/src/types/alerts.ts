@@ -19,6 +19,20 @@ export interface AlertCity {
   name: string;
 }
 
+/** A [lng, lat] coordinate pair (GeoJSON order). */
+export type LngLat = [number, number];
+
+/**
+ * Geocoded points for one city in an event.
+ * `points` is null until the backend resolves it, then an array of [lng, lat]:
+ * a single point is a map marker, multiple points form a polygon area.
+ */
+export interface AlertCoordinate {
+  id: string;
+  name: string;
+  points: LngLat[] | null;
+}
+
 /** One logical alert episode (NOT one raw Oref id). */
 export interface AlertEvent {
   id: string;
@@ -31,6 +45,8 @@ export interface AlertEvent {
   title: AlertText | null;
   description: AlertText | null;
   cities: AlertCity[];
+  /** Distinct per-city points for the map (one entry per city, deduped). */
+  coordinates: AlertCoordinate[];
 }
 
 /**

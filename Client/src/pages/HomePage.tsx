@@ -10,16 +10,15 @@ import { AlertFeed } from '@/components/pages/home/AlertFeed';
 import { ActiveAlertsBanner } from '@/components/pages/home/ActiveAlertsBanner';
 import { useAlertEvents } from '@/hooks/useAlertEvents';
 import { useAlertsStore } from '@/store/alertsStore';
-import { matchAreas, resolveCity } from '@/lib/geo';
-
-function namesOf(events: { cities: { name: string }[] }[]): string[] {
-  return events.flatMap((e) => e.cities.map((c) => c.name));
-}
+import { alertKeys, buildAlertFeatureCollection, cityKey, unmatchedAlertNames } from '@/lib/geo';
+import { categoryMeta, SEVERITY_HEX } from '@/data/categories';
+import type { MapCityMeta } from '@/components/map/AlertMap';
 
 export default function HomePage() {
   const { t } = useTranslation();
   const { events, activeEvents, isLoading, isError, refetch } = useAlertEvents();
   const selectedEventId = useAlertsStore((s) => s.selectedEventId);
+  const selectEvent = useAlertsStore((s) => s.selectEvent);
 
   // Pull fresh data each time the map page (re)mounts - e.g. returning from
   // Analytics - since the shared 24h query otherwise stays warm for an hour.
@@ -28,22 +27,50 @@ export default function HomePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const activeKeys = useMemo(() => matchAreas(namesOf(activeEvents)).matchedKeys, [activeEvents]);
-  const recentKeys = useMemo(() => matchAreas(namesOf(events)).matchedKeys, [events]);
-  const unmatchedActive = useMemo(() => matchAreas(namesOf(activeEvents)).unmatched, [activeEvents]);
+  // Build the map geometry from every event's per-city points (server-provided,
+  // with a bundled-centroid fallback while a city is still being geocoded).
+  const featureCollection = useMemo(() => buildAlertFeatureCollection(events), [events]);
+  const activeKeys = useMemo(() => alertKeys(activeEvents), [activeEvents]);
+  const recentKeys = useMemo(() => alertKeys(events), [events]);
+  const unmatchedActive = useMemo(() => unmatchedAlertNames(activeEvents), [activeEvents]);
 
-  const selectedKey = useMemo(() => {
-    if (!selectedEventId) return null;
+  // Per-city popup/selection info keyed by cityKey. Events are newest-first, so
+  // the first one seen for a city wins (its most recent alert).
+  const cityMeta = useMemo(() => {
+    const map: Record<string, MapCityMeta> = {};
+    for (const event of events) {
+      const meta = categoryMeta(event.category?.code);
+      const label = event.category?.label || t(`alerts.categories.${meta.i18nKey}`);
+      const color = SEVERITY_HEX[meta.severity];
+      for (const city of event.cities) {
+        const key = cityKey(city.name);
+        if (!map[key]) map[key] = { eventId: event.id, name: city.name, label, color };
+      }
+    }
+    return map;
+  }, [events, t]);
+
+  // Highlight EVERY city of the selected event (the latest alert a clicked city
+  // belongs to), so its whole set lights up - older events that share a city lose.
+  const selectedKeys = useMemo(() => {
+    if (!selectedEventId) return [];
     const event = events.find((e) => e.id === selectedEventId);
-    const firstCity = event?.cities[0]?.name;
-    return firstCity ? (resolveCity(firstCity)?.key ?? null) : null;
+    if (!event) return [];
+    return Array.from(new Set(event.cities.map((c) => cityKey(c.name))));
   }, [selectedEventId, events]);
 
   return (
     <div className="relative h-full w-full">
       <PageMetadata title={t('home.title')} />
 
-      <AlertMap activeKeys={activeKeys} recentKeys={recentKeys} selectedKey={selectedKey} />
+      <AlertMap
+        featureCollection={featureCollection}
+        activeKeys={activeKeys}
+        recentKeys={recentKeys}
+        selectedKeys={selectedKeys}
+        cityMeta={cityMeta}
+        onSelectEvent={selectEvent}
+      />
 
       <ActiveAlertsBanner activeCount={activeEvents.length} />
 

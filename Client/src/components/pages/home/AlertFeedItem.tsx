@@ -1,4 +1,4 @@
-import { memo, useMemo } from 'react';
+import { memo, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CategoryIcon } from '@/components/shared/CategoryIcon';
 import { categoryMeta, SEVERITY_CLASSES } from '@/data/categories';
@@ -24,6 +24,7 @@ export interface AlertFeedItemProps {
 function AlertFeedItemBase({ event, isSelected, isActive, onSelect }: AlertFeedItemProps) {
   const { t, i18n } = useTranslation();
   const now = useNow();
+  const ref = useRef<HTMLButtonElement>(null);
   const meta = categoryMeta(event.category?.code);
   const label = event.category?.label || t(`alerts.categories.${meta.i18nKey}`);
   const cityNames = event.cities.map((c) => c.name);
@@ -34,8 +35,14 @@ function AlertFeedItemBase({ event, isSelected, isActive, onSelect }: AlertFeedI
     [event, i18n.language, now],
   );
 
+  // Reveal the item when it becomes selected (e.g. from a click on the map).
+  useEffect(() => {
+    if (isSelected) ref.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }, [isSelected]);
+
   return (
     <button
+      ref={ref}
       type="button"
       onClick={() => onSelect(event)}
       className={cn(

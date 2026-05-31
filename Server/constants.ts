@@ -111,4 +111,21 @@ export const COGNITO = Object.freeze({
 export const EXTERNAL = Object.freeze({
   /** Israel Home Front Command (Oref) live alerts endpoint polled by the worker. */
   OREF_ALERTS_URL: "https://www.oref.org.il/WarningMessages/alert/alerts.json",
+  /** Free OSM Nominatim geocoder used to resolve Hebrew city names -> coordinates. */
+  NOMINATIM_URL: "https://nominatim.openstreetmap.org/search",
+  /**
+   * Descriptive User-Agent for Nominatim (its usage policy REQUIRES one that
+   * identifies the app). Keep it accurate so we stay a good API citizen.
+   */
+  NOMINATIM_USER_AGENT: "RedAlerts/1.0 (https://github.com/Shalev396/red-Alerts)",
+});
+
+export const GEOCODER = Object.freeze({
+  /** Background city geocoding on the worker (set "false" to disable). */
+  ENABLED: "true",
+  /**
+   * Seconds between geocoding lookups. MUST stay above Nominatim's ~1 req/sec
+   * policy, so the throttled background thread never hammers the free API.
+   */
+  INTERVAL_SECONDS: "1.1",
 });

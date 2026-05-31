@@ -64,6 +64,13 @@ private MySQL database:
   `publish_alert(event)` push the current event to IoT exactly once.
 - It is the **only writer** to the database. It does **NOT** run migrations (see
   "Database migrations" - that is manual).
+- It also runs a **separate background geocoder thread** (`GeoResolverThread`),
+  independent of the 1s poll loop so geocoding never blocks ingest/publish. It
+  drains the implicit "unresolved cities" queue (cities with `coordinates IS
+  NULL`) at ~1 req/sec against free OSM Nominatim - resolving each Hebrew city
+  name to points and storing them on the `City` row (see "City geocoding" under
+  the data model). Gated by `GEOCODER_ENABLED` (set `false` for local dev, like
+  `IOT_ENABLED`); throttle via `GEOCODER_INTERVAL_SECONDS`.
 - Image is built/pushed out-of-band (`make push-docker prod`) and run by tag, so
   we control rollout/rollback.
 
@@ -122,7 +129,9 @@ use an id received from Oref as a primary key.
   `title_id`, `description_id`. Linked to many cities via `event_cities`.
 - **`EventOrefId`** (`event_oref_ids`) - every raw Oref id absorbed into an event;
   the `oref_id` PK guarantees each poll is processed exactly once.
-- **`City`** (`cities`) - unique city name. So we can query "all events for city X".
+- **`City`** (`cities`) - unique city name (so we can query "all events for city
+  X"), plus a nullable `coordinates` JSON column holding geocoded points (see
+  "City geocoding").
 - **`Category`** (`categories`) - unique Oref category `code` (+ optional label).
 - **`Title`** (`titles`) - the alert title text, stored once. Unique key is a
   sha-256 `content_hash` of the text (avoids a long-text index).
@@ -153,6 +162,32 @@ into episodes instead:
   merge into one. Tune the window env var. Full rules table in `models/SCHEMA.md`.
 
 To wipe all data (keep schema/migration): `resources/sql/reset_database.sql`.
+
+### City geocoding (`coordinates` + the geocoder thread)
+
+Cities are stored by NAME only; coordinates are resolved lazily and for free via
+OSM **Nominatim** (`codebase/geo/nominatim.py`, Hebrew-aware). The single
+nullable `City.coordinates` JSON column **is the queue** and encodes the whole
+state - no status column:
+
+- `NULL` -> never looked up = enqueued (a new city inserts with NULL).
+- `[]` -> looked up, no match -> won't retry, renders nothing.
+- one point `[[lng,lat]]` -> a map **marker** (tiny locality).
+- many points `[[lng,lat], ...]` -> polygon ring -> a map **area**.
+- transient lookup error -> left `NULL` so a later pass retries it.
+
+`controllers/geocoding_controller.py` drains it: `resolve_next_unresolved()`
+picks the oldest `coordinates IS NULL` city, re-checks it still lacks points,
+calls Nominatim (~1 req/sec, throttled by the worker thread), and stores the
+result. `resolve_unresolved_batch()` is the reusable seam for a future bulk
+import. The worker runs this on a **separate thread** (see "Worker side"); the
+API never blocks - it just inserts cities (auto-enqueued) and serves whatever is
+resolved.
+
+`Event.to_dict()` carries a distinct per-city `coordinates: [{id, name, points}]`
+array (cities are already deduped), so each event's points reach the client over
+both the API and the IoT broadcast. The frontend draws a marker for a single
+point and a filled area for many (`Client/src/lib/geo`, `components/map`).
 
 ---
 

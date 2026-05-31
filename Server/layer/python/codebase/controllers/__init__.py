@@ -24,6 +24,11 @@ from codebase.controllers.events_controller import (
     list_last_24h,
     list_recent,
 )
+from codebase.controllers.geocoding_controller import (
+    enqueue_city,
+    resolve_next_unresolved,
+    resolve_unresolved_batch,
+)
 from codebase.controllers.titles_controller import (
     get_or_create_title,
     list_titles,
@@ -36,6 +41,10 @@ __all__ = [
     "list_by_city",
     "list_last_24h",
     "list_recent",
+    # geocoding
+    "enqueue_city",
+    "resolve_next_unresolved",
+    "resolve_unresolved_batch",
     # attributes
     "get_or_create_category",
     "list_categories",

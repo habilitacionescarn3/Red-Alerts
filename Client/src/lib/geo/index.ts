@@ -1,3 +1,4 @@
+import type { AlertEvent, LngLat } from '@/types/alerts';
 import type { CityFeature, CityFeatureCollection } from '@/types/geo';
 import { CITY_CENTROIDS } from './cityCentroids';
 
@@ -115,6 +116,122 @@ export function matchAreas(names: string[]): AreaMatch {
     else unmatched.push(name);
   }
   return { matchedKeys: Array.from(matchedKeys), unmatched };
+}
+
+/**
+ * Stable map key for an area: the canonical bundled key when we know the city,
+ * otherwise its normalized name. Used so backend-only cities (not in the bundled
+ * dataset) still highlight + draw from their server-provided points.
+ */
+export function cityKey(name: string): string {
+  return resolveCity(name)?.key ?? normalizeCityName(name);
+}
+
+/** Distinct `cityKey`s across all cities of the given events (for highlighting). */
+export function alertKeys(events: AlertEvent[]): string[] {
+  const keys = new Set<string>();
+  for (const event of events) {
+    for (const city of event.cities) keys.add(cityKey(city.name));
+  }
+  return Array.from(keys);
+}
+
+/** Average of a list of points (good enough as a fly-to target). */
+function centroid(points: LngLat[]): LngLat {
+  const sum = points.reduce<[number, number]>(
+    (acc, [lng, lat]) => [acc[0] + lng, acc[1] + lat],
+    [0, 0],
+  );
+  return [sum[0] / points.length, sum[1] / points.length];
+}
+
+/** Close a ring (first === last) so it forms a valid GeoJSON polygon. */
+function closedRing(points: LngLat[]): LngLat[] {
+  const first = points[0];
+  const last = points[points.length - 1];
+  if (first[0] === last[0] && first[1] === last[1]) return points;
+  return [...points, first];
+}
+
+/** Build one map feature for a city from backend points, or the bundled fallback. */
+function cityToFeature(id: number, key: string, points: LngLat[] | null): CityFeature | null {
+  // Multiple points -> polygon area.
+  if (points && points.length >= 2) {
+    const ring = closedRing(points);
+    return {
+      type: 'Feature',
+      id,
+      properties: { name: key, center: centroid(points) },
+      geometry: { type: 'Polygon', coordinates: [ring] },
+    };
+  }
+  // A single point -> marker.
+  if (points && points.length === 1) {
+    return {
+      type: 'Feature',
+      id,
+      properties: { name: key, center: points[0] },
+      geometry: { type: 'Point', coordinates: points[0] },
+    };
+  }
+  // No backend points yet -> fall back to a bundled circular area, if we know it.
+  const center = CITY_CENTROIDS[key];
+  if (!center) return null;
+  return {
+    type: 'Feature',
+    id,
+    properties: { name: key, center },
+    geometry: { type: 'Polygon', coordinates: [circlePolygon(center)] },
+  };
+}
+
+/**
+ * Build the map's FeatureCollection from the events' per-city points. Each
+ * distinct city (by `cityKey`) becomes one feature: many points -> polygon area,
+ * a single point -> marker, no points yet -> bundled circle fallback (dropped if
+ * the city isn't in the bundled dataset). An entry with points wins over one
+ * without, so a city upgrades from fallback to real geometry as it resolves.
+ */
+export function buildAlertFeatureCollection(events: AlertEvent[]): CityFeatureCollection {
+  const byKey = new Map<string, LngLat[] | null>();
+  for (const event of events) {
+    for (const coord of event.coordinates ?? []) {
+      const key = cityKey(coord.name);
+      const points = coord.points ?? null;
+      const existing = byKey.get(key);
+      const existingHasPoints = !!(existing && existing.length);
+      if (!byKey.has(key) || (!existingHasPoints && points && points.length)) {
+        byKey.set(key, points);
+      }
+    }
+  }
+
+  const features: CityFeature[] = [];
+  let id = 1;
+  for (const [key, points] of byKey) {
+    const feature = cityToFeature(id, key, points);
+    if (feature) {
+      features.push(feature);
+      id += 1;
+    }
+  }
+  return { type: 'FeatureCollection', features };
+}
+
+/** Active-event city names that can't be drawn (no points and not in the dataset). */
+export function unmatchedAlertNames(events: AlertEvent[]): string[] {
+  const seen = new Set<string>();
+  const unmatched: string[] = [];
+  for (const event of events) {
+    for (const coord of event.coordinates ?? []) {
+      const key = cityKey(coord.name);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const hasPoints = !!(coord.points && coord.points.length);
+      if (!hasPoints && !CITY_CENTROIDS[key]) unmatched.push(coord.name);
+    }
+  }
+  return unmatched;
 }
 
 export { CITY_CENTROIDS };

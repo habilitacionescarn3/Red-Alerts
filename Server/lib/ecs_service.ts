@@ -99,6 +99,12 @@ export class EcsService extends Construct {
         OREF_URL: CONSTANTS.EXTERNAL.OREF_ALERTS_URL,
         // Poll Oref once per second.
         POLL_INTERVAL_SECONDS: "1",
+        // Background city geocoding (resolve names -> coordinates) on a separate,
+        // throttled thread. Stays under Nominatim's ~1 req/sec policy.
+        GEOCODER_ENABLED: CONSTANTS.GEOCODER.ENABLED,
+        GEOCODER_INTERVAL_SECONDS: CONSTANTS.GEOCODER.INTERVAL_SECONDS,
+        NOMINATIM_URL: CONSTANTS.EXTERNAL.NOMINATIM_URL,
+        NOMINATIM_USER_AGENT: CONSTANTS.EXTERNAL.NOMINATIM_USER_AGENT,
         AWS_REGION: region,
         AWS_DEFAULT_REGION: region,
       },

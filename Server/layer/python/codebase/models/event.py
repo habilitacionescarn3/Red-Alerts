@@ -358,6 +358,13 @@ class Event(UUIDMixin, TimestampMixin, Base):
             if self.description
             else None,
             "cities": [{"id": c.id, "name": c.name} for c in self.cities],
+            # Distinct per-city points for the map (cities are already unioned,
+            # so each appears once). ``points`` is null until geocoded, then an
+            # [[lng, lat], ...] array: one point -> marker, many -> area.
+            "coordinates": [
+                {"id": c.id, "name": c.name, "points": c.coordinates}
+                for c in self.cities
+            ],
         }
 
 

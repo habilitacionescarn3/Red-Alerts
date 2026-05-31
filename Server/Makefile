@@ -90,6 +90,12 @@ IOT_TOPIC  ?= red-alerts-$(ENV)-alerts
 AWS_REGION ?= il-central-1
 API_PORT   ?= 8000
 
+# Optional knobs for `make geocode` (city coordinate backfill). Exported below so
+# the python process picks them up from the environment (cross-platform).
+LIMIT    ?=
+INTERVAL ?=
+RESET    ?=
+
 # --- Deploy config ----------------------------------------------------------
 # Image tag = current git short-sha so every push rolls the worker forward
 # (immutable tag -> ECS redeploys). Falls back to "latest" outside a git repo.
@@ -134,6 +140,9 @@ endif
 export DATABASE_URL
 export IOT_TOPIC
 export AWS_REGION
+export LIMIT
+export INTERVAL
+export RESET
 # Shared business code lives in layer/python; the API package dir is added by
 # uvicorn's --app-dir below.
 export PYTHONPATH := layer/python
@@ -148,7 +157,7 @@ ifeq ($(ONLY),worker)
 endif
 
 .PHONY: help setup serve dev qa prod local run-api run-worker publish-test sync \
-        bootstrap push-docker deploy release
+        geocode bootstrap push-docker deploy release
 
 help:
 	@echo Red Alerts - local dev
@@ -167,6 +176,9 @@ help:
 	@echo   Schema sync [Sequelize-style: diffs models -^> DB, applies in place]:
 	@echo   make sync prod local   make the DB match the models [no migration files]
 	@echo                        [sync is prod-only for now; dev/qa disabled like deploys]
+	@echo .
+	@echo   make geocode prod local  backfill coordinates for ALL cities [Nominatim, paced]
+	@echo                          e.g. make geocode prod local LIMIT=500 / RESET=1
 	@echo .
 	@echo Deploy [PROD ONLY for now - dev/qa are temporarily disabled]:
 	@echo   make push-docker prod build+push worker image to ECR [keeps last 5]
@@ -223,6 +235,15 @@ publish-test:
 #   `make sync prod local`  /  `make sync prod`
 sync:
 	$(VENV_PY) app/sync_db.py
+
+# Backfill coordinates for EVERY city in the selected DB, paced to respect
+# Nominatim's ~1 req/sec policy. Uses the same shared geocoding_controller as the
+# worker thread. Drains all cities with NULL coordinates; RESET=1 first clears
+# every city so even already-resolved ones are looked up again. Pick an env
+# (+`local` for the tunnel), e.g.
+#   `make geocode prod local`  /  `make geocode prod local LIMIT=500`  /  RESET=1
+geocode:
+	$(VENV_PY) app/geocode_cities.py
 
 # =============================================================================
 # Deploy targets (use as `make <target> <env>`, e.g. `make deploy prod`).

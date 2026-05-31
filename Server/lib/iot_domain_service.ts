@@ -66,6 +66,13 @@ export class IotDomainService extends Construct {
       domainName: props.iotDomain,
       serverCertificateArns: [certificate.certificateArn],
       serviceType: "DATA",
+      // Explicitly own the status so CDK ENFORCES "enabled" on every deploy. AWS
+      // (or a replace/rollback) can otherwise flip a custom domain configuration
+      // to DISABLED - which silently kills every browser's MQTT-over-WSS
+      // connection to iot.<app-domain> - and without this property CloudFormation
+      // has no desired value to reconcile back to. This is an in-place update
+      // (not a replacement), so a redeploy simply re-enables it.
+      domainConfigurationStatus: "ENABLED",
     });
     // The cert must exist (and be issued) before the domain configuration can use it.
     domainConfig.node.addDependency(certificate);
