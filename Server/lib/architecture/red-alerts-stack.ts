@@ -14,6 +14,7 @@ import { ApiGatewayService } from "../apigateway_service";
 import { CloudfrontService } from "../cloudfront_service";
 import { Route53Service } from "../route53_service";
 import { IotService } from "../iot_service";
+import { IotDomainService } from "../iot_domain_service";
 import { CognitoService } from "../cognito_service";
 import { EcsService } from "../ecs_service";
 
@@ -157,6 +158,15 @@ export class RedAlertsStack extends cdk.Stack {
     });
     resourceInfo.identityPoolId = cognitoService.identityPoolId;
 
+    // --- IoT custom domain (browsers connect to iot.<app-domain>) ---
+    // prod -> iot.red-alerts.shalev396.com ; dev/qa -> iot.dev.red-alerts.shalev396.com
+    // (the env, if any, comes from props.domain - prod has none).
+    const iotDomain = `${CONSTANTS.IOT.DOMAIN_PREFIX}.${props.domain}`;
+    new IotDomainService(this, "IotDomainService", {
+      hostedZoneName: props.hostedZoneName,
+      iotDomain,
+    });
+
     // --- ECS worker (always-on Oref poller) ---
     new EcsService(this, "EcsService", {
       vpc,
@@ -198,6 +208,11 @@ export class RedAlertsStack extends cdk.Stack {
     new cdk.CfnOutput(this, "IotBroadcastTopic", {
       value: iotTopic,
       description: "IoT topic clients subscribe to for live alerts.",
+    });
+    new cdk.CfnOutput(this, "IotCustomDomain", {
+      value: iotDomain,
+      description:
+        "Custom IoT data endpoint domain browsers connect to (MQTT-over-WSS). Set as ENDPOINT in the client realtime config.",
     });
     new cdk.CfnOutput(this, "AppSecurityGroupId", {
       value: appSecurityGroup.securityGroupId,

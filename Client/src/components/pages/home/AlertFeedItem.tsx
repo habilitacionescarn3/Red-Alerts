@@ -1,7 +1,8 @@
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CategoryIcon } from '@/components/shared/CategoryIcon';
 import { categoryMeta, SEVERITY_CLASSES } from '@/data/categories';
+import { useNow } from '@/hooks/useNow';
 import { eventTime, formatRelative } from '@/lib/time';
 import { cn } from '@/lib/utils';
 import type { AlertEvent } from '@/types/alerts';
@@ -22,10 +23,16 @@ export interface AlertFeedItemProps {
 
 function AlertFeedItemBase({ event, isSelected, isActive, onSelect }: AlertFeedItemProps) {
   const { t, i18n } = useTranslation();
+  const now = useNow();
   const meta = categoryMeta(event.category?.code);
   const label = event.category?.label || t(`alerts.categories.${meta.i18nKey}`);
   const cityNames = event.cities.map((c) => c.name);
-  const time = formatRelative(eventTime(event), i18n.language);
+  // Recompute the relative time on every tick so "2 minutes ago" keeps climbing
+  // while the page is idle (formatRelative reads the wall clock each call).
+  const time = useMemo(
+    () => formatRelative(eventTime(event), i18n.language),
+    [event, i18n.language, now],
+  );
 
   return (
     <button

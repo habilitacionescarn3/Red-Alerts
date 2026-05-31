@@ -21,12 +21,20 @@ export function useRecentAlerts(limit: number = CONFIG.RECENT_LIMIT) {
   });
 }
 
-/** Every event from the last 24 hours (drives the feed + analytics). */
+/**
+ * Every event from the last 24 hours (drives the feed + analytics).
+ *
+ * Realtime (IoT) push keeps the UI live, so we no longer poll every few seconds.
+ * Instead we refetch hourly in the background, plus whenever the component
+ * remounts (e.g. navigating Analytics -> back) or the tab regains focus.
+ */
 export function useLast24hAlerts(limit: number = CONFIG.LAST_24H_LIMIT) {
   return useQuery({
     queryKey: queryKeys.last24h(limit),
     queryFn: () => getLast24hAlerts(limit),
-    refetchInterval: CONFIG.POLL_INTERVAL_MS,
-    staleTime: CONFIG.POLL_INTERVAL_MS,
+    refetchInterval: CONFIG.LAST_24H_REFETCH_MS,
+    staleTime: CONFIG.LAST_24H_REFETCH_MS,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 }

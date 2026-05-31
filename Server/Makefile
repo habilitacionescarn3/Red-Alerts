@@ -147,7 +147,7 @@ ifeq ($(ONLY),worker)
   SERVICES := run-worker
 endif
 
-.PHONY: help setup serve dev qa prod local run-api run-worker sync \
+.PHONY: help setup serve dev qa prod local run-api run-worker publish-test sync \
         bootstrap push-docker deploy release
 
 help:
@@ -160,6 +160,9 @@ help:
 	@echo   e.g. make serve dev local / make serve qa local / make serve prod local
 	@echo   add ONLY=api or ONLY=worker to limit to one instance
 	@echo   e.g. make serve dev ONLY=api
+	@echo .
+	@echo   make publish-test prod   fire a synthetic alert to IoT [test browser push]
+	@echo                          e.g. make publish-test prod CITY="שלומי"
 	@echo .
 	@echo   Schema sync [Sequelize-style: diffs models -^> DB, applies in place]:
 	@echo   make sync prod local   make the DB match the models [no migration files]
@@ -202,6 +205,15 @@ run-api:
 
 run-worker:
 	$(VENV_PY) app/worker/worker.py
+
+# Fire ONE synthetic alert to the IoT broadcast topic so you can test the live
+# browser push without waiting for a real Oref alert. Publishes to the REAL AWS
+# IoT topic (needs AWS creds), so name the env to select the matching topic:
+#   make publish-test prod                       # default city
+#   make publish-test prod CITY="תל אביב - מרכז העיר"
+CITY ?=
+publish-test:
+	$(VENV_PY) app/dev/publish_test_event.py "$(CITY)"
 
 # Sync the selected DB to the models (Sequelize `sync({alter:true})` style):
 # diffs Base.metadata against the live schema and applies the changes in place -

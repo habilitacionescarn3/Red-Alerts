@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useLast24hAlerts } from '@/api/queries';
 import { useAlertsStore } from '@/store/alertsStore';
 import { CONFIG } from '@/data/config';
+import { useNow } from '@/hooks/useNow';
 import { eventTime, isActive } from '@/lib/time';
 import type { AlertEvent } from '@/types/alerts';
 
@@ -23,6 +24,7 @@ export interface AlertEventsResult {
 export function useAlertEvents(): AlertEventsResult {
   const query = useLast24hAlerts();
   const liveEvents = useAlertsStore((s) => s.liveEvents);
+  const now = useNow();
 
   const events = useMemo(() => {
     const byId = new Map<string, AlertEvent>();
@@ -37,9 +39,11 @@ export function useAlertEvents(): AlertEventsResult {
     });
   }, [query.data, liveEvents]);
 
+  // Depends on `now` so events drop out of the active (red) window on time as
+  // the clock advances, even with no new data arriving.
   const activeEvents = useMemo(
     () => events.filter((e) => isActive(e, CONFIG.ACTIVE_ALERT_WINDOW_MINUTES)),
-    [events],
+    [events, now],
   );
 
   return {

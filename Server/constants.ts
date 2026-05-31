@@ -92,6 +92,15 @@ export const IOT = Object.freeze({
   BROADCAST_TOPIC: "alerts",
   /** IoT policy base name granted to anonymous (Cognito unauth) browser subscribers. */
   SUBSCRIBER_POLICY_NAME: "subscriber-policy",
+  /**
+   * Subdomain prefix for the custom IoT data endpoint. Prepended to the app
+   * domain, so prod -> `iot.red-alerts.shalev396.com` and dev/qa ->
+   * `iot.dev.red-alerts.shalev396.com` (the env, if any, comes from the app
+   * domain itself - prod has none).
+   */
+  DOMAIN_PREFIX: "iot",
+  /** Base name of the IoT domain configuration (per-env via resourceName). */
+  DOMAIN_CONFIG_NAME: "iot-domain",
 });
 
 export const COGNITO = Object.freeze({

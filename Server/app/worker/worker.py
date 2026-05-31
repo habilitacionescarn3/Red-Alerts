@@ -77,7 +77,10 @@ def run() -> None:
                             title,
                         )
                     try:
-                        publish_alert(event)
+                        # Broadcast the full result wrapper
+                        # ({status, added_cities, event}) - the shape the browser
+                        # client expects (it reads broadcast.event / added_cities).
+                        publish_alert(result)
                     except Exception as exc:  # noqa: BLE001
                         logger.error(
                             "Failed to publish event %s: %s", event["oref_id"], exc

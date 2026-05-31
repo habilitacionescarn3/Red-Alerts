@@ -37,10 +37,22 @@ def _get_data_client():
     return _cached_data_client
 
 
+def _event_id(payload: Dict[str, Any]) -> Any:
+    """Best-effort id for logging.
+
+    ``payload`` is the broadcast wrapper ``{status, added_cities, event}``; fall
+    back to a flat event dict for any direct callers.
+    """
+    event = payload.get("event") if isinstance(payload, dict) else None
+    if isinstance(event, dict):
+        return event.get("id") or event.get("oref_id")
+    return payload.get("id") or payload.get("oref_id")
+
+
 def publish_alert(payload: Dict[str, Any], topic: Optional[str] = None) -> None:
     """Publish a single JSON payload to the broadcast topic (QoS 1)."""
     if not _IOT_ENABLED:
-        logger.info("IOT_ENABLED=false - skipping publish of alert %s", payload.get("oref_id") or payload.get("id"))
+        logger.info("IOT_ENABLED=false - skipping publish of alert %s", _event_id(payload))
         return
 
     target_topic = topic or _DEFAULT_TOPIC
@@ -50,4 +62,4 @@ def publish_alert(payload: Dict[str, Any], topic: Optional[str] = None) -> None:
         qos=1,
         payload=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
     )
-    logger.info("Published alert %s to topic '%s'", payload.get("id"), target_topic)
+    logger.info("Published alert %s to topic '%s'", _event_id(payload), target_topic)

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { List } from 'lucide-react';
 import { PageMetadata } from '@/components/shared/PageMetadata';
@@ -20,6 +20,13 @@ export default function HomePage() {
   const { t } = useTranslation();
   const { events, activeEvents, isLoading, isError, refetch } = useAlertEvents();
   const selectedEventId = useAlertsStore((s) => s.selectedEventId);
+
+  // Pull fresh data each time the map page (re)mounts - e.g. returning from
+  // Analytics - since the shared 24h query otherwise stays warm for an hour.
+  useEffect(() => {
+    refetch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const activeKeys = useMemo(() => matchAreas(namesOf(activeEvents)).matchedKeys, [activeEvents]);
   const recentKeys = useMemo(() => matchAreas(namesOf(events)).matchedKeys, [events]);

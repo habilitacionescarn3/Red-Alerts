@@ -1,5 +1,4 @@
 import { useEffect } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import i18n from '@/i18n';
 import { useAlertsStore } from '@/store/alertsStore';
@@ -41,7 +40,6 @@ function notifyNewAlert(broadcast: AlertBroadcast): void {
  * app root.
  */
 export function useLiveAlerts(): void {
-  const queryClient = useQueryClient();
   const setConnection = useAlertsStore((s) => s.setConnection);
   const ingestBroadcast = useAlertsStore((s) => s.ingestBroadcast);
 
@@ -56,8 +54,11 @@ export function useLiveAlerts(): void {
         setConnection(status);
       },
       onBroadcast: (broadcast) => {
+        // The live store merge ([useAlertEvents]) surfaces the new event in the
+        // feed/map immediately, so we do NOT invalidate the 24h query here - that
+        // would trigger an extra network refetch on every push. The hourly
+        // refetch (plus on-focus / on-mount) reconciles with the server.
         ingestBroadcast(broadcast);
-        void queryClient.invalidateQueries({ queryKey: ['alerts'] });
         notifyNewAlert(broadcast);
       },
     });
@@ -66,5 +67,5 @@ export function useLiveAlerts(): void {
     return () => {
       client.stop();
     };
-  }, [queryClient, setConnection, ingestBroadcast]);
+  }, [setConnection, ingestBroadcast]);
 }

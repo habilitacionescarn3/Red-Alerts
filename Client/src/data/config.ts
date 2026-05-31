@@ -23,6 +23,15 @@ export const CONFIG = {
    *  fallback cadence when IoT realtime is not configured. */
   POLL_INTERVAL_MS: 15000,
 
+  /**
+   * How often the 24h feed/analytics query refetches in the background (ms).
+   * Realtime (IoT) push keeps the UI live between refetches, so this is just an
+   * hourly safety-net reconcile - we additionally refetch on mount (e.g. coming
+   * back from Analytics) and on window focus, so the data stays fresh without
+   * the old every-15s polling.
+   */
+  LAST_24H_REFETCH_MS: 3_600_000,
+
   /** Map starting position (centered on Israel) and zoom. */
   MAP_CENTER: [34.95, 31.4] as [number, number],
   MAP_ZOOM: 7,
