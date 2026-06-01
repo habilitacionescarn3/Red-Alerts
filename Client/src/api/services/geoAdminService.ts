@@ -1,29 +1,11 @@
 import { api } from '@/api/instance';
-import type { LngLat } from '@/types/alerts';
+import type { AdminCity, GeoCandidate, LngLat } from '@/types/alerts';
 
 /**
  * Client for the LOCAL-ONLY geocoding correction tool. These endpoints only
  * exist when the backend runs with GEO_ADMIN_ENABLED (local `make serve`), so
  * the calling UI is gated behind `isLocalhost()`.
  */
-
-export interface AdminCity {
-  id: string;
-  name: string;
-  coordinates: LngLat[] | null;
-  created_at: string | null;
-}
-
-/** One Nominatim alternative for a place query. */
-export interface GeoCandidate {
-  display_name: string | null;
-  type: string | null;
-  category: string | null;
-  point_count: number;
-  points: LngLat[];
-}
-
-/** GET /api/admin/geo/cities - cities (id, name, coordinates) for the picker. */
 export async function listAdminCities(q?: string): Promise<AdminCity[]> {
   const response = await api.get<AdminCity[]>('/admin/geo/cities', { q, limit: 5000 });
   return response.data;

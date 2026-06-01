@@ -2,42 +2,54 @@ import { useEffect, useRef } from 'react';
 import maplibregl, { type FilterSpecification } from 'maplibre-gl';
 import { useTheme } from 'next-themes';
 import { CONFIG } from '@/data/config';
+import { MAP_COLORS } from '@/data/mapColors';
 import { cityKey, resolveCity } from '@/lib/geo';
+import { escapeHtml } from '@/lib/html';
 import { useAlertsStore } from '@/store/alertsStore';
-import type { CityFeatureCollection } from '@/types/geo';
+import type { CityFeatureCollection, MapCityMeta } from '@/types/alerts';
+import type { AlertMapProps } from '@/types/ui';
 import { DARK_STYLE, LIGHT_STYLE } from './mapStyle';
-import {
-  ensurePinImages,
-  PIN_ACTIVE_IMAGE,
-  PIN_RECENT_IMAGE,
-  PIN_SELECTED_IMAGE,
-} from './pin';
+import { ensureColoredPinImages, pinImageId } from './pin';
 
 const SOURCE_ID = 'cities';
 const LAYER_RECENT = 'alerts-recent-fill';
 const LAYER_ACTIVE_FILL = 'alerts-active-fill';
 const LAYER_ACTIVE_LINE = 'alerts-active-line';
+const LAYER_SELECTED_FILL = 'alerts-selected-fill';
 const LAYER_SELECTED_LINE = 'alerts-selected-line';
-// Marker (single-point) layers - circles render only Point features, while the
-// fill/line layers above render only Polygons, so each city draws as exactly one.
 const LAYER_RECENT_MARKER = 'alerts-recent-marker';
 const LAYER_ACTIVE_MARKER = 'alerts-active-marker';
 const LAYER_SELECTED_MARKER = 'alerts-selected-marker';
 
-// Layers whose features are hoverable + clickable (the highlighted areas/markers).
 const INTERACTIVE_LAYERS = [
   LAYER_ACTIVE_FILL,
   LAYER_RECENT,
+  LAYER_SELECTED_FILL,
   LAYER_ACTIVE_MARKER,
   LAYER_RECENT_MARKER,
   LAYER_SELECTED_MARKER,
+];
+
+const FILL_COLOR: maplibregl.ExpressionSpecification = [
+  'coalesce',
+  ['get', 'color'],
+  MAP_COLORS.recent,
+];
+const ACTIVE_FILL_COLOR: maplibregl.ExpressionSpecification = [
+  'coalesce',
+  ['get', 'color'],
+  MAP_COLORS.active,
+];
+const PIN_IMAGE: maplibregl.ExpressionSpecification = [
+  'coalesce',
+  ['get', 'pinImage'],
+  ['literal', pinImageId(MAP_COLORS.recent)],
 ];
 
 function inNames(keys: string[]): FilterSpecification {
   return ['in', ['get', 'name'], ['literal', keys]] as unknown as FilterSpecification;
 }
 
-/** Same name filter, but only Polygon features (the drawn areas). */
 function areasInNames(keys: string[]): FilterSpecification {
   return [
     'all',
@@ -46,15 +58,6 @@ function areasInNames(keys: string[]): FilterSpecification {
   ] as unknown as FilterSpecification;
 }
 
-/**
- * Same name filter, but only Point features. Without this a `circle` layer would
- * draw a dot at EVERY vertex of a matching polygon, so area cities would show a
- * ring of circles. Markers are for single-point cities only.
- */
-/**
- * Point features in `keys`, optionally minus `exclude` (so a single point is
- * only ever drawn by ONE pin layer - selected wins over active wins over recent).
- */
 function pointsInNames(keys: string[], exclude: string[] = []): FilterSpecification {
   const parts: unknown[] = [
     'all',
@@ -65,25 +68,10 @@ function pointsInNames(keys: string[], exclude: string[] = []): FilterSpecificat
   return parts as unknown as FilterSpecification;
 }
 
-/** Per-city display info for the hover popup + click-to-select (keyed by cityKey). */
-export interface MapCityMeta {
-  /** Event to select when this city is clicked. */
-  eventId: string;
-  /** City name as delivered by Oref (shown in the popup). */
-  name: string;
-  /** Category label of the alert (shown in the popup). */
-  label: string;
-  /** Severity color of the alert (hex). */
-  color: string;
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+function withoutKeys(keys: string[], exclude: string[]): string[] {
+  if (exclude.length === 0) return keys;
+  const skip = new Set(exclude);
+  return keys.filter((k) => !skip.has(k));
 }
 
 function popupHtml(name: string, meta: MapCityMeta | undefined): string {
@@ -91,19 +79,6 @@ function popupHtml(name: string, meta: MapCityMeta | undefined): string {
     ? `<div class="alert-popup__row"><span class="alert-popup__dot" style="background:${meta.color}"></span><span style="color:${meta.color}">${escapeHtml(meta.label)}</span></div>`
     : '';
   return `${row}<div class="alert-popup__name">${escapeHtml(name)}</div>`;
-}
-
-export interface AlertMapProps {
-  /** GeoJSON of the cities to draw (polygons for areas, points for markers). */
-  featureCollection: CityFeatureCollection;
-  activeKeys: string[];
-  recentKeys: string[];
-  /** cityKeys of every city in the currently selected event (the highlight set). */
-  selectedKeys: string[];
-  /** cityKey -> popup/selection info for the drawn cities. */
-  cityMeta: Record<string, MapCityMeta>;
-  /** Called with an event id when a city on the map is clicked. */
-  onSelectEvent: (eventId: string) => void;
 }
 
 export function AlertMap({
@@ -120,18 +95,20 @@ export function AlertMap({
   const { resolvedTheme } = useTheme();
   const focusRequest = useAlertsStore((s) => s.focusRequest);
 
-  // Keep the latest collection in a ref so the (style-change) re-add path and
-  // the create-once effect always read current data without re-subscribing.
   const collectionRef = useRef(featureCollection);
   collectionRef.current = featureCollection;
 
-  // Latest popup/selection data, read by the (once-bound) map event handlers.
   const cityMetaRef = useRef(cityMeta);
   cityMetaRef.current = cityMeta;
   const onSelectEventRef = useRef(onSelectEvent);
   onSelectEventRef.current = onSelectEvent;
 
-  // Create the map once.
+  const syncPinImages = (map: maplibregl.Map) => {
+    const colors = new Set<string>();
+    for (const meta of Object.values(cityMetaRef.current)) colors.add(meta.color);
+    ensureColoredPinImages(map, colors);
+  };
+
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
@@ -150,7 +127,7 @@ export function AlertMap({
 
     map.on('load', () => {
       map.addSource(SOURCE_ID, { type: 'geojson', data: collectionRef.current });
-      ensurePinImages(map);
+      syncPinImages(map);
       reAddLayers(map);
 
       const popup = new maplibregl.Popup({
@@ -193,7 +170,6 @@ export function AlertMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Swap basemap when the color theme changes.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !readyRef.current) return;
@@ -202,14 +178,19 @@ export function AlertMap({
       if (!map.getSource(SOURCE_ID)) {
         map.addSource(SOURCE_ID, { type: 'geojson', data: collectionRef.current });
       }
-      ensurePinImages(map);
+      syncPinImages(map);
       reAddLayers(map);
       applyFilters(map, activeKeys, recentKeys, selectedKeys);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resolvedTheme]);
 
-  // Push new geometry into the source whenever the events/points change.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !readyRef.current) return;
+    syncPinImages(map);
+  }, [cityMeta]);
+
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !readyRef.current) return;
@@ -217,14 +198,12 @@ export function AlertMap({
     source?.setData(featureCollection);
   }, [featureCollection]);
 
-  // Re-apply highlight filters whenever the alert sets change.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !readyRef.current) return;
     applyFilters(map, activeKeys, recentKeys, selectedKeys);
   }, [activeKeys, recentKeys, selectedKeys]);
 
-  // Fly to a focused area (from a feed click or a new live alert).
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !readyRef.current || !focusRequest) return;
@@ -237,7 +216,6 @@ export function AlertMap({
   return <div ref={containerRef} className="absolute inset-0 h-full w-full" />;
 }
 
-/** Resolve a fly-to target: prefer the drawn feature's center, else the bundled one. */
 function focusCenter(
   area: string,
   collection: CityFeatureCollection,
@@ -255,10 +233,15 @@ function applyFilters(
   recentKeys: string[],
   selectedKeys: string[],
 ) {
-  if (map.getLayer(LAYER_RECENT)) map.setFilter(LAYER_RECENT, areasInNames(recentKeys));
-  if (map.getLayer(LAYER_ACTIVE_FILL)) map.setFilter(LAYER_ACTIVE_FILL, areasInNames(activeKeys));
-  if (map.getLayer(LAYER_ACTIVE_LINE)) map.setFilter(LAYER_ACTIVE_LINE, areasInNames(activeKeys));
-  // Each point is drawn by exactly one pin layer: selected > active > recent.
+  const activeFillKeys = withoutKeys(activeKeys, selectedKeys);
+  const recentFillKeys = withoutKeys(recentKeys, [...activeKeys, ...selectedKeys]);
+
+  if (map.getLayer(LAYER_RECENT)) map.setFilter(LAYER_RECENT, areasInNames(recentFillKeys));
+  if (map.getLayer(LAYER_ACTIVE_FILL)) map.setFilter(LAYER_ACTIVE_FILL, areasInNames(activeFillKeys));
+  if (map.getLayer(LAYER_ACTIVE_LINE)) map.setFilter(LAYER_ACTIVE_LINE, areasInNames(activeFillKeys));
+  if (map.getLayer(LAYER_SELECTED_FILL)) {
+    map.setFilter(LAYER_SELECTED_FILL, areasInNames(selectedKeys));
+  }
   if (map.getLayer(LAYER_RECENT_MARKER)) {
     map.setFilter(LAYER_RECENT_MARKER, pointsInNames(recentKeys, [...activeKeys, ...selectedKeys]));
   }
@@ -268,10 +251,19 @@ function applyFilters(
   if (map.getLayer(LAYER_SELECTED_MARKER)) {
     map.setFilter(LAYER_SELECTED_MARKER, pointsInNames(selectedKeys));
   }
-  // White outline on every AREA city of the selected event.
   if (map.getLayer(LAYER_SELECTED_LINE)) {
     map.setFilter(LAYER_SELECTED_LINE, areasInNames(selectedKeys));
   }
+}
+
+function markerLayout(iconSize: number): maplibregl.SymbolLayerSpecification['layout'] {
+  return {
+    'icon-image': PIN_IMAGE,
+    'icon-size': iconSize,
+    'icon-anchor': 'bottom',
+    'icon-allow-overlap': true,
+    'icon-ignore-placement': true,
+  };
 }
 
 function reAddLayers(map: maplibregl.Map) {
@@ -280,7 +272,7 @@ function reAddLayers(map: maplibregl.Map) {
       id: LAYER_RECENT,
       type: 'fill',
       source: SOURCE_ID,
-      paint: { 'fill-color': '#f59e0b', 'fill-opacity': 0.18 },
+      paint: { 'fill-color': FILL_COLOR, 'fill-opacity': 0.18 },
       filter: inNames([]),
     });
   }
@@ -289,7 +281,7 @@ function reAddLayers(map: maplibregl.Map) {
       id: LAYER_ACTIVE_FILL,
       type: 'fill',
       source: SOURCE_ID,
-      paint: { 'fill-color': '#ef4444', 'fill-opacity': 0.45 },
+      paint: { 'fill-color': ACTIVE_FILL_COLOR, 'fill-opacity': 0.45 },
       filter: inNames([]),
     });
   }
@@ -298,7 +290,16 @@ function reAddLayers(map: maplibregl.Map) {
       id: LAYER_ACTIVE_LINE,
       type: 'line',
       source: SOURCE_ID,
-      paint: { 'line-color': '#ef4444', 'line-width': 2 },
+      paint: { 'line-color': ACTIVE_FILL_COLOR, 'line-width': 2 },
+      filter: inNames([]),
+    });
+  }
+  if (!map.getLayer(LAYER_SELECTED_FILL)) {
+    map.addLayer({
+      id: LAYER_SELECTED_FILL,
+      type: 'fill',
+      source: SOURCE_ID,
+      paint: { 'fill-color': FILL_COLOR, 'fill-opacity': 0.4 },
       filter: inNames([]),
     });
   }
@@ -307,13 +308,7 @@ function reAddLayers(map: maplibregl.Map) {
       id: LAYER_RECENT_MARKER,
       type: 'symbol',
       source: SOURCE_ID,
-      layout: {
-        'icon-image': PIN_RECENT_IMAGE,
-        'icon-size': 0.85,
-        'icon-anchor': 'bottom',
-        'icon-allow-overlap': true,
-        'icon-ignore-placement': true,
-      },
+      layout: markerLayout(0.85),
       filter: pointsInNames([]),
     });
   }
@@ -322,13 +317,7 @@ function reAddLayers(map: maplibregl.Map) {
       id: LAYER_ACTIVE_MARKER,
       type: 'symbol',
       source: SOURCE_ID,
-      layout: {
-        'icon-image': PIN_ACTIVE_IMAGE,
-        'icon-size': 1,
-        'icon-anchor': 'bottom',
-        'icon-allow-overlap': true,
-        'icon-ignore-placement': true,
-      },
+      layout: markerLayout(1),
       filter: pointsInNames([]),
     });
   }
@@ -337,13 +326,7 @@ function reAddLayers(map: maplibregl.Map) {
       id: LAYER_SELECTED_MARKER,
       type: 'symbol',
       source: SOURCE_ID,
-      layout: {
-        'icon-image': PIN_SELECTED_IMAGE,
-        'icon-size': 1.1,
-        'icon-anchor': 'bottom',
-        'icon-allow-overlap': true,
-        'icon-ignore-placement': true,
-      },
+      layout: markerLayout(1.15),
       filter: pointsInNames([]),
     });
   }

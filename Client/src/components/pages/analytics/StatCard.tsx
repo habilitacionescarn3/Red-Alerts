@@ -1,13 +1,6 @@
-import type { LucideIcon } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-
-export interface StatCardProps {
-  label: string;
-  value: string | number;
-  icon: LucideIcon;
-  accentClassName?: string;
-}
+import type { StatCardProps } from '@/types/ui';
 
 export function StatCard({ label, value, icon: Icon, accentClassName }: StatCardProps) {
   return (

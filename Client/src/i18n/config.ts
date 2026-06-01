@@ -1,7 +1,8 @@
 // i18n configuration and language utilities.
 
 export const SUPPORTED_LANGUAGES = ['he', 'en'] as const;
-export type Language = (typeof SUPPORTED_LANGUAGES)[number];
+export type { Language, RouteSegment } from '@/types';
+import type { Language } from '@/types';
 
 /** RTL languages (Hebrew is the primary/default language). */
 export const RTL_LANGUAGES: Language[] = ['he'];

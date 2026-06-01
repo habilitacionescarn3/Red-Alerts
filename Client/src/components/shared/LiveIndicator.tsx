@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import { useAlertsStore, type ConnectionStatus } from '@/store/alertsStore';
+import { useAlertsStore } from '@/store/alertsStore';
+import type { ConnectionStatus } from '@/types/alerts';
 import { cn } from '@/lib/utils';
 
 const DOT_CLASSES: Record<ConnectionStatus, string> = {

@@ -37,6 +37,11 @@ from codebase.models.category import Category
 from codebase.models.city import City
 from codebase.models.description import Description
 from codebase.models.title import Title
+from codebase.time.israel import (
+    israel_day_utc_bounds,
+    israel_month_utc_bounds,
+    utc_to_israel_date,
+)
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session
@@ -333,6 +338,37 @@ class Event(UUIDMixin, TimestampMixin, Base):
         cutoff = _utcnow() - timedelta(hours=max(1, int(hours)))
         query = cls._with_relations(session.query(cls)).filter(
             cls.received_at >= cutoff
+        )
+        return query.order_by(cls.received_at.desc()).limit(limit).all()
+
+    @classmethod
+    def dates_with_events_in_month(
+        cls, session: "Session", year: int, month: int
+    ) -> List[str]:
+        """Distinct Israel-local calendar dates (YYYY-MM-DD) with at least one event."""
+        year = int(year)
+        month = int(month)
+        if month < 1 or month > 12:
+            return []
+        start_utc, end_utc = israel_month_utc_bounds(year, month)
+        rows = (
+            session.query(cls.received_at)
+            .filter(cls.received_at >= start_utc, cls.received_at < end_utc)
+            .all()
+        )
+        dates = {utc_to_israel_date(received_at) for (received_at,) in rows}
+        return sorted(dates)
+
+    @classmethod
+    def on_date(
+        cls, session: "Session", date_str: str, limit: int = 500
+    ) -> List["Event"]:
+        """Return events whose ``received_at`` falls on an Israel-local day."""
+        limit = max(1, min(int(limit), 500))
+        start_utc, end_utc = israel_day_utc_bounds(date_str)
+        query = cls._with_relations(session.query(cls)).filter(
+            cls.received_at >= start_utc,
+            cls.received_at < end_utc,
         )
         return query.order_by(cls.received_at.desc()).limit(limit).all()
 

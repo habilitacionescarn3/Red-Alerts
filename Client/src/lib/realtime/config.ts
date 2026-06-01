@@ -20,12 +20,7 @@
  * pool id (a generated, per-account AWS id) - it lives in IDENTITY_POOLS below,
  * filled once from each stack's "IdentityPoolId" output.
  */
-export interface IotConfig {
-  region: string;
-  endpoint: string;
-  identityPoolId: string;
-  topic: string;
-}
+import type { IotConfig } from '@/types/alerts';
 
 type Env = 'prod' | 'dev' | 'qa';
 

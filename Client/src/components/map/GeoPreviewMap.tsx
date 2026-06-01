@@ -1,8 +1,12 @@
 import { useEffect, useRef } from 'react';
 import maplibregl from 'maplibre-gl';
 import { useTheme } from 'next-themes';
-import type { LngLat } from '@/types/alerts';
+import type { LngLat, PreviewCity } from '@/types/alerts';
+import type { GeoPreviewMapProps } from '@/types/ui';
 import { CONFIG } from '@/data/config';
+import { MAP_COLORS } from '@/data/mapColors';
+import { pointsToGeometry } from '@/lib/geo/geojson';
+import { escapeHtml } from '@/lib/html';
 import { DARK_STYLE, LIGHT_STYLE } from './mapStyle';
 import { ensurePinImages, PIN_ACTIVE_IMAGE } from './pin';
 
@@ -27,37 +31,7 @@ const ALL_FILL = 'preview-all-fill';
 const ALL_LINE = 'preview-all-line';
 const ALL_MARKER = 'preview-all-marker';
 
-const CURRENT_COLOR = '#f59e0b'; // amber - the city's currently-stored points
-const CANDIDATE_COLOR = '#10b981'; // emerald - the alternative being previewed
-const EVENT_COLOR = '#ef4444'; // red - matches the live map's ACTIVE event style
-
 type FeatureCollection = GeoJSON.FeatureCollection;
-
-/** One city with resolved points, for the "show all cities" overlay. */
-export interface PreviewCity {
-  id: string;
-  name: string;
-  points: LngLat[];
-}
-
-/** Close a ring (first === last) so it forms a valid GeoJSON polygon. */
-function closedRing(points: LngLat[]): LngLat[] {
-  const first = points[0];
-  const last = points[points.length - 1];
-  if (first[0] === last[0] && first[1] === last[1]) return points;
-  return [...points, first];
-}
-
-/** A polygon (>=2 points) or point (1 point) geometry, or null when empty. */
-function pointsToGeometry(points: LngLat[]): GeoJSON.Geometry | null {
-  if (points.length >= 2) {
-    return { type: 'Polygon', coordinates: [closedRing(points)] };
-  }
-  if (points.length === 1) {
-    return { type: 'Point', coordinates: points[0] };
-  }
-  return null;
-}
 
 /** A polygon/point feature tagged with its kind (current vs. candidate). */
 function toFeature(points: LngLat[], kind: 'current' | 'candidate'): GeoJSON.Feature | null {
@@ -130,7 +104,7 @@ function addLayers(map: maplibregl.Map) {
       type: 'fill',
       source: SOURCE_ALL,
       filter: ['==', ['geometry-type'], 'Polygon'],
-      paint: { 'fill-color': EVENT_COLOR, 'fill-opacity': 0.45 },
+      paint: { 'fill-color': MAP_COLORS.active, 'fill-opacity': 0.45 },
     });
   }
   if (!map.getLayer(ALL_LINE)) {
@@ -139,7 +113,7 @@ function addLayers(map: maplibregl.Map) {
       type: 'line',
       source: SOURCE_ALL,
       filter: ['==', ['geometry-type'], 'Polygon'],
-      paint: { 'line-color': EVENT_COLOR, 'line-width': 2 },
+      paint: { 'line-color': MAP_COLORS.active, 'line-width': 2 },
     });
   }
   if (!map.getLayer(ALL_MARKER)) {
@@ -158,21 +132,12 @@ function addLayers(map: maplibregl.Map) {
     });
   }
 
-  fill(LAYERS.currentFill, CURRENT_COLOR, 'current');
-  line(LAYERS.currentLine, CURRENT_COLOR, 'current');
-  circle(LAYERS.currentPoint, CURRENT_COLOR, 'current');
-  fill(LAYERS.candidateFill, CANDIDATE_COLOR, 'candidate');
-  line(LAYERS.candidateLine, CANDIDATE_COLOR, 'candidate');
-  circle(LAYERS.candidatePoint, CANDIDATE_COLOR, 'candidate');
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+  fill(LAYERS.currentFill, MAP_COLORS.geoCurrent, 'current');
+  line(LAYERS.currentLine, MAP_COLORS.geoCurrent, 'current');
+  circle(LAYERS.currentPoint, MAP_COLORS.geoCurrent, 'current');
+  fill(LAYERS.candidateFill, MAP_COLORS.geoCandidate, 'candidate');
+  line(LAYERS.candidateLine, MAP_COLORS.geoCandidate, 'candidate');
+  circle(LAYERS.candidatePoint, MAP_COLORS.geoCandidate, 'candidate');
 }
 
 /** Show the city name on hover over the "all cities" overlay (fill + markers). */
@@ -211,15 +176,6 @@ function fitToData(map: maplibregl.Map, current: LngLat[] | null, candidate: Lng
     new maplibregl.LngLatBounds(all[0], all[0]),
   );
   map.fitBounds(bounds, { padding: 48, maxZoom: CONFIG.MAP_FOCUS_ZOOM, duration: 600 });
-}
-
-export interface GeoPreviewMapProps {
-  /** The city's currently-stored points (amber), or null/empty if none. */
-  current: LngLat[] | null;
-  /** The alternative being previewed (emerald), or null if none selected. */
-  candidate: LngLat[] | null;
-  /** Every city to overlay as event-style geometry ("show all cities"), or null. */
-  allCities?: PreviewCity[] | null;
 }
 
 /** A small standalone maplibre map that previews stored vs. candidate points. */

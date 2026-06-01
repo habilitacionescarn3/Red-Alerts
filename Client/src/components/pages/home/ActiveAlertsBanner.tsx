@@ -3,9 +3,7 @@ import { ShieldCheck, TriangleAlert } from 'lucide-react';
 import { CONFIG } from '@/data/config';
 import { cn } from '@/lib/utils';
 
-export interface ActiveAlertsBannerProps {
-  activeCount: number;
-}
+import type { ActiveAlertsBannerProps } from '@/types/ui';
 
 export function ActiveAlertsBanner({ activeCount }: ActiveAlertsBannerProps) {
   const { t } = useTranslation();

@@ -2,14 +2,7 @@ import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { DEFAULT_METADATA, getBaseUrl } from '@/data/defaultMetadata';
 
-export interface PageMetadataProps {
-  title?: string;
-  description?: string;
-  keywords?: string;
-  image?: string;
-  canonicalPath?: string;
-  noIndex?: boolean;
-}
+import type { PageMetadataProps } from '@/types/ui';
 
 function setMetaTag(attr: 'name' | 'property', key: string, content: string): void {
   let el = document.querySelector(`meta[${attr}="${key}"]`);

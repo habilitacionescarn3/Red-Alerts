@@ -9,14 +9,10 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { GeoPreviewMap, type PreviewCity } from '@/components/map/GeoPreviewMap';
-import {
-  listAdminCities,
-  saveCityCoordinates,
-  searchLocations,
-  type AdminCity,
-  type GeoCandidate,
-} from '@/api/services/geoAdminService';
+import { GeoPreviewMap } from '@/components/map/GeoPreviewMap';
+import { listAdminCities, saveCityCoordinates, searchLocations } from '@/api/services/geoAdminService';
+import { MAP_COLORS } from '@/data/mapColors';
+import type { AdminCity, GeoCandidate, PreviewCity } from '@/types/alerts';
 
 const INPUT_CLASS =
   'w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring';
@@ -285,18 +281,24 @@ export default function GeoAdminPage() {
             />
             <div className="pointer-events-none absolute bottom-3 start-3 z-10 rounded-md border bg-background/85 px-3 py-2 text-xs backdrop-blur-md">
               <div className="flex items-center gap-2">
-                <span className="inline-block size-3 rounded-sm" style={{ background: '#f59e0b' }} />
+                <span
+                  className="inline-block size-3 rounded-sm"
+                  style={{ background: MAP_COLORS.geoCurrent }}
+                />
                 Stored
               </div>
               <div className="mt-1 flex items-center gap-2">
-                <span className="inline-block size-3 rounded-sm" style={{ background: '#10b981' }} />
+                <span
+                  className="inline-block size-3 rounded-sm"
+                  style={{ background: MAP_COLORS.geoCandidate }}
+                />
                 Candidate
               </div>
               {showAll && (
                 <div className="mt-1 flex items-center gap-2">
                   <span
                     className="inline-block size-3 rounded-sm"
-                    style={{ background: '#ef4444' }}
+                    style={{ background: MAP_COLORS.active }}
                   />
                   All cities (as event)
                 </div>

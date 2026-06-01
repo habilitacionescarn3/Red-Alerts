@@ -3,13 +3,7 @@ import { buildPresignedIotUrl } from './signer';
 import { iotConfig } from './config';
 import { hydrateEvent } from '@/lib/alerts';
 import type { AlertBroadcast, AlertBroadcastWire } from '@/types/alerts';
-
-export type RealtimeStatus = 'connecting' | 'connected' | 'offline';
-
-export interface IotClientCallbacks {
-  onStatus: (status: RealtimeStatus) => void;
-  onBroadcast: (broadcast: AlertBroadcast) => void;
-}
+import type { IotClientCallbacks } from '@/types/alerts';
 
 /**
  * Subscribes to the AWS IoT broadcast topic over MQTT-over-WSS and emits each

@@ -100,6 +100,18 @@ def list_last_24h(limit: int = 500) -> Dict[str, Any]:
         )
 
 
+def list_dates_in_month(year: int, month: int) -> Dict[str, Any]:
+    """Return Israel-local dates in a month that have at least one event."""
+    with session_scope() as session:
+        return {"dates": Event.dates_with_events_in_month(session, year, month)}
+
+
+def list_by_date(date: str, limit: int = 500) -> Dict[str, Any]:
+    """Return every event on an Israel-local calendar day, newest first."""
+    with session_scope() as session:
+        return serialize_alerts(Event.on_date(session, date.strip(), limit=limit))
+
+
 def list_by_city(city: str, limit: int = 50) -> Dict[str, Any]:
     """Return recent events affecting a city (matched by name or UUID)."""
     with session_scope() as session:

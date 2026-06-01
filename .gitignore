@@ -10,3 +10,4 @@
 *cdk.context.json
 *note.md
 *Server/historical/
+*.playwright-mcp

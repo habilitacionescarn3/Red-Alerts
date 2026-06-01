@@ -1,21 +1,36 @@
 import { useTranslation } from 'react-i18next';
-import { Inbox, Loader2, TriangleAlert } from 'lucide-react';
+import { Inbox, Loader2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
+import { AlertTypeIcon } from '@/components/shared/AlertTypeIcon';
+import { resolveAlertType } from '@/data/alertTypes';
 import { AlertFeedItem } from './AlertFeedItem';
 import { useAlertsStore } from '@/store/alertsStore';
 import { isActive } from '@/lib/time';
 import { CONFIG } from '@/data/config';
+import type { AlertFeedProps } from '@/types/ui';
 import type { AlertEvent } from '@/types/alerts';
 
-export interface AlertFeedProps {
-  events: AlertEvent[];
-  isLoading: boolean;
-  isError: boolean;
-  onRetry: () => void;
+function FeedHeaderIcon({ events }: { events: AlertEvent[] }) {
+  const newest = events[0];
+  if (!newest) return <AlertTypeIcon icon="TriangleAlert" className="size-4 text-primary" />;
+  const type = resolveAlertType(newest);
+  return (
+    <span style={{ color: type.color }}>
+      <AlertTypeIcon icon={type.icon} className="size-4" />
+    </span>
+  );
 }
 
-export function AlertFeed({ events, isLoading, isError, onRetry }: AlertFeedProps) {
+export function AlertFeed({
+  events,
+  isLoading,
+  isError,
+  onRetry,
+  feedTitle,
+  feedSubtitle,
+  feedEmpty,
+}: AlertFeedProps) {
   const { t } = useTranslation();
   const selectedEventId = useAlertsStore((s) => s.selectedEventId);
   const requestFocus = useAlertsStore((s) => s.requestFocus);
@@ -30,10 +45,10 @@ export function AlertFeed({ events, isLoading, isError, onRetry }: AlertFeedProp
     <div className="flex h-full flex-col">
       <div className="shrink-0 border-b p-4">
         <h2 className="flex items-center gap-2 text-sm font-semibold">
-          <TriangleAlert className="size-4 text-primary" />
-          {t('home.feedTitle')}
+          <FeedHeaderIcon events={events} />
+          {feedTitle}
         </h2>
-        <p className="mt-0.5 text-xs text-muted-foreground">{t('home.feedSubtitle')}</p>
+        <p className="mt-0.5 text-xs text-muted-foreground">{feedSubtitle}</p>
       </div>
 
       {isLoading && events.length === 0 ? (
@@ -50,7 +65,7 @@ export function AlertFeed({ events, isLoading, isError, onRetry }: AlertFeedProp
       ) : events.length === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-2 p-6 text-center text-sm text-muted-foreground">
           <Inbox className="size-6" />
-          <p>{t('home.feedEmpty')}</p>
+          <p>{feedEmpty}</p>
         </div>
       ) : (
         <ScrollArea className="min-h-0 flex-1">

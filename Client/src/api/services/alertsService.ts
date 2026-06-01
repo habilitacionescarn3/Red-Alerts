@@ -1,12 +1,7 @@
 import { api } from '@/api/instance';
 import { hydrateEvents } from '@/lib/alerts';
 import type { AlertsResponse, AlertsResponseWire } from '@/types/alerts';
-
-export interface RecentAlertsParams {
-  limit?: number;
-  city?: string;
-  category?: string;
-}
+import type { AlertDatesResponse, RecentAlertsParams } from '@/types/alerts';
 
 /** Join city names back onto the id-only event refs (see `hydrateEvents`). */
 function hydrate(wire: AlertsResponseWire): AlertsResponse {
@@ -26,5 +21,17 @@ export async function getRecentAlerts(params: RecentAlertsParams = {}): Promise<
 /** GET /api/alerts/last-24h - every event from the last 24 hours. */
 export async function getLast24hAlerts(limit?: number): Promise<AlertsResponse> {
   const response = await api.get<AlertsResponseWire>('/alerts/last-24h', { limit });
+  return hydrate(response.data);
+}
+
+/** GET /api/alerts/dates - Israel-local dates in a month that have events. */
+export async function getAlertDates(year: number, month: number): Promise<AlertDatesResponse> {
+  const response = await api.get<AlertDatesResponse>('/alerts/dates', { year, month });
+  return response.data;
+}
+
+/** GET /api/alerts/by-date - all events on an Israel-local day. */
+export async function getAlertsByDate(date: string, limit?: number): Promise<AlertsResponse> {
+  const response = await api.get<AlertsResponseWire>('/alerts/by-date', { date, limit });
   return hydrate(response.data);
 }

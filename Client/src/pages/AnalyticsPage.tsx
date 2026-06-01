@@ -18,7 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Footer } from '@/components/shared/Footer';
 import { StatCard } from '@/components/pages/analytics/StatCard';
 import { useAlertEvents } from '@/hooks/useAlertEvents';
-import { countByCategory, distinctCities, eventsPerHour, topCities } from '@/lib/analytics';
+import { countByAlertType, distinctCities, eventsPerHour, topCities } from '@/lib/analytics';
 import { formatClock } from '@/lib/time';
 
 const PALETTE = [
@@ -53,12 +53,8 @@ export default function AnalyticsPage() {
   );
 
   const byCategory = useMemo(
-    () =>
-      countByCategory(events).map((c) => ({
-        name: c.label || t(`alerts.categories.${c.i18nKey}`),
-        count: c.count,
-      })),
-    [events, t],
+    () => countByAlertType(events, i18n.language).map((c) => ({ name: c.label, count: c.count })),
+    [events, i18n.language],
   );
 
   const cities = useMemo(() => topCities(events, 10), [events]);

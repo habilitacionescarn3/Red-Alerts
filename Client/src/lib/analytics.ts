@@ -1,12 +1,7 @@
-import { categoryMeta } from '@/data/categories';
-import { eventTime } from '@/lib/time';
+import { alertDisplayLabel, resolveAlertType } from '@/data/alertTypes';
+import { eventTime, MS_PER_HOUR } from '@/lib/time';
 import type { AlertEvent } from '@/types/alerts';
-
-export interface HourBucket {
-  /** Epoch ms at the start of the hour (for sorting / formatting). */
-  ts: number;
-  count: number;
-}
+import type { AlertTypeCount, CityCount, HourBucket } from '@/types/alerts';
 
 /** Bucket events into the last 24 hourly slots, oldest -> newest. */
 export function eventsPerHour(events: AlertEvent[]): HourBucket[] {
@@ -16,7 +11,7 @@ export function eventsPerHour(events: AlertEvent[]): HourBucket[] {
   const indexByTs = new Map<number, number>();
 
   for (let i = 23; i >= 0; i -= 1) {
-    const ts = now.getTime() - i * 3600_000;
+    const ts = now.getTime() - i * MS_PER_HOUR;
     indexByTs.set(ts, buckets.length);
     buckets.push({ ts, count: 0 });
   }
@@ -24,7 +19,7 @@ export function eventsPerHour(events: AlertEvent[]): HourBucket[] {
   for (const event of events) {
     const date = eventTime(event);
     if (!date) continue;
-    const hourTs = date.getTime() - (date.getTime() % 3600_000);
+    const hourTs = date.getTime() - (date.getTime() % MS_PER_HOUR);
     const idx = indexByTs.get(hourTs);
     if (idx !== undefined) buckets[idx].count += 1;
   }
@@ -32,36 +27,23 @@ export function eventsPerHour(events: AlertEvent[]): HourBucket[] {
   return buckets;
 }
 
-export interface CategoryCount {
-  code: string;
-  i18nKey: string;
-  label: string | null;
-  count: number;
-}
-
-/** Count events grouped by category, most frequent first. */
-export function countByCategory(events: AlertEvent[]): CategoryCount[] {
-  const map = new Map<string, CategoryCount>();
+/** Count events grouped by alert type (title prefix), most frequent first. */
+export function countByAlertType(events: AlertEvent[], language = 'en'): AlertTypeCount[] {
+  const map = new Map<string, AlertTypeCount>();
   for (const event of events) {
-    const code = event.category?.code ?? 'unknown';
-    const existing = map.get(code);
+    const { key } = resolveAlertType(event);
+    const existing = map.get(key);
     if (existing) {
       existing.count += 1;
     } else {
-      map.set(code, {
-        code,
-        i18nKey: categoryMeta(event.category?.code).i18nKey,
-        label: event.category?.label ?? null,
+      map.set(key, {
+        key,
+        label: alertDisplayLabel(event, language),
         count: 1,
       });
     }
   }
   return Array.from(map.values()).sort((a, b) => b.count - a.count);
-}
-
-export interface CityCount {
-  name: string;
-  count: number;
 }
 
 /** Count events per city (an event counts once per affected city), top N. */

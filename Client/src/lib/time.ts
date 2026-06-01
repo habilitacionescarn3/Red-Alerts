@@ -2,6 +2,10 @@ import { formatDistanceToNowStrict, format } from 'date-fns';
 import { he, enUS, type Locale } from 'date-fns/locale';
 import type { AlertEvent } from '@/types/alerts';
 
+export const MS_PER_MINUTE = 60_000;
+export const MS_PER_HOUR = 3_600_000;
+export const MINUTES_PER_DAY = 24 * 60;
+
 const LOCALES: Record<string, Locale> = { he, en: enUS };
 
 function localeFor(lang: string): Locale {
@@ -29,7 +33,7 @@ export function eventTime(event: AlertEvent): Date | null {
 export function isActive(event: AlertEvent, windowMinutes: number): boolean {
   const date = eventTime(event);
   if (!date) return false;
-  return Date.now() - date.getTime() <= windowMinutes * 60_000;
+  return Date.now() - date.getTime() <= windowMinutes * MS_PER_MINUTE;
 }
 
 export function formatRelative(date: Date | null, lang: string): string {

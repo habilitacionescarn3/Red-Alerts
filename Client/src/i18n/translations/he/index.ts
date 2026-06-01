@@ -5,6 +5,7 @@ import { analytics } from './analytics';
 import { footer } from './footer';
 import { map } from './map';
 import { notFound } from './notFound';
+import { timeline } from './timeline';
 
 export const he = {
   ...common,
@@ -14,4 +15,5 @@ export const he = {
   footer,
   map,
   notFound,
+  timeline,
 };

@@ -1,5 +1,13 @@
-import type { AlertEvent, LngLat } from '@/types/alerts';
-import type { CityFeature, CityFeatureCollection } from '@/types/geo';
+import type {
+  AlertEvent,
+  AreaMatch,
+  CityFeature,
+  CityFeatureCollection,
+  LngLat,
+  ResolvedCity,
+} from '@/types/alerts';
+import { pinImageId } from '@/components/map/pin';
+import { closedRing } from '@/lib/geo/geojson';
 import { CITY_CENTROIDS } from './cityCentroids';
 
 /**
@@ -33,12 +41,6 @@ const NORMALIZED_INDEX: Record<string, string> = (() => {
   }
   return index;
 })();
-
-export interface ResolvedCity {
-  /** Canonical dataset key (matches the polygon feature `name`). */
-  key: string;
-  center: [number, number];
-}
 
 /** Resolve an Oref area name to a known city (centroid + canonical key), or null. */
 export function resolveCity(name: string): ResolvedCity | null {
@@ -99,13 +101,6 @@ export function buildCityFeatureCollection(): CityFeatureCollection {
   return cachedCollection;
 }
 
-export interface AreaMatch {
-  /** Canonical dataset keys (polygon names) for matched areas. */
-  matchedKeys: string[];
-  /** Original Oref names with no geo match (not drawable on the map). */
-  unmatched: string[];
-}
-
 /** Split a list of Oref area names into matched canonical keys and unmatched names. */
 export function matchAreas(names: string[]): AreaMatch {
   const matchedKeys = new Set<string>();
@@ -145,23 +140,21 @@ function centroid(points: LngLat[]): LngLat {
   return [sum[0] / points.length, sum[1] / points.length];
 }
 
-/** Close a ring (first === last) so it forms a valid GeoJSON polygon. */
-function closedRing(points: LngLat[]): LngLat[] {
-  const first = points[0];
-  const last = points[points.length - 1];
-  if (first[0] === last[0] && first[1] === last[1]) return points;
-  return [...points, first];
-}
-
 /** Build one map feature for a city from backend points, or the bundled fallback. */
-function cityToFeature(id: number, key: string, points: LngLat[] | null): CityFeature | null {
+function cityToFeature(
+  id: number,
+  key: string,
+  points: LngLat[] | null,
+  color?: string,
+): CityFeature | null {
+  const colorProp = color ? { color, pinImage: pinImageId(color) } : {};
   // Multiple points -> polygon area.
   if (points && points.length >= 2) {
     const ring = closedRing(points);
     return {
       type: 'Feature',
       id,
-      properties: { name: key, center: centroid(points) },
+      properties: { name: key, center: centroid(points), ...colorProp },
       geometry: { type: 'Polygon', coordinates: [ring] },
     };
   }
@@ -170,7 +163,7 @@ function cityToFeature(id: number, key: string, points: LngLat[] | null): CityFe
     return {
       type: 'Feature',
       id,
-      properties: { name: key, center: points[0] },
+      properties: { name: key, center: points[0], ...colorProp },
       geometry: { type: 'Point', coordinates: points[0] },
     };
   }
@@ -180,7 +173,7 @@ function cityToFeature(id: number, key: string, points: LngLat[] | null): CityFe
   return {
     type: 'Feature',
     id,
-    properties: { name: key, center },
+    properties: { name: key, center, ...colorProp },
     geometry: { type: 'Polygon', coordinates: [circlePolygon(center)] },
   };
 }
@@ -196,6 +189,7 @@ function cityToFeature(id: number, key: string, points: LngLat[] | null): CityFe
 export function buildAlertFeatureCollection(
   events: AlertEvent[],
   cityCoords: Map<string, LngLat[] | null>,
+  cityColors?: Record<string, string>,
 ): CityFeatureCollection {
   const byKey = new Map<string, LngLat[] | null>();
   for (const event of events) {
@@ -213,7 +207,7 @@ export function buildAlertFeatureCollection(
   const features: CityFeature[] = [];
   let id = 1;
   for (const [key, points] of byKey) {
-    const feature = cityToFeature(id, key, points);
+    const feature = cityToFeature(id, key, points, cityColors?.[key]);
     if (feature) {
       features.push(feature);
       id += 1;

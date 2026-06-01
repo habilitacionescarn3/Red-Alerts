@@ -12,3 +12,5 @@ SQLAlchemy==2.0.36
 alembic==1.13.2
 requests==2.34.2
 pydantic==2.7.1
+# IANA tz database for zoneinfo (required on Windows; harmless on Linux/Lambda).
+tzdata>=2024.1

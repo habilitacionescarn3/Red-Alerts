@@ -1,17 +1,7 @@
 import { create } from 'zustand';
 import type { AlertBroadcast, AlertEvent, LngLat } from '@/types/alerts';
+import type { ConnectionStatus, FocusRequest } from '@/types/alerts';
 import { CONFIG } from '@/data/config';
-
-/** Realtime channel status, surfaced in the navbar live indicator. */
-export type ConnectionStatus = 'idle' | 'connecting' | 'connected' | 'polling' | 'offline';
-
-/** A request for the map to fly to / highlight a specific area. */
-export interface FocusRequest {
-  area: string;
-  eventId: string;
-  /** Monotonic timestamp so repeated focuses on the same area still trigger. */
-  ts: number;
-}
 
 interface AlertsState {
   /** Newest-first ring buffer of events pushed over the realtime channel. */

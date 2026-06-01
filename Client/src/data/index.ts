@@ -1,4 +1,11 @@
 export { app } from './app';
 export { CONFIG } from './config';
-export { categoryMeta, SEVERITY_CLASSES } from './categories';
-export type { AlertSeverity, CategoryMeta } from './categories';
+export {
+  ALERT_TYPES,
+  alertDisplayLabel,
+  alertTypeBg,
+  instructionDisplay,
+  resolveAlertType,
+  titleInstruction,
+  titlePrefix,
+} from './alertTypes';

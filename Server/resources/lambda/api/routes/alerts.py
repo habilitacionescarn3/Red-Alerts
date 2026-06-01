@@ -7,6 +7,8 @@ from fastapi import APIRouter, Query
 from codebase.controllers import (
     list_by_category,
     list_by_city,
+    list_by_date,
+    list_dates_in_month,
     list_last_24h,
     list_recent,
 )
@@ -20,6 +22,24 @@ async def list_alerts_last_24h(
 ) -> Dict[str, Any]:
     """Return every event received in the last 24 hours, newest first."""
     return list_last_24h(limit=limit)
+
+
+@router.get("/api/alerts/dates")
+async def list_alert_dates(
+    year: int = Query(..., ge=2000, le=2100),
+    month: int = Query(..., ge=1, le=12),
+) -> Dict[str, Any]:
+    """Return Israel-local dates in a month that have at least one event."""
+    return list_dates_in_month(year=year, month=month)
+
+
+@router.get("/api/alerts/by-date")
+async def list_alerts_by_date(
+    date: str = Query(..., description="Israel-local day (YYYY-MM-DD)."),
+    limit: int = Query(500, ge=1, le=500),
+) -> Dict[str, Any]:
+    """Return every event on the given Israel-local day, newest first."""
+    return list_by_date(date=date, limit=limit)
 
 
 @router.get("/api/alerts")

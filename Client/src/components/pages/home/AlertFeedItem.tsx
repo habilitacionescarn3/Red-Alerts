@@ -1,41 +1,37 @@
 import { memo, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CategoryIcon } from '@/components/shared/CategoryIcon';
-import { categoryMeta, SEVERITY_CLASSES } from '@/data/categories';
+import { AlertTypeIcon } from '@/components/shared/AlertTypeIcon';
+import {
+  alertDisplayLabel,
+  alertTypeBg,
+  instructionDisplay,
+  resolveAlertType,
+  titleInstruction,
+} from '@/data/alertTypes';
 import { useNow } from '@/hooks/useNow';
 import { eventTime, formatRelative } from '@/lib/time';
 import { cn } from '@/lib/utils';
-import type { AlertEvent } from '@/types/alerts';
-
-const SEVERITY_ACCENT = {
-  critical: 'border-s-red-500',
-  high: 'border-s-orange-500',
-  medium: 'border-s-amber-500',
-  info: 'border-s-sky-500',
-} as const;
-
-export interface AlertFeedItemProps {
-  event: AlertEvent;
-  isSelected: boolean;
-  isActive: boolean;
-  onSelect: (event: AlertEvent) => void;
-}
+import type { AlertFeedItemProps } from '@/types/ui';
 
 function AlertFeedItemBase({ event, isSelected, isActive, onSelect }: AlertFeedItemProps) {
   const { t, i18n } = useTranslation();
   const now = useNow();
   const ref = useRef<HTMLButtonElement>(null);
-  const meta = categoryMeta(event.category?.code);
-  const label = event.category?.label || t(`alerts.categories.${meta.i18nKey}`);
+  const alertType = resolveAlertType(event);
+  const label = alertDisplayLabel(event, i18n.language);
+  const instruction = titleInstruction(event.title?.text);
+  const subtitle = useMemo(() => {
+    if (instruction) return instructionDisplay(instruction, i18n.language);
+    if (alertType.key === 'eventEnded') return t('alerts.eventEndedHint');
+    if (event.description?.text) return instructionDisplay(event.description.text, i18n.language);
+    return null;
+  }, [instruction, alertType.key, event.description?.text, i18n.language, t]);
   const cityNames = event.cities.map((c) => c.name);
-  // Recompute the relative time on every tick so "2 minutes ago" keeps climbing
-  // while the page is idle (formatRelative reads the wall clock each call).
   const time = useMemo(
     () => formatRelative(eventTime(event), i18n.language),
     [event, i18n.language, now],
   );
 
-  // Reveal the item when it becomes selected (e.g. from a click on the map).
   useEffect(() => {
     if (isSelected) ref.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }, [isSelected]);
@@ -47,23 +43,26 @@ function AlertFeedItemBase({ event, isSelected, isActive, onSelect }: AlertFeedI
       onClick={() => onSelect(event)}
       className={cn(
         'w-full rounded-lg border border-s-4 bg-card p-3 text-start transition-colors hover:bg-accent',
-        SEVERITY_ACCENT[meta.severity],
         isSelected && 'ring-2 ring-primary',
         isActive && 'alert-pulse',
       )}
+      style={{ borderInlineStartColor: alertType.color }}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2 font-semibold">
-          <span className={cn('flex size-7 items-center justify-center rounded-md', SEVERITY_CLASSES[meta.severity])}>
-            <CategoryIcon code={event.category?.code} />
+          <span
+            className="flex size-7 items-center justify-center rounded-md"
+            style={{ color: alertType.color, backgroundColor: alertTypeBg(alertType.color) }}
+          >
+            <AlertTypeIcon icon={alertType.icon} />
           </span>
           <span className="text-sm">{label}</span>
         </div>
         <time className="shrink-0 text-xs text-muted-foreground">{time}</time>
       </div>
 
-      {event.title?.text && (
-        <p className="mt-1.5 line-clamp-1 text-xs text-muted-foreground">{event.title.text}</p>
+      {subtitle && (
+        <p className="mt-1.5 line-clamp-1 text-xs text-muted-foreground">{subtitle}</p>
       )}
 
       <p className="mt-2 line-clamp-2 text-sm">
