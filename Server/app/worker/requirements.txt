@@ -1,8 +1,8 @@
 # Worker container dependencies (the worker is NOT a Lambda, so it bundles its own).
-requests==2.31.0
+requests==2.34.2
 pymysql==1.1.1
 # Required by PyMySQL for MySQL 8 / RDS "caching_sha2_password" auth.
-cryptography==43.0.1
+cryptography==48.0.0
 # ORM. Alembic is used in-memory by sync_database() (diff models -> DB); the
 # worker never syncs on boot - schema sync is triggered by hand via `make sync`.
 SQLAlchemy==2.0.36

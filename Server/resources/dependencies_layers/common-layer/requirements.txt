@@ -4,11 +4,11 @@ fastapi==0.111.0
 mangum==0.17.0
 pymysql==1.1.1
 # Required by PyMySQL for MySQL 8 / RDS "caching_sha2_password" auth.
-cryptography==43.0.1
+cryptography==48.0.0
 # ORM.
 SQLAlchemy==2.0.36
 # Used IN-MEMORY only (no migration files): its autogenerate engine powers
 # sync_database() to diff models -> DB and apply changes. `make sync`.
 alembic==1.13.2
-requests==2.31.0
+requests==2.34.2
 pydantic==2.7.1
