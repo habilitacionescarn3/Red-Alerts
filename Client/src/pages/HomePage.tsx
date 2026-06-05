@@ -13,7 +13,8 @@ import { TimelineBar } from '@/components/pages/home/timeline/TimelineBar';
 import { CONFIG } from '@/data/config';
 import { useFilteredAlertEvents } from '@/hooks/useFilteredAlertEvents';
 import { useTimelineUrlSync } from '@/hooks/useTimelineUrlSync';
-import { alertKeys, buildAlertFeatureCollection, cityKey, unmatchedAlertNames } from '@/lib/geo';
+import { mapCityKeys } from '@/lib/map/perCity';
+import { buildAlertFeatureCollection, cityKey, unmatchedAlertNames } from '@/lib/geo';
 import { buildCityMeta } from '@/lib/map/cityMeta';
 import { useAlertsStore } from '@/store/alertsStore';
 import { useTimelineStore } from '@/store/timelineStore';
@@ -82,8 +83,8 @@ export default function HomePage() {
   }, [mapEvents, selectedEvent]);
 
   const cityMeta = useMemo(
-    () => buildCityMeta(displayMapEvents, selectedEvent, i18n.language),
-    [displayMapEvents, i18n.language, selectedEvent],
+    () => buildCityMeta(displayMapEvents, i18n.language),
+    [displayMapEvents, i18n.language],
   );
 
   const featureCollection = useMemo(() => {
@@ -92,8 +93,8 @@ export default function HomePage() {
     return buildAlertFeatureCollection(displayMapEvents, cityCoords, colors);
   }, [displayMapEvents, cityCoords, cityMeta]);
 
-  const activeKeys = useMemo(() => alertKeys(activeEvents), [activeEvents]);
-  const recentKeys = useMemo(() => alertKeys(mapEvents), [mapEvents]);
+  const activeKeys = useMemo(() => mapCityKeys(activeEvents), [activeEvents]);
+  const recentKeys = useMemo(() => mapCityKeys(mapEvents), [mapEvents]);
   const selectedKeys = useMemo(() => {
     if (!selectedEvent) return [];
     return Array.from(new Set(selectedEvent.cities.map((c) => cityKey(c.name))));

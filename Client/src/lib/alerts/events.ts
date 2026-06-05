@@ -1,11 +1,32 @@
 import { CONFIG } from '@/data/config';
-import { eventTime, isActive, MS_PER_MINUTE } from '@/lib/time';
+import { eventTime, isActive, MS_PER_MINUTE, parseEventDate } from '@/lib/time';
 import type {
   AlertCityCoordinates,
   AlertEvent,
   CityCoords,
   LngLat,
 } from '@/types/alerts';
+
+/** True when an episode's [received_at, last_seen_at] window intersects the range. */
+export function eventOverlapsRange(
+  event: AlertEvent,
+  startMs: number,
+  endMs: number,
+): boolean {
+  const episodeStart = parseEventDate(event.received_at)?.getTime();
+  const episodeEnd = eventTime(event)?.getTime();
+  if (
+    episodeStart === undefined ||
+    episodeStart === null ||
+    Number.isNaN(episodeStart) ||
+    episodeEnd === undefined ||
+    episodeEnd === null ||
+    Number.isNaN(episodeEnd)
+  ) {
+    return false;
+  }
+  return episodeStart <= endMs && episodeEnd >= startMs;
+}
 
 export function mergeAlertEvents(
   serverEvents: AlertEvent[],
@@ -45,11 +66,7 @@ export function filterEventsByRange(
   startMs: number,
   endMs: number,
 ): AlertEvent[] {
-  return events.filter((event) => {
-    const t = eventTime(event)?.getTime();
-    if (t === undefined || t === null || Number.isNaN(t)) return false;
-    return t >= startMs && t <= endMs;
-  });
+  return events.filter((event) => eventOverlapsRange(event, startMs, endMs));
 }
 
 export function filterEventsLastMinutes(

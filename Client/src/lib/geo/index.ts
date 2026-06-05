@@ -1,6 +1,7 @@
 import type {
   AlertEvent,
   AreaMatch,
+  CityCoords,
   CityFeature,
   CityFeatureCollection,
   LngLat,
@@ -178,19 +179,11 @@ function cityToFeature(
   };
 }
 
-/**
- * Build the map's FeatureCollection from the events' cities + the shared
- * `cityCoords` map (city id -> points). Each distinct city (by `cityKey`)
- * becomes one feature: many points -> polygon area, a single point -> marker,
- * no points yet -> bundled circle fallback (dropped if the city isn't in the
- * bundled dataset). An entry with points wins over one without, so a city
- * upgrades from fallback to real geometry as it resolves.
- */
-export function buildAlertFeatureCollection(
+/** Best available geocoded points per `cityKey` across all episodes. */
+function collectCoordsByCityKey(
   events: AlertEvent[],
-  cityCoords: Map<string, LngLat[] | null>,
-  cityColors?: Record<string, string>,
-): CityFeatureCollection {
+  cityCoords: CityCoords,
+): Map<string, LngLat[] | null> {
   const byKey = new Map<string, LngLat[] | null>();
   for (const event of events) {
     for (const city of event.cities) {
@@ -203,10 +196,33 @@ export function buildAlertFeatureCollection(
       }
     }
   }
+  return byKey;
+}
+
+/**
+ * Build the map's FeatureCollection from the events' cities + the shared
+ * `cityCoords` map (city id -> points). Each distinct city (by `cityKey`)
+ * becomes one feature: many points -> polygon area, a single point -> marker,
+ * no points yet -> bundled circle fallback (dropped if the city isn't in the
+ * bundled dataset). Every city from every event in the set is included; when
+ * several episodes share a city, the newest episode drives color while coords
+ * are merged from any episode that has resolved points.
+ */
+export function buildAlertFeatureCollection(
+  events: AlertEvent[],
+  cityCoords: CityCoords,
+  cityColors?: Record<string, string>,
+): CityFeatureCollection {
+  const coordsByKey = collectCoordsByCityKey(events, cityCoords);
+  const keys = new Set<string>();
+  for (const event of events) {
+    for (const city of event.cities) keys.add(cityKey(city.name));
+  }
 
   const features: CityFeature[] = [];
   let id = 1;
-  for (const [key, points] of byKey) {
+  for (const key of keys) {
+    const points = coordsByKey.get(key) ?? null;
     const feature = cityToFeature(id, key, points, cityColors?.[key]);
     if (feature) {
       features.push(feature);
