@@ -82,6 +82,18 @@ function withoutKeys(keys: string[], exclude: string[]): string[] {
   return keys.filter((k) => !skip.has(k));
 }
 
+/**
+ * MapLibre opens the compact attribution expanded by default, which sprawls over
+ * the bottom UI on narrow screens. Collapse it to the ⓘ toggle (tap to reveal),
+ * matching MapLibre's own collapse behaviour.
+ */
+function collapseAttribution(map: maplibregl.Map) {
+  const attrib = map.getContainer().querySelector('.maplibregl-ctrl-attrib');
+  if (!attrib) return;
+  attrib.classList.remove('maplibregl-compact-show');
+  attrib.setAttribute('open', '');
+}
+
 function popupHtml(name: string, meta: MapCityMeta | undefined): string {
   const row = meta
     ? `<div class="alert-popup__row"><span class="alert-popup__dot" style="background:${meta.color}"></span><span style="color:${meta.color}">${escapeHtml(meta.label)}</span></div>`
@@ -190,6 +202,7 @@ export function AlertMap({
 
       readyRef.current = true;
       applyFilters(map, activeKeys, recentKeys, selectedKeys);
+      collapseAttribution(map);
     });
 
     return () => {

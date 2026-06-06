@@ -10,7 +10,7 @@ export function ActiveAlertsBanner({ activeCount }: ActiveAlertsBannerProps) {
   const hasActive = activeCount > 0;
 
   return (
-    <div className="pointer-events-none absolute inset-x-0 top-3 z-20 flex justify-center px-3 sm:top-4 sm:px-4">
+    <div className="pointer-events-none absolute inset-x-0 top-3 z-20 hidden justify-center px-3 sm:top-4 sm:flex sm:px-4">
       <div
         className={cn(
           'pointer-events-auto flex max-w-[min(100%,36rem)] flex-wrap items-center justify-center gap-x-3 gap-y-1 rounded-full border px-3 py-1.5 shadow-lg backdrop-blur-md sm:gap-3 sm:px-4 sm:py-2',

@@ -216,3 +216,20 @@
   line-height: 1.35;
   font-size: 0.6875rem;
 }
+
+/* Mobile: lift the attribution clear of the bottom control cluster — above the
+   active-alerts button. It is anchored at the bottom, so expanding it grows
+   UPWARD (never under the button), and the high z-index keeps the expanded panel
+   on top of every control. !important is required because maplibre-gl.css is
+   imported after this file and would otherwise reset bottom/right to 0. Desktop
+   keeps the default bottom-right corner. */
+@media (max-width: 767.98px) {
+  .maplibregl-ctrl-bottom-right {
+    z-index: 40 !important;
+    bottom: 64px !important;
+    right: 12px !important;
+  }
+  .maplibregl-ctrl-bottom-right .maplibregl-ctrl {
+    margin: 0 !important;
+  }
+}

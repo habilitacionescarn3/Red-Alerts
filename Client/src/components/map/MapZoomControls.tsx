@@ -12,7 +12,7 @@ export function MapZoomControls({ onZoomIn, onZoomOut }: MapZoomControlsProps) {
   const { t } = useTranslation();
 
   return (
-    <div className="pointer-events-none absolute start-3 top-14 z-10 sm:start-4">
+    <div className="pointer-events-none absolute start-3 top-3 z-10 sm:start-4 sm:top-4">
       <div className="pointer-events-auto flex flex-col overflow-hidden rounded-md border bg-card shadow-md">
         <Button
           type="button"

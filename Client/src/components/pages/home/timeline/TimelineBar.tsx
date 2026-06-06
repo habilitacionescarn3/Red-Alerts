@@ -48,11 +48,12 @@ export function TimelineBar({ dayEvents }: TimelineBarProps) {
 
   if (!isOpen) {
     return (
-      <div className="pointer-events-none absolute inset-x-0 bottom-4 z-30 flex justify-center">
+      <div className="pointer-events-none absolute inset-x-0 bottom-4 z-30 hidden justify-center md:flex">
         <Button
           type="button"
+          variant="outline"
           size="lg"
-          className="pointer-events-auto gap-2 rounded-full shadow-xl"
+          className="pointer-events-auto gap-2 rounded-full bg-background/90 shadow-xl backdrop-blur-md hover:bg-accent"
           onClick={openTimeline}
         >
           <Clock className="size-4" />
@@ -71,29 +72,30 @@ export function TimelineBar({ dayEvents }: TimelineBarProps) {
       )}
     >
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-2 px-3 py-3 sm:gap-3 sm:px-4 2xl:max-w-screen-xl">
-        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+        <div className="flex items-center justify-between gap-2">
           <DatePickerControl />
-          <span className="min-w-0 flex-1 text-sm text-muted-foreground">{rangeLabel}</span>
-          {hasCustomRange && (
-            <Button type="button" variant="ghost" size="sm" onClick={clearRange}>
-              {t('timeline.clearRange')}
+          <div className="flex shrink-0 items-center gap-1">
+            {hasCustomRange && (
+              <Button type="button" variant="ghost" size="sm" onClick={clearRange}>
+                {t('timeline.clearRange')}
+              </Button>
+            )}
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="gap-1.5"
+              onClick={closeTimeline}
+            >
+              <X className="size-4" />
+              <span className="hidden sm:inline">{t('timeline.backToLive')}</span>
             </Button>
-          )}
-          <Button type="button" variant="ghost" size="sm" onClick={closeTimeline}>
-            {t('timeline.backToLive')}
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="size-8 shrink-0"
-            aria-label={t('timeline.close')}
-            onClick={closeTimeline}
-          >
-            <X className="size-4" />
-          </Button>
+          </div>
         </div>
-        <p className="text-xs text-muted-foreground md:hidden">{t('timeline.dragHint')}</p>
+        {hasCustomRange && (
+          <p className="text-sm font-medium text-foreground">{rangeLabel}</p>
+        )}
+        <p className="text-xs text-muted-foreground">{t('timeline.dragHint')}</p>
         <DayScrubber dayEvents={dayEvents} />
       </div>
     </div>

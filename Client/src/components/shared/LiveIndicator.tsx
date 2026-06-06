@@ -23,11 +23,17 @@ export function LiveIndicator() {
   const { t } = useTranslation();
   const connection = useAlertsStore((s) => s.connection);
 
+  const statusLabel = t(LABEL_KEYS[connection]);
+
   return (
-    <div className="flex items-center gap-2 rounded-full border px-2.5 py-1 text-xs font-medium text-muted-foreground">
-      <span className={cn('size-2 rounded-full', DOT_CLASSES[connection])} />
+    <div
+      className="flex items-center gap-2 rounded-full border px-1.5 py-1 text-xs font-medium text-muted-foreground sm:px-2.5"
+      title={statusLabel}
+      aria-label={statusLabel}
+    >
+      <span className={cn('size-2 shrink-0 rounded-full', DOT_CLASSES[connection])} />
       <span className="hidden sm:inline">{t('live.label')}</span>
-      <span className="text-foreground/80">{t(LABEL_KEYS[connection])}</span>
+      <span className="hidden text-foreground/80 sm:inline">{statusLabel}</span>
     </div>
   );
 }

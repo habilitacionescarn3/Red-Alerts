@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { List } from 'lucide-react';
+import { Clock, List } from 'lucide-react';
 import { PageMetadata } from '@/components/shared/PageMetadata';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ import { CONFIG } from '@/data/config';
 import { useFilteredAlertEvents } from '@/hooks/useFilteredAlertEvents';
 import { useMapOverlayBottomInset } from '@/hooks/useMapOverlayBottomInset';
 import { useTimelineUrlSync } from '@/hooks/useTimelineUrlSync';
+import { cn } from '@/lib/utils';
 import { mapCityKeys } from '@/lib/map/perCity';
 import { buildAlertFeatureCollection, cityKey, unmatchedAlertNames } from '@/lib/geo';
 import { buildCityMeta } from '@/lib/map/cityMeta';
@@ -37,6 +38,8 @@ export default function HomePage() {
   const hasCustomRange = useTimelineStore((s) => s.hasCustomRange);
   const selectedDate = useTimelineStore((s) => s.selectedDate);
   const bottomInsetPx = useMapOverlayBottomInset();
+  const timelineOpen = useTimelineStore((s) => s.isOpen);
+  const openTimeline = useTimelineStore((s) => s.openTimeline);
 
   useTimelineUrlSync();
 
@@ -138,10 +141,41 @@ export default function HomePage() {
         <AlertFeed {...feedProps} />
       </Card>
 
-      <div className="absolute end-3 z-20 sm:end-4 md:hidden" style={{ bottom: overlayBottom }}>
+      {/* Mobile controls (md:hidden): history (left) + active alerts (right) sit
+          on the bottom row; the layers picker sits above history on the left,
+          and the map attribution is lifted to the matching spot on the right
+          (see the mobile rule in index.css). When the timeline opens, history is
+          replaced by the panel and the remaining controls float just above it. */}
+      <div
+        className="pointer-events-none absolute inset-x-0 z-20 flex items-end justify-between px-3 md:hidden"
+        style={{ bottom: timelineOpen ? overlayBottom : '1rem' }}
+      >
+        <div className="flex flex-col items-start gap-2">
+          <BasemapSwitcher />
+          {!timelineOpen && (
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              className="pointer-events-auto gap-2 rounded-full bg-background/90 shadow-xl backdrop-blur-md hover:bg-accent"
+              onClick={openTimeline}
+            >
+              <Clock className="size-4" />
+              {t('timeline.open')}
+            </Button>
+          )}
+        </div>
+
         <Sheet>
           <SheetTrigger asChild>
-            <Button size="lg" className="gap-2 rounded-full shadow-xl">
+            <Button
+              size="lg"
+              className={cn(
+                'pointer-events-auto gap-2 rounded-full shadow-xl',
+                activeEvents.length === 0 &&
+                  'bg-emerald-600 text-white hover:bg-emerald-700',
+              )}
+            >
               <List className="size-4" />
               {t('home.activeNow', { count: activeEvents.length })}
             </Button>
@@ -164,9 +198,9 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* Google Maps–style basemap picker — bottom-start (map corner, away from feed) */}
+      {/* Desktop basemap picker — bottom-start corner. Mobile uses the cluster above. */}
       <div
-        className="pointer-events-none absolute start-3 z-20 sm:start-4"
+        className="pointer-events-none absolute start-3 z-20 hidden sm:start-4 md:block"
         style={{ bottom: overlayBottom }}
       >
         <BasemapSwitcher />
