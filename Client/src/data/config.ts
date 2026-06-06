@@ -32,16 +32,25 @@ export const CONFIG = {
    */
   LAST_24H_REFETCH_MS: 3_600_000,
 
-  /** Map starting position (centered on Israel) and zoom. */
-  MAP_CENTER: [34.95, 31.4] as [number, number],
+  /**
+   * Map starting position and zoom. The longitude is shifted ~0.5° east of the
+   * country's true centre so Israel sits further left in the viewport, away from
+   * the feed card (the empty sea on the left is consumed as the country slides
+   * onto it). The east bound is widened to match (see below).
+   */
+  MAP_CENTER: [35.45, 31.4] as [number, number],
   MAP_ZOOM: 7,
   MAP_MIN_ZOOM: 6,
   MAP_MAX_ZOOM: 13,
   /** Zoom level the camera flies to when focusing a single area. */
   MAP_FOCUS_ZOOM: 10,
 
-  /** Bounding box of Israel [west, south, east, north] to constrain the map. */
-  MAP_MAX_BOUNDS: [33.6, 29.0, 36.3, 33.6] as [number, number, number, number],
+  /**
+   * Bounding box [west, south, east, north] constraining the map. The east edge
+   * is extended (37.3) so the framing can sit further left while the west edge
+   * (33.6) still keeps the full coastline in view.
+   */
+  MAP_MAX_BOUNDS: [33.6, 29.0, 37.3, 33.6] as [number, number, number, number],
 
   /** Max number of live alerts kept in the in-memory ring buffer. */
   LIVE_BUFFER_SIZE: 100,

@@ -43,6 +43,7 @@
 
 :root {
   --radius: 0.625rem;
+  --maplibre-icon-filter: none;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -77,6 +78,7 @@
 }
 
 .dark {
+  --maplibre-icon-filter: invert(1);
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
@@ -114,8 +116,13 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    overflow-x: hidden;
+  }
   body {
     @apply bg-background text-foreground;
+    font-size: clamp(0.875rem, 0.8rem + 0.25vw, 1rem);
+    overflow-x: hidden;
   }
 }
 
@@ -169,4 +176,43 @@
   margin-top: 0.125rem;
   font-size: 0.875rem;
   font-weight: 600;
+}
+
+/* Theme-aware MapLibre controls (zoom, attribution) — vendor CSS defaults to white. */
+.maplibregl-ctrl-group {
+  background: var(--card) !important;
+  box-shadow: 0 0 0 1px var(--border) !important;
+}
+.maplibregl-ctrl-group button {
+  min-width: 2.5rem;
+  min-height: 2.5rem;
+}
+.maplibregl-ctrl-group button + button {
+  border-top: 1px solid var(--border) !important;
+}
+.maplibregl-ctrl button:hover {
+  background-color: color-mix(in oklab, var(--foreground) 8%, transparent) !important;
+}
+.maplibregl-ctrl-group button .maplibregl-ctrl-icon {
+  filter: var(--maplibre-icon-filter);
+}
+.maplibregl-ctrl-attrib,
+.maplibregl-ctrl-attrib.maplibregl-compact,
+.maplibregl-ctrl-attrib.maplibregl-compact-show {
+  background-color: var(--card) !important;
+  color: var(--muted-foreground) !important;
+}
+.maplibregl-ctrl-attrib a {
+  color: var(--muted-foreground) !important;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.maplibregl-ctrl-attrib a:hover {
+  color: var(--foreground) !important;
+}
+.maplibregl-ctrl-attrib.maplibregl-compact-show {
+  max-width: min(100vw - 2rem, 28rem);
+  white-space: normal;
+  line-height: 1.35;
+  font-size: 0.6875rem;
 }

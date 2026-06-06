@@ -1,14 +1,22 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import maplibregl, { type FilterSpecification } from 'maplibre-gl';
 import { useTheme } from 'next-themes';
+import { useTranslation } from 'react-i18next';
 import { CONFIG } from '@/data/config';
 import { MAP_COLORS } from '@/data/mapColors';
 import { cityKey, resolveCity } from '@/lib/geo';
 import { escapeHtml } from '@/lib/html';
 import { useAlertsStore } from '@/store/alertsStore';
+import { useBasemapStore } from '@/store/basemapStore';
 import type { CityFeatureCollection, MapCityMeta } from '@/types/alerts';
 import type { AlertMapProps } from '@/types/ui';
-import { DARK_STYLE, LIGHT_STYLE } from './mapStyle';
+import { getBasemapStyle, getBasemapMaxZoom, MAPLIBRE_ATTRIBUTION } from './mapStyle';
+import {
+  applyLabelLanguage,
+  ensureRtlTextPlugin,
+  normalizeLabelLang,
+} from './labels';
+import { MapZoomControls } from './MapZoomControls';
 import { ensureColoredPinImages, pinImageId } from './pin';
 
 const SOURCE_ID = 'cities';
@@ -93,7 +101,26 @@ export function AlertMap({
   const mapRef = useRef<maplibregl.Map | null>(null);
   const readyRef = useRef(false);
   const { resolvedTheme } = useTheme();
+  const { i18n } = useTranslation();
+  const basemap = useBasemapStore((s) => s.basemap);
   const focusRequest = useAlertsStore((s) => s.focusRequest);
+
+  const labelLang = normalizeLabelLang(i18n.language);
+  const labelLangRef = useRef(labelLang);
+  labelLangRef.current = labelLang;
+
+  const styleForMap = useCallback(
+    () => getBasemapStyle(basemap, resolvedTheme, labelLangRef.current),
+    [basemap, resolvedTheme],
+  );
+
+  const handleZoomIn = useCallback(() => {
+    mapRef.current?.zoomIn({ duration: 200 });
+  }, []);
+
+  const handleZoomOut = useCallback(() => {
+    mapRef.current?.zoomOut({ duration: 200 });
+  }, []);
 
   const collectionRef = useRef(featureCollection);
   collectionRef.current = featureCollection;
@@ -110,20 +137,23 @@ export function AlertMap({
   };
 
   useEffect(() => {
+    ensureRtlTextPlugin();
+  }, []);
+
+  useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: resolvedTheme === 'light' ? LIGHT_STYLE : DARK_STYLE,
+      style: styleForMap(),
       center: CONFIG.MAP_CENTER,
       zoom: CONFIG.MAP_ZOOM,
       minZoom: CONFIG.MAP_MIN_ZOOM,
-      maxZoom: CONFIG.MAP_MAX_ZOOM,
+      maxZoom: getBasemapMaxZoom(basemap),
       maxBounds: CONFIG.MAP_MAX_BOUNDS,
-      attributionControl: { compact: true },
+      attributionControl: { compact: true, customAttribution: MAPLIBRE_ATTRIBUTION },
     });
     mapRef.current = map;
-    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-left');
 
     map.on('load', () => {
       map.addSource(SOURCE_ID, { type: 'geojson', data: collectionRef.current });
@@ -173,7 +203,10 @@ export function AlertMap({
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !readyRef.current) return;
-    map.setStyle(resolvedTheme === 'light' ? LIGHT_STYLE : DARK_STYLE, { diff: false });
+    const maxZoom = getBasemapMaxZoom(basemap);
+    map.setMaxZoom(maxZoom);
+    if (map.getZoom() > maxZoom) map.setZoom(maxZoom);
+    map.setStyle(styleForMap(), { diff: false });
     map.once('styledata', () => {
       if (!map.getSource(SOURCE_ID)) {
         map.addSource(SOURCE_ID, { type: 'geojson', data: collectionRef.current });
@@ -183,7 +216,7 @@ export function AlertMap({
       applyFilters(map, activeKeys, recentKeys, selectedKeys);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [resolvedTheme]);
+  }, [basemap, resolvedTheme]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -206,6 +239,12 @@ export function AlertMap({
 
   useEffect(() => {
     const map = mapRef.current;
+    if (!map || !readyRef.current) return;
+    applyLabelLanguage(map, labelLang);
+  }, [labelLang]);
+
+  useEffect(() => {
+    const map = mapRef.current;
     if (!map || !readyRef.current || !focusRequest) return;
     const center = focusCenter(focusRequest.area, collectionRef.current);
     if (center) {
@@ -213,7 +252,12 @@ export function AlertMap({
     }
   }, [focusRequest]);
 
-  return <div ref={containerRef} className="absolute inset-0 h-full w-full" />;
+  return (
+    <div className="absolute inset-0 h-full w-full">
+      <div ref={containerRef} className="h-full w-full" />
+      <MapZoomControls onZoomIn={handleZoomIn} onZoomOut={handleZoomOut} />
+    </div>
+  );
 }
 
 function focusCenter(

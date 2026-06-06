@@ -6,22 +6,19 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { AlertMap } from '@/components/map/AlertMap';
-import { MapLegend } from '@/components/map/MapLegend';
+import { BasemapSwitcher } from '@/components/map/BasemapSwitcher';
 import { AlertFeed } from '@/components/pages/home/AlertFeed';
 import { ActiveAlertsBanner } from '@/components/pages/home/ActiveAlertsBanner';
 import { TimelineBar } from '@/components/pages/home/timeline/TimelineBar';
 import { CONFIG } from '@/data/config';
 import { useFilteredAlertEvents } from '@/hooks/useFilteredAlertEvents';
+import { useMapOverlayBottomInset } from '@/hooks/useMapOverlayBottomInset';
 import { useTimelineUrlSync } from '@/hooks/useTimelineUrlSync';
 import { mapCityKeys } from '@/lib/map/perCity';
 import { buildAlertFeatureCollection, cityKey, unmatchedAlertNames } from '@/lib/geo';
 import { buildCityMeta } from '@/lib/map/cityMeta';
 import { useAlertsStore } from '@/store/alertsStore';
 import { useTimelineStore } from '@/store/timelineStore';
-
-/** Bottom timeline bar height + padding (keep feed card above it). */
-const TIMELINE_OFFSET_OPEN = '7.5rem';
-const TIMELINE_OFFSET_CLOSED = '1rem';
 
 export default function HomePage() {
   const { t, i18n } = useTranslation();
@@ -39,11 +36,9 @@ export default function HomePage() {
   const selectEvent = useAlertsStore((s) => s.selectEvent);
   const hasCustomRange = useTimelineStore((s) => s.hasCustomRange);
   const selectedDate = useTimelineStore((s) => s.selectedDate);
-  const isTimelineOpen = useTimelineStore((s) => s.isOpen);
+  const bottomInsetPx = useMapOverlayBottomInset();
 
   useTimelineUrlSync();
-
-  const timelineOffset = isTimelineOpen ? TIMELINE_OFFSET_OPEN : TIMELINE_OFFSET_CLOSED;
 
   useEffect(() => {
     refetch();
@@ -119,6 +114,8 @@ export default function HomePage() {
     ...feedCopy,
   };
 
+  const overlayBottom = `${bottomInsetPx}px`;
+
   return (
     <div className="relative h-full w-full">
       <PageMetadata title={t('home.title')} />
@@ -132,17 +129,16 @@ export default function HomePage() {
         onSelectEvent={selectEvent}
       />
 
-      <MapLegend />
       <ActiveAlertsBanner activeCount={activeEvents.length} />
 
       <Card
-        className="absolute end-4 top-20 z-20 hidden w-[360px] flex-col gap-0 overflow-hidden py-0 shadow-xl md:flex"
-        style={{ bottom: timelineOffset }}
+        className="absolute end-3 top-20 z-20 hidden w-[clamp(320px,26vw,460px)] flex-col gap-0 overflow-hidden py-0 shadow-xl sm:end-4 2xl:w-[clamp(360px,22vw,520px)] md:flex"
+        style={{ bottom: overlayBottom }}
       >
         <AlertFeed {...feedProps} />
       </Card>
 
-      <div className="absolute end-4 z-20 md:hidden" style={{ bottom: timelineOffset }}>
+      <div className="absolute end-3 z-20 sm:end-4 md:hidden" style={{ bottom: overlayBottom }}>
         <Sheet>
           <SheetTrigger asChild>
             <Button size="lg" className="gap-2 rounded-full shadow-xl">
@@ -161,12 +157,20 @@ export default function HomePage() {
 
       {unmatchedActive.length > 0 && (
         <div
-          className="absolute start-4 z-20 max-w-xs rounded-md border bg-background/85 px-3 py-2 text-xs text-muted-foreground backdrop-blur-md"
-          style={{ bottom: timelineOffset }}
+          className="absolute start-3 z-20 max-w-[min(100%,18rem)] rounded-md border bg-background/85 px-3 py-2 text-xs text-muted-foreground backdrop-blur-md sm:start-4 sm:max-w-xs"
+          style={{ bottom: overlayBottom }}
         >
           {t('map.unmatched')}
         </div>
       )}
+
+      {/* Google Maps–style basemap picker — bottom-start (map corner, away from feed) */}
+      <div
+        className="pointer-events-none absolute start-3 z-20 sm:start-4"
+        style={{ bottom: overlayBottom }}
+      >
+        <BasemapSwitcher />
+      </div>
 
       <TimelineBar dayEvents={dayEvents} />
     </div>

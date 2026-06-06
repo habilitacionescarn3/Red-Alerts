@@ -7,8 +7,8 @@ export function Footer() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="border-t bg-background/60 px-4 py-6 text-sm text-muted-foreground">
-      <div className="mx-auto flex max-w-6xl flex-col items-center gap-2 text-center">
+    <footer className="border-t bg-background/60 px-3 py-6 text-sm text-muted-foreground sm:px-4">
+      <div className="mx-auto flex max-w-6xl flex-col items-center gap-2 text-center 2xl:max-w-screen-2xl">
         <p className="font-medium text-foreground">
           {app.name} · {t('footer.tagline')}
         </p>

@@ -1,6 +1,7 @@
 export const home = {
   title: 'Live Alert Map',
   subtitle: 'Active alerts in the last {{minutes}} minutes',
+  subtitleClear: 'No alerts in the last {{minutes}} minutes',
   activeNow: 'Active alerts: {{count}}',
   noActive: 'No active alerts',
   allClear: 'All clear right now',

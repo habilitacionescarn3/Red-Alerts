@@ -7,7 +7,7 @@ import { CONFIG } from '@/data/config';
 import { MAP_COLORS } from '@/data/mapColors';
 import { pointsToGeometry } from '@/lib/geo/geojson';
 import { escapeHtml } from '@/lib/html';
-import { DARK_STYLE, LIGHT_STYLE } from './mapStyle';
+import { getBasemapStyle } from './mapStyle';
 import { ensurePinImages, PIN_ACTIVE_IMAGE } from './pin';
 
 const SOURCE_ID = 'preview';
@@ -207,7 +207,7 @@ export function GeoPreviewMap({ current, candidate, allCities = null }: GeoPrevi
     if (!containerRef.current || mapRef.current) return;
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: resolvedTheme === 'light' ? LIGHT_STYLE : DARK_STYLE,
+      style: getBasemapStyle('satellite', resolvedTheme),
       center: CONFIG.MAP_CENTER,
       zoom: CONFIG.MAP_ZOOM,
       attributionControl: { compact: true },
@@ -236,7 +236,7 @@ export function GeoPreviewMap({ current, candidate, allCities = null }: GeoPrevi
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !readyRef.current) return;
-    map.setStyle(resolvedTheme === 'light' ? LIGHT_STYLE : DARK_STYLE, { diff: false });
+    map.setStyle(getBasemapStyle('satellite', resolvedTheme), { diff: false });
     map.once('styledata', () => {
       addSources(map);
       ensurePinImages(map);

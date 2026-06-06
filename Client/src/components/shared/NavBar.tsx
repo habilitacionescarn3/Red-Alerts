@@ -23,16 +23,16 @@ export function NavBar() {
   ];
 
   return (
-    <header className="z-30 flex h-14 shrink-0 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-md">
-      <div className="flex items-center gap-6">
-        <NavLink to={pathTo(ROUTES.HOME, language)} className="flex items-center gap-2 font-bold">
-          <span className="flex size-8 items-center justify-center rounded-md bg-primary/10 text-primary">
+    <header className="z-30 flex h-14 shrink-0 items-center justify-between gap-2 border-b bg-background/80 px-3 backdrop-blur-md sm:px-4">
+      <div className="flex min-w-0 items-center gap-2 sm:gap-6">
+        <NavLink to={pathTo(ROUTES.HOME, language)} className="flex min-w-0 shrink items-center gap-1.5 font-bold sm:gap-2">
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
             <TriangleAlert className="size-4" />
           </span>
-          <span className="text-base tracking-tight">{t('nav.brand')}</span>
+          <span className="truncate text-sm tracking-tight sm:text-base">{t('nav.brand')}</span>
         </NavLink>
 
-        <nav className="flex items-center gap-1">
+        <nav className="flex shrink-0 items-center gap-0.5 sm:gap-1">
           {links.map(({ to, label, icon: Icon, end }) => (
             <NavLink
               key={to}
@@ -40,21 +40,21 @@ export function NavBar() {
               end={end}
               className={({ isActive }) =>
                 cn(
-                  'flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+                  'flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium transition-colors sm:px-3',
                   isActive
                     ? 'bg-primary/10 text-primary'
                     : 'text-muted-foreground hover:bg-accent hover:text-foreground',
                 )
               }
             >
-              <Icon className="size-4" />
+              <Icon className="size-4 shrink-0" />
               <span className="hidden sm:inline">{label}</span>
             </NavLink>
           ))}
         </nav>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex shrink-0 items-center gap-1 sm:gap-2">
         <LiveIndicator />
         <LanguageSwitcher />
         <ModeToggle />

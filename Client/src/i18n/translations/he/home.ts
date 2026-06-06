@@ -1,6 +1,7 @@
 export const home = {
   title: 'מפת התרעות בזמן אמת',
   subtitle: 'התרעות פעילות ב-{{minutes}} הדקות האחרונות',
+  subtitleClear: 'אין התרעות פעילות ב-{{minutes}} הדקות האחרונות',
   activeNow: 'התרעות פעילות: {{count}}',
   noActive: 'אין התרעות פעילות',
   allClear: 'הכל שקט כעת',

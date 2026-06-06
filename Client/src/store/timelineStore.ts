@@ -4,6 +4,8 @@ import { MINUTES_PER_DAY } from '@/lib/time';
 
 interface TimelineState {
   isOpen: boolean;
+  /** Measured height of the open timeline panel (px). 0 when closed. */
+  panelHeightPx: number;
   selectedDate: string;
   /** User dragged the scrubber — map + feed both filter to this range. */
   hasCustomRange: boolean;
@@ -11,6 +13,7 @@ interface TimelineState {
   rangeEndMs: number;
   openTimeline: () => void;
   closeTimeline: () => void;
+  setPanelHeightPx: (height: number) => void;
   setSelectedDate: (date: string) => void;
   /** Enable custom range filtering (called when user drags scrubber). */
   setRangeMs: (startMs: number, endMs: number) => void;
@@ -19,6 +22,7 @@ interface TimelineState {
 
 export const useTimelineStore = create<TimelineState>((set) => ({
   isOpen: false,
+  panelHeightPx: 0,
   selectedDate: israelDateString(),
   hasCustomRange: false,
   rangeStartMs: israelDateTime(israelDateString(), 0).getTime(),
@@ -30,7 +34,10 @@ export const useTimelineStore = create<TimelineState>((set) => ({
     set({
       isOpen: false,
       hasCustomRange: false,
+      panelHeightPx: 0,
     }),
+
+  setPanelHeightPx: (panelHeightPx) => set({ panelHeightPx }),
 
   setSelectedDate: (date) =>
     set({

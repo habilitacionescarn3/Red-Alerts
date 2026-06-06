@@ -15,7 +15,6 @@ export const common = {
   theme: {
     light: 'בהיר',
     dark: 'כהה',
-    system: 'מערכת',
   },
   aria: {
     toggleTheme: 'החלפת ערכת נושא',

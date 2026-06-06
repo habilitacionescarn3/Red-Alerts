@@ -15,7 +15,6 @@ export const common = {
   theme: {
     light: 'Light',
     dark: 'Dark',
-    system: 'System',
   },
   aria: {
     toggleTheme: 'Toggle theme',
