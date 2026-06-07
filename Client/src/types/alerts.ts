@@ -90,16 +90,16 @@ export interface AlertsResponseWire {
 
 export interface AlertBroadcast {
   status: 'created' | 'updated';
-  added_cities: string[];
   event: AlertEvent;
-  cities: AlertCityCoordinates[];
+  added_cities?: string[];
+  cities?: AlertCityCoordinates[];
 }
 
 export interface AlertBroadcastWire {
   status: 'created' | 'updated';
-  added_cities: string[];
   event: AlertEventWire;
-  cities: AlertCityCoordinates[];
+  added_cities?: string[];
+  cities?: AlertCityCoordinates[];
 }
 
 // --- Display metadata (values live in data/alertTypes.ts) ---

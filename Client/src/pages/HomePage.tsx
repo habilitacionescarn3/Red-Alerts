@@ -118,6 +118,11 @@ export default function HomePage() {
   };
 
   const overlayBottom = `${bottomInsetPx}px`;
+  // Nudge the basemap picker up when a city/event is selected so the
+  // MapLibre popup near the bottom of the map isn't hidden behind it.
+  const basemapBottom = selectedEventId
+    ? `${bottomInsetPx + 56}px`
+    : overlayBottom;
 
   return (
     <div className="relative h-full w-full">
@@ -147,8 +152,8 @@ export default function HomePage() {
           (see the mobile rule in index.css). When the timeline opens, history is
           replaced by the panel and the remaining controls float just above it. */}
       <div
-        className="pointer-events-none absolute inset-x-0 z-20 flex items-end justify-between px-3 md:hidden"
-        style={{ bottom: timelineOpen ? overlayBottom : '1rem' }}
+        className="pointer-events-none absolute inset-x-0 z-20 flex items-end justify-between px-3 md:hidden transition-[bottom] duration-200"
+        style={{ bottom: timelineOpen ? overlayBottom : selectedEventId ? '3.5rem' : '1rem' }}
       >
         <div className="flex flex-col items-start gap-2">
           <BasemapSwitcher />
@@ -200,8 +205,8 @@ export default function HomePage() {
 
       {/* Desktop basemap picker — bottom-start corner. Mobile uses the cluster above. */}
       <div
-        className="pointer-events-none absolute start-3 z-20 hidden sm:start-4 md:block"
-        style={{ bottom: overlayBottom }}
+        className="pointer-events-none absolute start-3 z-20 hidden sm:start-4 md:block transition-[bottom] duration-200"
+        style={{ bottom: basemapBottom }}
       >
         <BasemapSwitcher />
       </div>

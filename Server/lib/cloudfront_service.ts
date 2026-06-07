@@ -1,5 +1,6 @@
 // cloudfront_service.ts - the CDN: /* -> S3 (client build), /api/* -> API Gateway.
 
+import { Duration } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import * as cloudfront from "aws-cdk-lib/aws-cloudfront";
 import * as origins from "aws-cdk-lib/aws-cloudfront-origins";
@@ -27,6 +28,26 @@ export class CloudfrontService extends Construct {
       protocolPolicy: cloudfront.OriginProtocolPolicy.HTTPS_ONLY,
     });
 
+    // Short-lived cache for the last-24h endpoint. All browsers that invalidate
+    // simultaneously after a broadcast share a single origin request; only the
+    // first one reaches Lambda within any 3-second window.
+    const last24hCachePolicy = new cloudfront.CachePolicy(
+      this,
+      "Last24hCachePolicy",
+      {
+        cachePolicyName: `RedAlerts-last24h-3s`,
+        minTtl: Duration.seconds(0),
+        defaultTtl: Duration.seconds(5),
+        maxTtl: Duration.seconds(5),
+        // Include limit= in the cache key so different limit values don't collide.
+        queryStringBehavior: cloudfront.CacheQueryStringBehavior.all(),
+        headerBehavior: cloudfront.CacheHeaderBehavior.none(),
+        cookieBehavior: cloudfront.CacheCookieBehavior.none(),
+        enableAcceptEncodingGzip: true,
+        enableAcceptEncodingBrotli: true,
+      }
+    );
+
     // Default origin = the client bucket's S3 STATIC WEBSITE endpoint, reached
     // as a plain HTTP origin (the website endpoint only speaks HTTP). The bucket
     // is public-read and its error document is index.html (see s3_service.ts),
@@ -50,6 +71,18 @@ export class CloudfrontService extends Construct {
         compress: true,
       },
       additionalBehaviors: {
+        // /api/alerts/last-24h -> cached at CloudFront for 3 s (see last24hCachePolicy).
+        // This behavior is matched before the wildcard /api/* below because
+        // CloudFront always picks the most specific path first.
+        "/api/alerts/last-24h": {
+          origin: apiOrigin,
+          viewerProtocolPolicy:
+            cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+          allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
+          cachePolicy: last24hCachePolicy,
+          originRequestPolicy:
+            cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
+        },
         // /api/* -> API Gateway, never cached, forward the viewer request. No
         // error-response rewriting here, so API status codes pass through intact.
         "/api/*": {

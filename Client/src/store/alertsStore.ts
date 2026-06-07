@@ -35,19 +35,15 @@ export const useAlertsStore = create<AlertsState>((set) => ({
       const event = broadcast.event;
       const deduped = state.liveEvents.filter((e) => e.id !== event.id);
       const liveEvents = [event, ...deduped].slice(0, CONFIG.LIVE_BUFFER_SIZE);
-      const liveCityCoords = { ...state.liveCityCoords };
-      for (const city of broadcast.cities ?? []) {
-        liveCityCoords[city.id] = city.coordinates;
-      }
-      const firstCity = event.cities[0]?.name;
+      // Broadcasts carry no city data (stripped to keep IoT payloads small and
+      // consistent). Cities + coordinates arrive via the HTTP refetch that
+      // invalidateTodayAlerts triggers immediately after this runs.
       return {
         liveEvents,
-        liveCityCoords,
+        liveCityCoords: state.liveCityCoords,
         lastBroadcast: broadcast,
         selectedEventId: event.id,
-        focusRequest: firstCity
-          ? { area: firstCity, eventId: event.id, ts: Date.now() }
-          : state.focusRequest,
+        focusRequest: state.focusRequest,
       };
     }),
 

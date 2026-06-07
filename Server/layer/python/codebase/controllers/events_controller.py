@@ -6,6 +6,7 @@ to plain dicts inside the session so callers get JSON-ready data with no lazy
 loads escaping the session.
 """
 
+import time
 from datetime import datetime
 from typing import Any, Dict, Iterable, List, Optional
 
@@ -95,9 +96,7 @@ def list_recent(limit: int = 50) -> Dict[str, Any]:
 def list_last_24h(limit: int = 500) -> Dict[str, Any]:
     """Return every event received in the last 24 hours, newest first."""
     with session_scope() as session:
-        return serialize_alerts(
-            Event.in_last_hours(session, hours=24, limit=limit)
-        )
+        return serialize_alerts(Event.in_last_hours(session, hours=24, limit=limit))
 
 
 def list_dates_in_month(year: int, month: int) -> Dict[str, Any]:

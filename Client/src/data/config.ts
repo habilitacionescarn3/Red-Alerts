@@ -8,7 +8,7 @@ export const CONFIG = {
    * An alert is considered "active" (highlighted on the map) when its
    * last_seen_at is within this many minutes of now. Change freely.
    */
-  ACTIVE_ALERT_WINDOW_MINUTES: 5,
+  ACTIVE_ALERT_WINDOW_MINUTES: 10,
 
   /** The right-side feed shows events from the last N hours. */
   FEED_WINDOW_HOURS: 24,

@@ -3,6 +3,7 @@
 from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Query
+from fastapi.responses import JSONResponse
 
 from codebase.controllers import (
     list_by_category,
@@ -15,13 +16,19 @@ from codebase.controllers import (
 
 router = APIRouter()
 
+# CloudFront respects s-maxage; browsers see max-age=0 and always ask the CDN.
+# The 3-second s-maxage collapses a broadcast-triggered thundering herd (all
+# browsers refetching at the same moment) into a single origin request.
+_LAST_24H_CACHE_CONTROL = "public, max-age=0, s-maxage=5"
+
 
 @router.get("/api/alerts/last-24h")
 async def list_alerts_last_24h(
     limit: int = Query(500, ge=1, le=500),
-) -> Dict[str, Any]:
+) -> JSONResponse:
     """Return every event received in the last 24 hours, newest first."""
-    return list_last_24h(limit=limit)
+    data = list_last_24h(limit=limit)
+    return JSONResponse(content=data, headers={"Cache-Control": _LAST_24H_CACHE_CONTROL})
 
 
 @router.get("/api/alerts/dates")

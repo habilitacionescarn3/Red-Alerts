@@ -34,10 +34,14 @@ export function mergeAlertEvents(
   includeLive: boolean,
 ): AlertEvent[] {
   const byId = new Map<string, AlertEvent>();
-  for (const event of serverEvents) byId.set(event.id, event);
+  // Live events go in first so brand-new alerts are immediately visible, even
+  // before the server has been refetched. Server events then overwrite for any
+  // matching ID — the server response always carries full city data, so once
+  // the HTTP refetch lands the complete version replaces the stripped live copy.
   if (includeLive) {
     for (const event of liveEvents) byId.set(event.id, event);
   }
+  for (const event of serverEvents) byId.set(event.id, event);
   return sortEventsByTime(Array.from(byId.values()));
 }
 

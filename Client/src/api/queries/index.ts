@@ -68,11 +68,14 @@ export function useAlertsByDate(date: string, limit: number = CONFIG.LAST_24H_LI
   });
 }
 
-/** Invalidate today's by-date cache after a live alert (refetch on next access). */
+/** Invalidate today's alert caches after a live broadcast (triggers background refetch). */
 export function invalidateTodayAlerts(queryClient: {
   invalidateQueries: (opts: { queryKey: readonly unknown[] }) => void;
 }): void {
   const today = israelDateString();
+  // last-24h is the primary source for the feed and map — must be invalidated
+  // so the new event's full city data arrives without waiting for the hourly tick.
+  queryClient.invalidateQueries({ queryKey: queryKeys.last24h(CONFIG.LAST_24H_LIMIT) });
   queryClient.invalidateQueries({
     queryKey: queryKeys.byDate(today, CONFIG.LAST_24H_LIMIT),
   });
