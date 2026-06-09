@@ -8,6 +8,7 @@ import {
   resolveAlertType,
   titleInstruction,
 } from '@/data/alertTypes';
+import { useLocalizeCityName } from '@/hooks/useLocalizeCityName';
 import { useNow } from '@/hooks/useNow';
 import { eventTime, formatRelative } from '@/lib/time';
 import { cn } from '@/lib/utils';
@@ -26,7 +27,8 @@ function AlertFeedItemBase({ event, isSelected, isActive, onSelect }: AlertFeedI
     if (event.description?.text) return instructionDisplay(event.description.text, i18n.language);
     return null;
   }, [instruction, alertType.key, event.description?.text, i18n.language, t]);
-  const cityNames = event.cities.map((c) => c.name);
+  const localize = useLocalizeCityName();
+  const cityNames = event.cities.map((c) => localize(c.name));
   const time = useMemo(
     () => formatRelative(eventTime(event), i18n.language),
     [event, i18n.language, now],

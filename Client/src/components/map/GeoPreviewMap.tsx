@@ -3,8 +3,10 @@ import maplibregl from 'maplibre-gl';
 import { useTheme } from 'next-themes';
 import type { LngLat, PreviewCity } from '@/types/alerts';
 import type { GeoPreviewMapProps } from '@/types/ui';
+import i18n from '@/i18n';
 import { CONFIG } from '@/data/config';
 import { MAP_COLORS } from '@/data/mapColors';
+import { localizeCityName } from '@/lib/geo/cityNames';
 import { pointsToGeometry } from '@/lib/geo/geojson';
 import { escapeHtml } from '@/lib/html';
 import { getBasemapStyle } from './mapStyle';
@@ -151,7 +153,8 @@ function bindHover(map: maplibregl.Map) {
     const name = e.features?.[0]?.properties?.name;
     if (typeof name !== 'string') return;
     map.getCanvas().style.cursor = 'pointer';
-    popup.setLngLat(e.lngLat).setHTML(`<div class="alert-popup__name">${escapeHtml(name)}</div>`).addTo(map);
+    const display = localizeCityName(name, i18n.language);
+    popup.setLngLat(e.lngLat).setHTML(`<div class="alert-popup__name">${escapeHtml(display)}</div>`).addTo(map);
   };
   const hide = () => {
     map.getCanvas().style.cursor = '';

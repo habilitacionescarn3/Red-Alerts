@@ -4,6 +4,7 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 import { DEFAULT_LANGUAGE, SUPPORTED_LANGUAGES, updateDocumentDirection } from './i18n/config';
 import { resources } from './i18n/resources';
 import { app } from './data/app';
+import { preloadCityNames } from './lib/geo/cityNames';
 
 void i18n
   .use(LanguageDetector)
@@ -27,8 +28,10 @@ void i18n
 
 i18n.on('languageChanged', (lng) => {
   updateDocumentDirection(lng);
+  if (!lng.startsWith('he')) void preloadCityNames();
 });
 
 updateDocumentDirection(i18n.language);
+if (!i18n.language.startsWith('he')) void preloadCityNames();
 
 export default i18n;

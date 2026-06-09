@@ -18,6 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Footer } from '@/components/shared/Footer';
 import { StatCard } from '@/components/pages/analytics/StatCard';
 import { useAlertEvents } from '@/hooks/useAlertEvents';
+import { useLocalizeCityName } from '@/hooks/useLocalizeCityName';
 import { countByAlertType, distinctCities, eventsPerHour, topCities } from '@/lib/analytics';
 import { formatClock } from '@/lib/time';
 
@@ -42,6 +43,7 @@ const AXIS_TICK = { fill: 'var(--muted-foreground)', fontSize: 12 };
 export default function AnalyticsPage() {
   const { t, i18n } = useTranslation();
   const { events, activeEvents } = useAlertEvents();
+  const localize = useLocalizeCityName();
 
   const perHour = useMemo(
     () =>
@@ -57,7 +59,10 @@ export default function AnalyticsPage() {
     [events, i18n.language],
   );
 
-  const cities = useMemo(() => topCities(events, 10), [events]);
+  const cities = useMemo(
+    () => topCities(events, 10).map((c) => ({ ...c, name: localize(c.name) })),
+    [events, localize],
+  );
 
   const topCategoryLabel = byCategory[0]?.name ?? '—';
   const hasData = events.length > 0;

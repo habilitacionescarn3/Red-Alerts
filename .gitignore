@@ -11,3 +11,4 @@
 *note.md
 *Server/historical/
 *.playwright-mcp
+*.serverless

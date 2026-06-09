@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { CONFIG } from '@/data/config';
 import { MAP_COLORS } from '@/data/mapColors';
 import { cityKey, resolveCity } from '@/lib/geo';
+import { localizeCityName } from '@/lib/geo/cityNames';
 import { escapeHtml } from '@/lib/html';
 import { useAlertsStore } from '@/store/alertsStore';
 import { useBasemapStore } from '@/store/basemapStore';
@@ -182,7 +183,10 @@ export function AlertMap({
         if (typeof key !== 'string') return;
         const meta = cityMetaRef.current[key];
         map.getCanvas().style.cursor = 'pointer';
-        popup.setLngLat(e.lngLat).setHTML(popupHtml(meta?.name ?? key, meta)).addTo(map);
+        popup
+          .setLngLat(e.lngLat)
+          .setHTML(popupHtml(localizeCityName(meta?.name ?? key, i18n.language), meta))
+          .addTo(map);
       };
       const hideFeature = () => {
         map.getCanvas().style.cursor = '';

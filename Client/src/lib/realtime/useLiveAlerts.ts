@@ -6,15 +6,17 @@ import { queryClient } from '@/api/queryClient';
 import { invalidateTodayAlerts, queryKeys } from '@/api/queries';
 import { CONFIG } from '@/data/config';
 import { alertDisplayLabel } from '@/data/alertTypes';
+import { localizeCityNames } from '@/lib/geo/cityNames';
 import type { AlertBroadcast } from '@/types/alerts';
 import { IotAlertsClient } from './IotAlertsClient';
 import { isIotConfigured } from './config';
 import { playAlertSound } from './sound';
 
 function notifyNewAlert(broadcast: AlertBroadcast): void {
-  const cities = broadcast.added_cities?.length
+  const rawCities = broadcast.added_cities?.length
     ? broadcast.added_cities
     : (broadcast.event.cities ?? []).map((c) => c.name);
+  const cities = localizeCityNames(rawCities, i18n.language);
   const preview = cities.slice(0, 4).join(', ');
   const more = cities.length > 4 ? ` +${cities.length - 4}` : '';
 
