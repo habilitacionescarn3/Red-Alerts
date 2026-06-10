@@ -65,6 +65,28 @@ export const ALERT_TYPES: Record<string, AlertTypeDefinition> = {
     color: '#22c55e',
     icon: 'TriangleAlert',
   },
+  'חדירת מחבלים': {
+    key: 'infiltration',
+    labelEn: 'Terrorist infiltration',
+    labelHe: 'חדירת מחבלים',
+    color: '#a855f7',
+    icon: 'Users',
+  },
+  'אירוע חדירת מחבלים הסתיים': {
+    key: 'infiltrationEnded',
+    labelEn: 'Infiltration event ended',
+    labelHe: 'אירוע חדירת מחבלים הסתיים',
+    color: '#22c55e',
+    icon: 'Users',
+  },
+  // Oref sometimes sends the shelter instruction alone as the whole title.
+  'התקרבו למרחב מוגן': {
+    key: 'approachShelter',
+    labelEn: 'Approach a protected area',
+    labelHe: 'התקרבו למרחב מוגן',
+    color: '#eab308',
+    icon: 'TriangleAlert',
+  },
 };
 
 const DEFAULT_TYPE: AlertTypeDefinition = {

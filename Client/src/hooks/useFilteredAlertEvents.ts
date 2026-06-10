@@ -23,9 +23,15 @@ export function useFilteredAlertEvents(): FilteredAlertEventsResult {
   const hasCustomRange = useTimelineStore((s) => s.hasCustomRange);
   const rangeStartMs = useTimelineStore((s) => s.rangeStartMs);
   const rangeEndMs = useTimelineStore((s) => s.rangeEndMs);
+  const timelineOpen = useTimelineStore((s) => s.isOpen);
+
+  // Day data only feeds the timeline scrubber / custom-range views, so don't
+  // fetch it until the timeline opens - otherwise the home page fires two
+  // heavy requests (last-24h AND by-date=today) on every load.
+  const dayQueryEnabled = timelineOpen || hasCustomRange;
 
   const last24hQuery = useLast24hAlerts();
-  const dayQuery = useAlertsByDate(selectedDate);
+  const dayQuery = useAlertsByDate(selectedDate, CONFIG.LAST_24H_LIMIT, dayQueryEnabled);
   const liveEvents = useAlertsStore((s) => s.liveEvents);
   const liveCityCoords = useAlertsStore((s) => s.liveCityCoords);
   const now = useNow();
@@ -76,7 +82,9 @@ export function useFilteredAlertEvents(): FilteredAlertEventsResult {
     isError: last24hQuery.isError || dayQuery.isError,
     refetch: () => {
       void last24hQuery.refetch();
-      void dayQuery.refetch();
+      // refetch() ignores `enabled`, so guard it - a disabled day query must
+      // not fire on the home page's mount-refresh.
+      if (dayQueryEnabled) void dayQuery.refetch();
     },
   };
 }

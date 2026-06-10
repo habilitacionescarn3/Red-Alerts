@@ -28,6 +28,7 @@ from sqlalchemy import (
     Index,
     String,
     Table,
+    func,
 )
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Mapped, mapped_column, relationship, selectinload
@@ -44,7 +45,7 @@ from codebase.time.israel import (
 )
 
 if TYPE_CHECKING:
-    from sqlalchemy.orm import Session
+    from sqlalchemy.orm import Query, Session
 
 # Two alerts of the SAME category are considered the SAME ongoing event when the
 # later one arrives within this many seconds of the event's most recent update
@@ -292,7 +293,16 @@ class Event(UUIDMixin, TimestampMixin, Base):
 
     @classmethod
     def _with_relations(cls, query):
-        """Eager-load relations to avoid N+1 when serializing."""
+        """Eager-load relations for the WRITE path's single-event loads.
+
+        Only ``_open_event_for_category`` (ingest) uses this: it needs real ORM
+        objects to union cities into. Never use it on read/list queries:
+        ``selectinload(cls.cities)`` joins through ``event_cities`` and returns
+        one row per (event, city) pair, each row carrying the city's full
+        ``coordinates`` JSON - a popular city's polygon is then transferred
+        once per referencing event. Read endpoints go through ``_list_query``
+        wrapped in the controller's single JSON-envelope statement instead.
+        """
         return query.options(
             selectinload(cls.category),
             selectinload(cls.title),
@@ -301,76 +311,129 @@ class Event(UUIDMixin, TimestampMixin, Base):
         )
 
     @classmethod
-    def recent(cls, session: "Session", limit: int = 50) -> List["Event"]:
-        """Return the most recent events, newest first."""
-        limit = max(1, min(int(limit), 500))
-        query = cls._with_relations(session.query(cls))
-        return query.order_by(cls.received_at.desc()).limit(limit).all()
+    def _list_query(cls, session: "Session"):
+        """Narrow column select shared by every read endpoint (no relations).
+
+        Each public read method below applies its filters/order/limit to this
+        and returns the QUERY (not rows); the controller turns it into a CTE
+        inside one JSON-envelope statement, so the whole request is a single
+        round trip to the database.
+        """
+        return session.query(
+            cls.id,
+            cls.oref_id,
+            cls.received_at,
+            cls.last_seen_at,
+            cls.category_id,
+            cls.title_id,
+            cls.description_id,
+        )
 
     @classmethod
-    def by_city(
-        cls, session: "Session", city: str, limit: int = 50
-    ) -> List["Event"]:
-        """Return recent events affecting a city (matched by name or UUID)."""
+    def recent(cls, session: "Session", limit: int = 50) -> "Query":
+        """Query for the most recent events, newest first."""
+        limit = max(1, min(int(limit), 500))
+        query = cls._list_query(session)
+        return query.order_by(cls.received_at.desc()).limit(limit)
+
+    @classmethod
+    def by_city(cls, session: "Session", city: str, limit: int = 50) -> "Query":
+        """Query for recent events affecting a city (matched by name or UUID)."""
         limit = max(1, min(int(limit), 500))
         city = (city or "").strip()
-        query = cls._with_relations(session.query(cls)).join(cls.cities)
+        # distinct(): the secondary join can yield the same event twice if the
+        # OR filter happens to match more than one of its cities.
+        query = cls._list_query(session).join(cls.cities).distinct()
         query = query.filter((City.name == city) | (City.id == city))
-        return query.order_by(cls.received_at.desc()).limit(limit).all()
+        return query.order_by(cls.received_at.desc()).limit(limit)
 
     @classmethod
     def by_category(
         cls, session: "Session", category: str, limit: int = 50
-    ) -> List["Event"]:
-        """Return recent events of a category (matched by code or UUID)."""
+    ) -> "Query":
+        """Query for recent events of a category (matched by code or UUID)."""
         limit = max(1, min(int(limit), 500))
         category = (category or "").strip()
-        query = cls._with_relations(session.query(cls)).join(cls.category)
+        query = cls._list_query(session).join(cls.category)
         query = query.filter((Category.code == category) | (Category.id == category))
-        return query.order_by(cls.received_at.desc()).limit(limit).all()
+        return query.order_by(cls.received_at.desc()).limit(limit)
 
     @classmethod
     def in_last_hours(
         cls, session: "Session", hours: int = 24, limit: int = 500
-    ) -> List["Event"]:
-        """Return events received within the last ``hours`` hours, newest first."""
+    ) -> "Query":
+        """Query for events received within the last ``hours`` hours, newest first."""
         limit = max(1, min(int(limit), 500))
         cutoff = _utcnow() - timedelta(hours=max(1, int(hours)))
-        query = cls._with_relations(session.query(cls)).filter(
-            cls.received_at >= cutoff
-        )
-        return query.order_by(cls.received_at.desc()).limit(limit).all()
+        query = cls._list_query(session).filter(cls.received_at >= cutoff)
+        return query.order_by(cls.received_at.desc()).limit(limit)
 
     @classmethod
     def dates_with_events_in_month(
         cls, session: "Session", year: int, month: int
     ) -> List[str]:
-        """Distinct Israel-local calendar dates (YYYY-MM-DD) with at least one event."""
+        """Distinct Israel-local calendar dates (YYYY-MM-DD) with at least one event.
+
+        Dedupe happens in SQL at hour granularity (<=744 rows/month) instead of
+        fetching every event row. Hour truncation is safe for the UTC->Israel
+        conversion: Israel offsets are whole hours (UTC+2/+3).
+        """
         year = int(year)
         month = int(month)
         if month < 1 or month > 12:
             return []
         start_utc, end_utc = israel_month_utc_bounds(year, month)
         rows = (
-            session.query(cls.received_at)
+            session.query(func.date_format(cls.received_at, "%Y-%m-%d %H"))
             .filter(cls.received_at >= start_utc, cls.received_at < end_utc)
+            .distinct()
             .all()
         )
-        dates = {utc_to_israel_date(received_at) for (received_at,) in rows}
+        dates = {
+            utc_to_israel_date(datetime.strptime(hour_str, "%Y-%m-%d %H"))
+            for (hour_str,) in rows
+        }
         return sorted(dates)
 
     @classmethod
-    def on_date(
-        cls, session: "Session", date_str: str, limit: int = 500
-    ) -> List["Event"]:
-        """Return events whose ``received_at`` falls on an Israel-local day."""
+    def on_date(cls, session: "Session", date_str: str, limit: int = 500) -> "Query":
+        """Query for events whose ``received_at`` falls on an Israel-local day."""
         limit = max(1, min(int(limit), 500))
         start_utc, end_utc = israel_day_utc_bounds(date_str)
-        query = cls._with_relations(session.query(cls)).filter(
+        query = cls._list_query(session).filter(
             cls.received_at >= start_utc,
             cls.received_at < end_utc,
         )
-        return query.order_by(cls.received_at.desc()).limit(limit).all()
+        return query.order_by(cls.received_at.desc()).limit(limit)
+
+    @classmethod
+    def in_date_range(
+        cls, session: "Session", from_date: str, to_date: str, limit: int = 2000
+    ) -> "Query":
+        """Query for events received within an inclusive Israel-local date range.
+
+        ``from_date``/``to_date`` are YYYY-MM-DD Israel-local days; the range
+        covers both end days in full. The route caps the span, so the higher
+        limit here only serves multi-day queries.
+        """
+        limit = max(1, min(int(limit), 5000))
+        start_utc, _ = israel_day_utc_bounds(from_date)
+        _, end_utc = israel_day_utc_bounds(to_date)
+        query = cls._list_query(session).filter(
+            cls.received_at >= start_utc,
+            cls.received_at < end_utc,
+        )
+        return query.order_by(cls.received_at.desc()).limit(limit)
+
+    @classmethod
+    def by_id(cls, session: "Session", event_id: str) -> "Query":
+        """Single-event variant of the list queries (0 or 1 rows by our UUID).
+
+        Goes through the same envelope statement as the list endpoints; an
+        unknown id just yields an empty ``events`` array.
+        """
+        event_id = (event_id or "").strip()
+        return cls._list_query(session).filter(cls.id == event_id)
 
     # --- serialization ------------------------------------------------------
 

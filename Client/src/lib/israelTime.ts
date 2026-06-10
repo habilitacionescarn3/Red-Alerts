@@ -24,6 +24,30 @@ export function israelMinutesFromMidnight(d: Date): number {
   return hour * 60 + minute;
 }
 
+/** Hour of day (0-23) in Israel local time for a UTC instant. */
+export function israelHourOfDay(d: Date): number {
+  return Math.floor(israelMinutesFromMidnight(d) / 60);
+}
+
+/** Shift a YYYY-MM-DD calendar date by whole days (pure date arithmetic). */
+export function shiftIsraelDate(dateStr: string, deltaDays: number): string {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  // Noon-anchored UTC so the date math never straddles a DST boundary.
+  const d = new Date(Date.UTC(year, month - 1, day + deltaDays, 12));
+  return d.toISOString().slice(0, 10);
+}
+
+/** Inclusive list of Israel-local days from `fromDate` through `toDate`. */
+export function enumerateIsraelDays(fromDate: string, toDate: string): string[] {
+  const days: string[] = [];
+  let cursor = fromDate;
+  while (cursor <= toDate && days.length <= 366) {
+    days.push(cursor);
+    cursor = shiftIsraelDate(cursor, 1);
+  }
+  return days;
+}
+
 function israelLocalParts(d: Date): { date: string; minutes: number } {
   return { date: israelDateString(d), minutes: israelMinutesFromMidnight(d) };
 }

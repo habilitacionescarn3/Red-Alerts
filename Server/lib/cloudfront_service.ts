@@ -48,6 +48,26 @@ export class CloudfrontService extends Construct {
       }
     );
 
+    // Cache for the analytics date-range endpoint. The cache key is the full
+    // query string (from/to/limit), so each distinct range is its own entry.
+    // The origin's Cache-Control drives the actual TTL within [0, 1 day]:
+    // fully-past ranges send s-maxage=3600, today-touching ranges s-maxage=5.
+    const rangeCachePolicy = new cloudfront.CachePolicy(
+      this,
+      "RangeCachePolicy",
+      {
+        cachePolicyName: `RedAlerts-range`,
+        minTtl: Duration.seconds(0),
+        defaultTtl: Duration.seconds(5),
+        maxTtl: Duration.days(1),
+        queryStringBehavior: cloudfront.CacheQueryStringBehavior.all(),
+        headerBehavior: cloudfront.CacheHeaderBehavior.none(),
+        cookieBehavior: cloudfront.CacheCookieBehavior.none(),
+        enableAcceptEncodingGzip: true,
+        enableAcceptEncodingBrotli: true,
+      }
+    );
+
     // Default origin = the client bucket's S3 STATIC WEBSITE endpoint, reached
     // as a plain HTTP origin (the website endpoint only speaks HTTP). The bucket
     // is public-read and its error document is index.html (see s3_service.ts),
@@ -80,6 +100,17 @@ export class CloudfrontService extends Construct {
             cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
           allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
           cachePolicy: last24hCachePolicy,
+          originRequestPolicy:
+            cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
+        },
+        // /api/alerts/range -> cached per query string; TTL follows the
+        // origin's Cache-Control (1 h for past ranges, 5 s when touching today).
+        "/api/alerts/range": {
+          origin: apiOrigin,
+          viewerProtocolPolicy:
+            cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+          allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
+          cachePolicy: rangeCachePolicy,
           originRequestPolicy:
             cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
         },

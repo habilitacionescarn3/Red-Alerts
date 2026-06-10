@@ -147,9 +147,22 @@ export interface HourBucket {
   count: number;
 }
 
+/** One Israel-local calendar day in a multi-day analytics range. */
+export interface DayBucket {
+  date: string;
+  count: number;
+}
+
+/** One Israel-local hour-of-day slot (0-23) in the daily-rhythm histogram. */
+export interface HourOfDayBucket {
+  hour: number;
+  count: number;
+}
+
 export interface AlertTypeCount {
   key: string;
   label: string;
+  color?: string;
   count: number;
 }
 
@@ -157,6 +170,14 @@ export interface CityCount {
   name: string;
   count: number;
 }
+
+/** Analytics time-range presets; 'custom' uses an explicit from/to date pair. */
+export type AnalyticsRangePreset = '24h' | '7d' | '30d' | 'custom';
+
+/** Resolved analytics window: the rolling 24h feed or an Israel-local date range. */
+export type AnalyticsRange =
+  | { mode: 'rolling24h' }
+  | { mode: 'range'; fromDate: string; toDate: string };
 
 // --- Geo / map ---
 
@@ -166,6 +187,8 @@ export interface CityFeatureProperties {
   center?: [number, number];
   color?: string;
   pinImage?: string;
+  /** Event count for the analytics heat map (absent on the live map). */
+  count?: number;
 }
 
 export type CityFeature = GeoFeature<Geometry, CityFeatureProperties>;
@@ -231,6 +254,11 @@ export interface AlertEventsResult {
   isLoading: boolean;
   isError: boolean;
   refetch: () => void;
+}
+
+export interface AnalyticsEventsResult extends AlertEventsResult {
+  /** The resolved time window the events were fetched for. */
+  range: AnalyticsRange;
 }
 
 export interface FilteredAlertEventsResult {

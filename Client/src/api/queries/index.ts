@@ -1,7 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import {
+  getAlertById,
   getAlertDates,
   getAlertsByDate,
+  getAlertsRange,
   getLast24hAlerts,
   getRecentAlerts,
 } from '@/api/services/alertsService';
@@ -13,6 +15,8 @@ export const queryKeys = {
   last24h: (limit: number) => ['alerts', 'last24h', limit] as const,
   datesInMonth: (year: number, month: number) => ['alerts', 'dates', year, month] as const,
   byDate: (date: string, limit: number) => ['alerts', 'by-date', date, limit] as const,
+  range: (from: string, to: string) => ['alerts', 'range', from, to] as const,
+  byId: (id: string) => ['alerts', 'by-id', id] as const,
 };
 
 const DATES_STALE_MS = 3_600_000;
@@ -57,20 +61,59 @@ export function useAlertDatesInMonth(year: number, month: number) {
 }
 
 /** All events on an Israel-local day (cached; today stays short-lived). */
-export function useAlertsByDate(date: string, limit: number = CONFIG.LAST_24H_LIMIT) {
+export function useAlertsByDate(
+  date: string,
+  limit: number = CONFIG.LAST_24H_LIMIT,
+  enabled: boolean = true,
+) {
   const today = isTodayIsrael(date);
   return useQuery({
     queryKey: queryKeys.byDate(date, limit),
     queryFn: () => getAlertsByDate(date, limit),
     staleTime: today ? TODAY_BY_DATE_STALE_MS : Number.POSITIVE_INFINITY,
-    enabled: Boolean(date),
+    enabled: Boolean(date) && enabled,
     refetchOnWindowFocus: today,
+  });
+}
+
+/**
+ * One event by UUID. Backs shareable `?event=` deep links: only fetched when
+ * the shared event is outside the windows the page already loaded. A 404 means
+ * the event is gone - don't retry, the page deselects instead.
+ */
+export function useAlertById(id: string | null, enabled: boolean = true) {
+  return useQuery({
+    queryKey: queryKeys.byId(id ?? ''),
+    queryFn: () => getAlertById(id ?? ''),
+    staleTime: TODAY_BY_DATE_STALE_MS,
+    retry: false,
+    enabled: Boolean(id) && enabled,
+  });
+}
+
+/**
+ * All events in an inclusive Israel-local date range (the analytics window).
+ * Fully-past ranges never change (beyond geocoding backfill), so they cache for
+ * the session; a range touching today stays short-lived and is also refreshed
+ * by `invalidateTodayAlerts` on live broadcasts.
+ */
+export function useAlertsRange(from: string, to: string) {
+  const touchesToday = Boolean(to) && to >= israelDateString();
+  return useQuery({
+    queryKey: queryKeys.range(from, to),
+    queryFn: () => getAlertsRange(from, to, CONFIG.RANGE_LIMIT),
+    staleTime: touchesToday ? TODAY_BY_DATE_STALE_MS : Number.POSITIVE_INFINITY,
+    enabled: Boolean(from && to),
+    refetchOnWindowFocus: touchesToday,
   });
 }
 
 /** Invalidate today's alert caches after a live broadcast (triggers background refetch). */
 export function invalidateTodayAlerts(queryClient: {
-  invalidateQueries: (opts: { queryKey: readonly unknown[] }) => void;
+  invalidateQueries: (opts: {
+    queryKey: readonly unknown[];
+    predicate?: (query: { queryKey: readonly unknown[] }) => boolean;
+  }) => void;
 }): void {
   const today = israelDateString();
   // last-24h is the primary source for the feed and map — must be invalidated
@@ -78,6 +121,15 @@ export function invalidateTodayAlerts(queryClient: {
   queryClient.invalidateQueries({ queryKey: queryKeys.last24h(CONFIG.LAST_24H_LIMIT) });
   queryClient.invalidateQueries({
     queryKey: queryKeys.byDate(today, CONFIG.LAST_24H_LIMIT),
+  });
+  // Analytics ranges that include today must also pick up the new event; past
+  // ranges are left untouched (their data cannot have changed).
+  queryClient.invalidateQueries({
+    queryKey: ['alerts', 'range'],
+    predicate: (query) => {
+      const to = query.queryKey[3];
+      return typeof to === 'string' && to >= today;
+    },
   });
   const [year, month] = today.split('-').map(Number);
   queryClient.invalidateQueries({ queryKey: queryKeys.datesInMonth(year, month) });

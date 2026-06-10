@@ -1,4 +1,8 @@
-import axios, { type AxiosInstance, type AxiosError } from 'axios';
+import axios, {
+  type AxiosError,
+  type AxiosInstance,
+  type AxiosRequestConfig,
+} from 'axios';
 import { isLocalhost } from '@/lib/env';
 
 /**
@@ -33,8 +37,11 @@ export function toErrorMessage(error: unknown, fallback = 'Request failed'): str
 }
 
 export const api = {
-  get: <T = unknown>(url: string, params?: Record<string, unknown>) =>
-    axiosInstance.get<T>(url, { params }),
+  get: <T = unknown>(
+    url: string,
+    params?: Record<string, unknown>,
+    config?: AxiosRequestConfig,
+  ) => axiosInstance.get<T>(url, { params, ...config }),
   put: <T = unknown>(url: string, data?: unknown) => axiosInstance.put<T>(url, data),
 };
 

@@ -19,6 +19,12 @@ export const CONFIG = {
   /** Max events requested for the 24h feed + analytics. */
   LAST_24H_LIMIT: 500,
 
+  /** Max events requested for a multi-day analytics date range (server caps at 5000). */
+  RANGE_LIMIT: 2000,
+
+  /** Longest analytics date range, in days (mirrors the server-side cap). */
+  RANGE_MAX_DAYS: 31,
+
   /** How often React Query refetches the recent alerts (ms). Also the polling
    *  fallback cadence when IoT realtime is not configured. */
   POLL_INTERVAL_MS: 15000,

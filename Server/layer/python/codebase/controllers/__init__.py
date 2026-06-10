@@ -19,10 +19,12 @@ from codebase.controllers.descriptions_controller import (
     list_descriptions,
 )
 from codebase.controllers.events_controller import (
+    get_event,
     ingest_alert,
     list_by_category,
     list_by_city,
     list_by_date,
+    list_by_date_range,
     list_dates_in_month,
     list_last_24h,
     list_recent,
@@ -40,10 +42,12 @@ from codebase.controllers.titles_controller import (
 
 __all__ = [
     # events
+    "get_event",
     "ingest_alert",
     "list_by_category",
     "list_by_city",
     "list_by_date",
+    "list_by_date_range",
     "list_dates_in_month",
     "list_last_24h",
     "list_recent",

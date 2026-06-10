@@ -1,5 +1,6 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { isAxiosError } from 'axios';
 import { Clock, List } from 'lucide-react';
 import { PageMetadata } from '@/components/shared/PageMetadata';
 import { Card } from '@/components/ui/card';
@@ -11,10 +12,13 @@ import { AlertFeed } from '@/components/pages/home/AlertFeed';
 import { ActiveAlertsBanner } from '@/components/pages/home/ActiveAlertsBanner';
 import { TimelineBar } from '@/components/pages/home/timeline/TimelineBar';
 import { CONFIG } from '@/data/config';
+import { useAlertById } from '@/api/queries';
 import { useFilteredAlertEvents } from '@/hooks/useFilteredAlertEvents';
 import { useMapOverlayBottomInset } from '@/hooks/useMapOverlayBottomInset';
+import { useSelectedEventUrlSync } from '@/hooks/useSelectedEventUrlSync';
 import { useTimelineUrlSync } from '@/hooks/useTimelineUrlSync';
 import { cn } from '@/lib/utils';
+import { sortEventsByTime } from '@/lib/alerts/events';
 import { mapCityKeys } from '@/lib/map/perCity';
 import { buildAlertFeatureCollection, cityKey, unmatchedAlertNames } from '@/lib/geo';
 import { buildCityMeta } from '@/lib/map/cityMeta';
@@ -35,6 +39,7 @@ export default function HomePage() {
   } = useFilteredAlertEvents();
   const selectedEventId = useAlertsStore((s) => s.selectedEventId);
   const selectEvent = useAlertsStore((s) => s.selectEvent);
+  const requestFocus = useAlertsStore((s) => s.requestFocus);
   const hasCustomRange = useTimelineStore((s) => s.hasCustomRange);
   const selectedDate = useTimelineStore((s) => s.selectedDate);
   const bottomInsetPx = useMapOverlayBottomInset();
@@ -42,6 +47,7 @@ export default function HomePage() {
   const openTimeline = useTimelineStore((s) => s.openTimeline);
 
   useTimelineUrlSync();
+  const hydratedEventId = useSelectedEventUrlSync();
 
   useEffect(() => {
     refetch();
@@ -65,20 +71,68 @@ export default function HomePage() {
     };
   }, [hasCustomRange, selectedDate, t]);
 
+  /** A shared `?event=` link can point outside every loaded window - fetch by
+   *  id only then (normal clicks always resolve from the loaded lists). */
+  const inLoadedLists = useMemo(
+    () =>
+      Boolean(selectedEventId) &&
+      (feedEvents.some((e) => e.id === selectedEventId) ||
+        mapEvents.some((e) => e.id === selectedEventId)),
+    [selectedEventId, feedEvents, mapEvents],
+  );
+  const byIdQuery = useAlertById(selectedEventId, !inLoadedLists);
+
   /** Feed selection can point at an event outside the default 5-min map window. */
   const selectedEvent = useMemo(() => {
     if (!selectedEventId) return null;
     return (
       feedEvents.find((e) => e.id === selectedEventId) ??
       mapEvents.find((e) => e.id === selectedEventId) ??
+      byIdQuery.data?.events.find((e) => e.id === selectedEventId) ??
       null
     );
-  }, [selectedEventId, feedEvents, mapEvents]);
+  }, [selectedEventId, feedEvents, mapEvents, byIdQuery.data]);
+
+  // A shared link to an event that no longer exists: drop the selection (the
+  // URL param cleans itself up via the sync hook).
+  useEffect(() => {
+    if (byIdQuery.isError && isAxiosError(byIdQuery.error) && byIdQuery.error.response?.status === 404) {
+      selectEvent(null);
+    }
+  }, [byIdQuery.isError, byIdQuery.error, selectEvent]);
+
+  // Focus the map/feed ONCE on the event a shared URL pointed at, as soon as
+  // its data resolves (from the loaded windows or the by-id fetch).
+  const focusedFromUrl = useRef(false);
+  useEffect(() => {
+    if (focusedFromUrl.current || !hydratedEventId) return;
+    if (!selectedEvent || selectedEvent.id !== hydratedEventId) return;
+    focusedFromUrl.current = true;
+    const firstCity = selectedEvent.cities[0];
+    if (firstCity) requestFocus(firstCity.name, selectedEvent.id);
+  }, [hydratedEventId, selectedEvent, requestFocus]);
 
   const displayMapEvents = useMemo(() => {
     if (!selectedEvent || mapEvents.some((e) => e.id === selectedEvent.id)) return mapEvents;
     return [...mapEvents, selectedEvent];
   }, [mapEvents, selectedEvent]);
+
+  /** Show a shared out-of-window event in the feed too, in time order. */
+  const displayFeedEvents = useMemo(() => {
+    if (!selectedEvent || feedEvents.some((e) => e.id === selectedEvent.id)) return feedEvents;
+    return sortEventsByTime([...feedEvents, selectedEvent]);
+  }, [feedEvents, selectedEvent]);
+
+  /** Polygons for a shared event's cities when outside the loaded windows. */
+  const mergedCityCoords = useMemo(() => {
+    const byIdCities = byIdQuery.data?.cities;
+    if (!byIdCities?.length) return cityCoords;
+    const map = new Map(cityCoords);
+    for (const city of byIdCities) {
+      if (!map.has(city.id)) map.set(city.id, city.coordinates);
+    }
+    return map;
+  }, [cityCoords, byIdQuery.data]);
 
   const cityMeta = useMemo(
     () => buildCityMeta(displayMapEvents, i18n.language),
@@ -88,8 +142,8 @@ export default function HomePage() {
   const featureCollection = useMemo(() => {
     const colors: Record<string, string> = {};
     for (const [key, meta] of Object.entries(cityMeta)) colors[key] = meta.color;
-    return buildAlertFeatureCollection(displayMapEvents, cityCoords, colors);
-  }, [displayMapEvents, cityCoords, cityMeta]);
+    return buildAlertFeatureCollection(displayMapEvents, mergedCityCoords, colors);
+  }, [displayMapEvents, mergedCityCoords, cityMeta]);
 
   const activeKeys = useMemo(() => mapCityKeys(activeEvents), [activeEvents]);
   const recentKeys = useMemo(() => mapCityKeys(mapEvents), [mapEvents]);
@@ -110,7 +164,7 @@ export default function HomePage() {
   );
 
   const feedProps = {
-    events: feedEvents,
+    events: displayFeedEvents,
     isLoading,
     isError,
     onRetry: refetch,
