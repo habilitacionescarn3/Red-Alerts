@@ -57,10 +57,14 @@ function resolveConfig(): IotConfig {
     typeof window !== 'undefined' ? window.location.hostname : '';
   const env = detectEnv(hostname);
 
-  // On the deployed site the hostname IS the app domain; on localhost (or any
-  // non-deployed host) fall back to prod's domain so local dev talks to the real
-  // (prod) AWS IoT endpoint.
-  const isDeployed = hostname.endsWith(PROD_APP_DOMAIN);
+  // On the deployed site the hostname IS the app domain (apex) or a subdomain of
+  // it (dev./qa.); on localhost (or any non-deployed host) fall back to prod's
+  // domain so local dev talks to the real (prod) AWS IoT endpoint. Match the apex
+  // exactly or require a "." before it, so a lookalike host such as
+  // "evilred-alerts.shalev396.com" is NOT treated as deployed.
+  const isDeployed =
+    hostname === PROD_APP_DOMAIN ||
+    hostname.endsWith(`.${PROD_APP_DOMAIN}`);
   const appDomain = isDeployed ? hostname : PROD_APP_DOMAIN;
 
   return {
