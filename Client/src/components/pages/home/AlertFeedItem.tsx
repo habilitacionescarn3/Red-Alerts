@@ -1,6 +1,7 @@
 import { memo, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertTypeIcon } from '@/components/shared/AlertTypeIcon';
+import { Item } from '@/components/ui/item';
 import {
   alertDisplayLabel,
   alertTypeBg,
@@ -39,38 +40,42 @@ function AlertFeedItemBase({ event, isSelected, isActive, onSelect }: AlertFeedI
   }, [isSelected]);
 
   return (
-    <button
-      ref={ref}
-      type="button"
-      onClick={() => onSelect(event)}
-      className={cn(
-        'w-full rounded-lg border border-s-4 bg-card p-3 text-start transition-colors hover:bg-accent',
-        isSelected && 'ring-2 ring-primary',
-        isActive && 'alert-pulse',
-      )}
-      style={{ borderInlineStartColor: alertType.color }}
+    <Item
+      asChild
+      interactive
+      selected={isSelected}
+      className={cn(isActive && 'alert-pulse')}
     >
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-2 font-semibold">
-          <span
-            className="flex size-7 items-center justify-center rounded-md"
-            style={{ color: alertType.color, backgroundColor: alertTypeBg(alertType.color) }}
-          >
-            <AlertTypeIcon icon={alertType.icon} />
-          </span>
-          <span className="text-sm">{label}</span>
+      <button
+        ref={ref}
+        type="button"
+        onClick={() => onSelect(event)}
+        style={{ borderInlineStartColor: alertType.color }}
+      >
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center gap-2 font-semibold">
+            <span
+              className="flex size-7 items-center justify-center rounded-md"
+              style={{ color: alertType.color, backgroundColor: alertTypeBg(alertType.color) }}
+            >
+              <AlertTypeIcon icon={alertType.icon} />
+            </span>
+            <span className="text-sm">{label}</span>
+          </div>
+          <time className="shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
+            {time}
+          </time>
         </div>
-        <time className="shrink-0 text-xs text-muted-foreground">{time}</time>
-      </div>
 
-      {subtitle && (
-        <p className="mt-1.5 line-clamp-1 text-xs text-muted-foreground">{subtitle}</p>
-      )}
+        {subtitle && (
+          <p className="mt-1.5 line-clamp-1 text-xs text-muted-foreground">{subtitle}</p>
+        )}
 
-      <p className="mt-2 line-clamp-2 text-sm">
-        {cityNames.length > 0 ? cityNames.join(', ') : t('alerts.unknownArea')}
-      </p>
-    </button>
+        <p className="mt-2 line-clamp-2 text-sm">
+          {cityNames.length > 0 ? cityNames.join(', ') : t('alerts.unknownArea')}
+        </p>
+      </button>
+    </Item>
   );
 }
 

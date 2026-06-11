@@ -1,4 +1,6 @@
 import { useTranslation } from 'react-i18next';
+import { Card } from '@/components/ui/card';
+import { HEAT_RAMP_GRADIENT } from '@/lib/geo/heat';
 
 interface HeatLegendProps {
   /** Highest per-city event count in the current window. */
@@ -11,18 +13,19 @@ export function HeatLegend({ max }: HeatLegendProps) {
   if (max <= 0) return null;
 
   return (
-    <div className="pointer-events-none absolute bottom-3 start-3 z-10 rounded-md border bg-card/85 px-2.5 py-1.5 shadow-sm backdrop-blur">
-      <p className="mb-1 text-[10px] font-medium text-muted-foreground">
+    <Card
+      variant="overlay"
+      size="xs"
+      className="pointer-events-none absolute bottom-3 start-3 z-10 gap-1 px-2.5 py-1.5"
+    >
+      <p className="text-2xs font-medium text-muted-foreground">
         {t('analytics.heatmap.legend')}
       </p>
       <div dir="ltr" className="flex items-center gap-1.5">
-        <span className="text-[10px] tabular-nums text-muted-foreground">0</span>
-        <span
-          className="h-2 w-24 rounded-full"
-          style={{ background: 'linear-gradient(to right, #22c55e, #eab308, #ef4444)' }}
-        />
-        <span className="text-[10px] tabular-nums text-muted-foreground">{max}</span>
+        <span className="font-mono text-2xs tabular-nums text-muted-foreground">0</span>
+        <span className="h-2 w-24 rounded-full" style={{ background: HEAT_RAMP_GRADIENT }} />
+        <span className="font-mono text-2xs tabular-nums text-muted-foreground">{max}</span>
       </div>
-    </div>
+    </Card>
   );
 }

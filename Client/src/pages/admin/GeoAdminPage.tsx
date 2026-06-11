@@ -8,14 +8,13 @@ import { ROUTES, pathTo } from '@/router/routes';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { GeoPreviewMap } from '@/components/map/GeoPreviewMap';
 import { listAdminCities, saveCityCoordinates, searchLocations } from '@/api/services/geoAdminService';
 import { MAP_COLORS } from '@/data/mapColors';
 import type { AdminCity, GeoCandidate, PreviewCity } from '@/types/alerts';
-
-const INPUT_CLASS =
-  'w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring';
 
 /** Human label for a city's current geometry state. */
 function geometryLabel(city: AdminCity | null): string {
@@ -116,9 +115,11 @@ export default function GeoAdminPage() {
   }
 
   return (
-    <div className="flex h-full w-full">
-      {/* Left control panel */}
-      <div className="flex w-[420px] shrink-0 flex-col border-e bg-background">
+    // Stacks vertically below md (local tool: tablet-up is the quality bar,
+    // but nothing should ever require horizontal scrolling).
+    <div className="flex h-full w-full flex-col overflow-y-auto md:flex-row md:overflow-hidden">
+      {/* Control panel (inline-start on md+) */}
+      <div className="flex shrink-0 flex-col border-b bg-background md:w-[380px] md:border-b-0 md:border-e lg:w-[420px]">
         <div className="border-b px-4 py-3">
           <h1 className="text-sm font-semibold">Geocoding correction (local)</h1>
           <p className="text-xs text-muted-foreground">
@@ -139,14 +140,13 @@ export default function GeoAdminPage() {
         <div className="flex min-h-0 flex-1 flex-col">
           <div className="border-b p-3">
             <label className="mb-1 block text-xs font-medium text-muted-foreground">City</label>
-            <input
-              className={INPUT_CLASS}
+            <Input
               placeholder="Filter cities..."
               value={cityFilter}
               onChange={(e) => setCityFilter(e.target.value)}
             />
           </div>
-          <ScrollArea className="min-h-0 flex-1">
+          <ScrollArea className="h-[35svh] md:h-auto md:min-h-0 md:flex-1">
             <ul className="p-2">
               {loadingCities && (
                 <li className="flex items-center gap-2 px-2 py-3 text-sm text-muted-foreground">
@@ -170,11 +170,11 @@ export default function GeoAdminPage() {
                   >
                     <span className="truncate">{city.name}</span>
                     {city.coordinates === null ? (
-                      <Badge variant="outline" className="shrink-0 text-[10px]">
+                      <Badge variant="outline" size="xs" className="shrink-0">
                         unresolved
                       </Badge>
                     ) : city.coordinates.length === 0 ? (
-                      <Badge variant="destructive" className="shrink-0 text-[10px]">
+                      <Badge variant="destructive" size="xs" className="shrink-0">
                         no match
                       </Badge>
                     ) : null}
@@ -194,13 +194,13 @@ export default function GeoAdminPage() {
               <div className="flex items-center gap-2 text-sm">
                 <MapPin className="size-4 text-muted-foreground" />
                 <span className="font-medium">{selectedCity.name}</span>
-                <Badge variant="secondary" className="text-[10px]">
+                <Badge variant="secondary" size="xs">
                   {geometryLabel(selectedCity)}
                 </Badge>
               </div>
-              <div className="flex gap-2">
-                <input
-                  className={INPUT_CLASS}
+              <div className="flex flex-wrap gap-2">
+                <Input
+                  className="min-w-40 flex-1"
                   placeholder="Search a place (e.g. a more specific name)"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -232,9 +232,11 @@ export default function GeoAdminPage() {
           )}
         </div>
 
-        <div className="flex min-h-0 flex-1">
+        {/* Candidates sit above the map until lg — at md the side-by-side split
+            would leave the preview map under 150px wide. */}
+        <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
           {/* Candidate list */}
-          <ScrollArea className="w-[320px] shrink-0 border-e">
+          <ScrollArea className="h-[30svh] shrink-0 border-b lg:h-auto lg:w-[320px] lg:border-b-0 lg:border-e">
             <ul className="p-2">
               {candidates.length === 0 && (
                 <li className="px-2 py-3 text-xs text-muted-foreground">
@@ -251,7 +253,7 @@ export default function GeoAdminPage() {
                     className={cn(
                       'w-full rounded-md px-2 py-2 text-start text-xs transition-colors',
                       selectedCandidate === candidate
-                        ? 'bg-emerald-500/15 ring-1 ring-emerald-500/40'
+                        ? 'bg-success/15 ring-1 ring-success/40'
                         : 'hover:bg-accent',
                     )}
                   >
@@ -273,13 +275,17 @@ export default function GeoAdminPage() {
           </ScrollArea>
 
           {/* Preview map */}
-          <div className="relative min-w-0 flex-1">
+          <div className="relative min-h-[320px] min-w-0 flex-1">
             <GeoPreviewMap
               current={selectedCity?.coordinates ?? null}
               candidate={selectedCandidate?.points ?? null}
               allCities={showAll ? allCities : null}
             />
-            <div className="pointer-events-none absolute bottom-3 start-3 z-10 rounded-md border bg-background/85 px-3 py-2 text-xs backdrop-blur-md">
+            <Card
+              variant="overlay"
+              size="xs"
+              className="pointer-events-none absolute bottom-3 start-3 z-10 gap-1 px-3 py-2 text-xs"
+            >
               <div className="flex items-center gap-2">
                 <span
                   className="inline-block size-3 rounded-sm"
@@ -303,7 +309,7 @@ export default function GeoAdminPage() {
                   All cities (as event)
                 </div>
               )}
-            </div>
+            </Card>
           </div>
         </div>
       </div>

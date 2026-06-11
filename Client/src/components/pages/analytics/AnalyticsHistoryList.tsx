@@ -2,7 +2,13 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { AnalyticsHistoryItem } from '@/components/pages/analytics/AnalyticsHistoryItem';
 import { cn } from '@/lib/utils';
@@ -31,11 +37,13 @@ export function AnalyticsHistoryList({ events, className }: AnalyticsHistoryList
 
   return (
     <Card className={cn('flex flex-col gap-3 overflow-hidden py-4', className)}>
-      <CardHeader className="flex-row items-center justify-between">
+      <CardHeader>
         <CardTitle className="text-base">{t('analytics.history.title')}</CardTitle>
-        <Badge variant="secondary" className="tabular-nums">
-          {events.length}
-        </Badge>
+        <CardAction>
+          <Badge variant="secondary" className="font-mono tabular-nums">
+            {events.length}
+          </Badge>
+        </CardAction>
       </CardHeader>
       <CardContent className="min-h-0 flex-1 px-3 pb-0">
         <ScrollArea className="h-full">

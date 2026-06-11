@@ -11,7 +11,13 @@ import {
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { hourOfDayHistogram } from '@/lib/analytics';
-import { AXIS_TICK, TOOLTIP_ITEM_STYLE, TOOLTIP_STYLE } from '@/components/pages/analytics/chartTheme';
+import {
+  AXIS_TICK,
+  CHART_MARGIN,
+  TOOLTIP_ITEM_STYLE,
+  TOOLTIP_STYLE,
+  Y_AXIS_WIDTH,
+} from '@/components/pages/analytics/chartTheme';
 import type { AlertEvent } from '@/types/alerts';
 
 interface HourOfDayCardProps {
@@ -37,17 +43,23 @@ export function HourOfDayCard({ events }: HourOfDayCardProps) {
         <CardTitle className="text-base">{t('analytics.charts.hourOfDay')}</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-72 w-full">
+        {/* Time axes stay LTR in both locales (same convention as the scrubber). */}
+        <div className="h-60 w-full sm:h-72" dir="ltr">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+            <BarChart data={data} margin={CHART_MARGIN}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
               <XAxis dataKey="label" tick={AXIS_TICK} stroke="var(--border)" interval={2} />
-              <YAxis tick={AXIS_TICK} stroke="var(--border)" allowDecimals={false} />
+              <YAxis
+                tick={AXIS_TICK}
+                stroke="var(--border)"
+                allowDecimals={false}
+                width={Y_AXIS_WIDTH}
+              />
               <Tooltip contentStyle={TOOLTIP_STYLE} itemStyle={TOOLTIP_ITEM_STYLE} cursor={{ fill: 'var(--accent)' }} />
               <Bar
                 dataKey="count"
                 name={t('analytics.events')}
-                fill="var(--chart-1)"
+                fill="var(--primary)"
                 radius={[4, 4, 0, 0]}
               />
             </BarChart>

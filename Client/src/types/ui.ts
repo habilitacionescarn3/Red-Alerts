@@ -41,7 +41,8 @@ export interface StatCardProps {
   label: string;
   value: string | number;
   icon: LucideIcon;
-  accentClassName?: string;
+  /** Icon badge tint; 'destructive' marks the live/active stat. */
+  accent?: 'default' | 'destructive';
 }
 
 export interface PageMetadataProps {

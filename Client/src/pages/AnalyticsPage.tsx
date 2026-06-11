@@ -86,7 +86,9 @@ export default function AnalyticsPage() {
 
       <div className="mx-auto w-full max-w-6xl px-3 pb-8 sm:px-4 2xl:max-w-screen-2xl">
         <header className="py-6">
-          <h1 className="text-xl font-bold tracking-tight sm:text-2xl">{t('analytics.title')}</h1>
+          <h1 className="font-display text-2xl tracking-tight sm:text-3xl">
+            {t('analytics.title')}
+          </h1>
           <p className="mt-1 text-sm text-muted-foreground">{t('analytics.subtitle')}</p>
         </header>
 
@@ -97,7 +99,7 @@ export default function AnalyticsPage() {
           isLoading={isLoading}
         />
 
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
           <StatCard
             label={
               range.mode === 'rolling24h'
@@ -111,7 +113,7 @@ export default function AnalyticsPage() {
             label={t('analytics.cards.activeNow')}
             value={rangeIncludesNow ? filteredActive.length : '—'}
             icon={ShieldAlert}
-            accentClassName="bg-red-500/10 text-red-500"
+            accent="destructive"
           />
           <StatCard
             label={t('analytics.cards.affectedAreas')}
@@ -160,11 +162,11 @@ export default function AnalyticsPage() {
               <AnalyticsHeatMap
                 events={filteredEvents}
                 cityCoords={cityCoords}
-                className="h-[420px] lg:col-span-3 lg:h-[560px]"
+                className="h-[min(60svh,420px)] lg:col-span-3 lg:h-[560px]"
               />
               <AnalyticsHistoryList
                 events={filteredEvents}
-                className="h-[480px] lg:col-span-2 lg:h-[560px]"
+                className="h-[min(70svh,480px)] lg:col-span-2 lg:h-[560px]"
               />
             </div>
           </>

@@ -39,12 +39,13 @@ export const CONFIG = {
   LAST_24H_REFETCH_MS: 3_600_000,
 
   /**
-   * Map starting position and zoom. The longitude is shifted ~0.5° east of the
-   * country's true centre so Israel sits further left in the viewport, away from
-   * the feed card (the empty sea on the left is consumed as the country slides
-   * onto it). The east bound is widened to match (see below).
+   * Map starting position and zoom. The longitude is shifted west of the
+   * country's true centre so the camera starts toward the Mediterranean (more
+   * open sea on the left of the viewport, less of Jordan on the right). The whole
+   * bounds window is shifted west by the same amount (see below) so the camera
+   * can actually sit there without maxBounds clamping it back east.
    */
-  MAP_CENTER: [35.45, 31.4] as [number, number],
+  MAP_CENTER: [35.05, 31.4] as [number, number],
   MAP_ZOOM: 7,
   MAP_MIN_ZOOM: 6,
   MAP_MAX_ZOOM: 13,
@@ -52,11 +53,12 @@ export const CONFIG = {
   MAP_FOCUS_ZOOM: 10,
 
   /**
-   * Bounding box [west, south, east, north] constraining the map. The east edge
-   * is extended (37.3) so the framing can sit further left while the west edge
-   * (33.6) still keeps the full coastline in view.
+   * Bounding box [west, south, east, north] constraining the map. The whole
+   * window is shifted west (toward the sea) to match MAP_CENTER: the west edge
+   * (33.2) opens up the coastline + Mediterranean, while the east edge (36.9)
+   * still keeps all Israeli territory in view (and trims empty desert/Jordan).
    */
-  MAP_MAX_BOUNDS: [33.6, 29.0, 37.3, 33.6] as [number, number, number, number],
+  MAP_MAX_BOUNDS: [33.2, 29.0, 36.9, 33.6] as [number, number, number, number],
 
   /** Max number of live alerts kept in the in-memory ring buffer. */
   LIVE_BUFFER_SIZE: 100,

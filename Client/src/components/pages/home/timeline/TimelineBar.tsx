@@ -53,7 +53,8 @@ export function TimelineBar({ dayEvents }: TimelineBarProps) {
           type="button"
           variant="outline"
           size="lg"
-          className="pointer-events-auto gap-2 rounded-full bg-background/90 shadow-xl backdrop-blur-md hover:bg-accent"
+          floating
+          className="pointer-events-auto"
           onClick={openTimeline}
         >
           <Clock className="size-4" />
@@ -93,7 +94,13 @@ export function TimelineBar({ dayEvents }: TimelineBarProps) {
           </div>
         </div>
         {hasCustomRange && (
-          <p className="text-sm font-medium text-foreground">{rangeLabel}</p>
+          <p className="text-sm font-medium text-foreground">
+            {/* Times are a LTR run even in Hebrew — the isolate stops the bidi
+                algorithm from flipping "09:36 – 10:36". */}
+            <span dir="ltr" className="font-mono tabular-nums">
+              {rangeLabel}
+            </span>
+          </p>
         )}
         <p className="text-xs text-muted-foreground">{t('timeline.dragHint')}</p>
         <DayScrubber dayEvents={dayEvents} />

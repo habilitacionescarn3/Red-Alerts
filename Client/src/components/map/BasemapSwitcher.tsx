@@ -34,7 +34,7 @@ export function BasemapSwitcher() {
               <Layers className="size-3 text-white/90" aria-hidden />
             </span>
           </div>
-          <span className="truncate border-t border-border bg-card px-1.5 py-1 text-center text-[11px] font-semibold leading-tight text-foreground">
+          <span className="truncate border-t border-border bg-card px-1.5 py-1 text-center text-2xs font-semibold leading-tight text-foreground">
             {currentLabel}
           </span>
         </button>
@@ -98,7 +98,7 @@ function BasemapOption({
       </div>
       <span
         className={cn(
-          'max-w-[4.5rem] truncate text-center text-[10px] leading-tight',
+          'max-w-[4.5rem] truncate text-center text-2xs leading-tight',
           selected ? 'font-semibold text-primary' : 'text-muted-foreground',
         )}
       >

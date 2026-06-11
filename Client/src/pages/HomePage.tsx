@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import { isAxiosError } from 'axios';
 import { Clock, List } from 'lucide-react';
 import { PageMetadata } from '@/components/shared/PageMetadata';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { AlertMap } from '@/components/map/AlertMap';
@@ -14,7 +14,12 @@ import { TimelineBar } from '@/components/pages/home/timeline/TimelineBar';
 import { CONFIG } from '@/data/config';
 import { useAlertById } from '@/api/queries';
 import { useFilteredAlertEvents } from '@/hooks/useFilteredAlertEvents';
-import { useMapOverlayBottomInset } from '@/hooks/useMapOverlayBottomInset';
+import {
+  BASE_INSET_PX,
+  CONTROL_ROW_PX,
+  SELECTED_POPUP_CLEARANCE_PX,
+  useMapOverlayBottomInset,
+} from '@/hooks/useMapOverlayBottomInset';
 import { useSelectedEventUrlSync } from '@/hooks/useSelectedEventUrlSync';
 import { useTimelineUrlSync } from '@/hooks/useTimelineUrlSync';
 import { cn } from '@/lib/utils';
@@ -175,11 +180,22 @@ export default function HomePage() {
   // Nudge the basemap picker up when a city/event is selected so the
   // MapLibre popup near the bottom of the map isn't hidden behind it.
   const basemapBottom = selectedEventId
-    ? `${bottomInsetPx + 56}px`
+    ? `${bottomInsetPx + SELECTED_POPUP_CLEARANCE_PX}px`
     : overlayBottom;
+  // Mobile bottom control row, and the MapLibre attribution one row above it
+  // (consumed by the mobile attribution rule in index.css).
+  const mobileClusterBottomPx = timelineOpen
+    ? bottomInsetPx
+    : selectedEventId
+      ? SELECTED_POPUP_CLEARANCE_PX
+      : BASE_INSET_PX;
+  const attribBottom = `${mobileClusterBottomPx + CONTROL_ROW_PX}px`;
 
   return (
-    <div className="relative h-full w-full">
+    <div
+      className="relative h-full w-full"
+      style={{ '--map-attrib-bottom': attribBottom } as CSSProperties}
+    >
       <PageMetadata title={t('home.title')} />
 
       <AlertMap
@@ -194,6 +210,7 @@ export default function HomePage() {
       <ActiveAlertsBanner activeCount={activeEvents.length} />
 
       <Card
+        variant="overlay"
         className="absolute end-3 top-20 z-20 hidden w-[clamp(320px,26vw,460px)] flex-col gap-0 overflow-hidden py-0 shadow-xl sm:end-4 2xl:w-[clamp(360px,22vw,520px)] md:flex"
         style={{ bottom: overlayBottom }}
       >
@@ -207,7 +224,7 @@ export default function HomePage() {
           replaced by the panel and the remaining controls float just above it. */}
       <div
         className="pointer-events-none absolute inset-x-0 z-20 flex items-end justify-between px-3 md:hidden transition-[bottom] duration-200"
-        style={{ bottom: timelineOpen ? overlayBottom : selectedEventId ? '3.5rem' : '1rem' }}
+        style={{ bottom: `${mobileClusterBottomPx}px` }}
       >
         <div className="flex flex-col items-start gap-2">
           <BasemapSwitcher />
@@ -216,7 +233,8 @@ export default function HomePage() {
               type="button"
               variant="outline"
               size="lg"
-              className="pointer-events-auto gap-2 rounded-full bg-background/90 shadow-xl backdrop-blur-md hover:bg-accent"
+              floating
+              className="pointer-events-auto"
               onClick={openTimeline}
             >
               <Clock className="size-4" />
@@ -229,17 +247,18 @@ export default function HomePage() {
           <SheetTrigger asChild>
             <Button
               size="lg"
+              floating
+              variant={activeEvents.length === 0 ? 'success' : 'default'}
               className={cn(
-                'pointer-events-auto gap-2 rounded-full shadow-xl',
-                activeEvents.length === 0 &&
-                  'bg-emerald-600 text-white hover:bg-emerald-700',
+                'pointer-events-auto',
+                activeEvents.length > 0 && 'alert-pulse',
               )}
             >
               <List className="size-4" />
               {t('home.activeNow', { count: activeEvents.length })}
             </Button>
           </SheetTrigger>
-          <SheetContent side="bottom" className="h-[80svh] p-0">
+          <SheetContent side="bottom" className="h-[min(80svh,40rem)] p-0">
             <SheetHeader className="sr-only">
               <SheetTitle>{feedCopy.feedTitle}</SheetTitle>
             </SheetHeader>
@@ -249,12 +268,14 @@ export default function HomePage() {
       </div>
 
       {unmatchedActive.length > 0 && (
-        <div
-          className="absolute start-3 z-20 max-w-[min(100%,18rem)] rounded-md border bg-background/85 px-3 py-2 text-xs text-muted-foreground backdrop-blur-md sm:start-4 sm:max-w-xs"
+        <Card
+          variant="overlay"
+          size="xs"
+          className="absolute start-3 z-20 max-w-[min(100%,18rem)] py-2 text-xs text-muted-foreground sm:start-4 sm:max-w-xs"
           style={{ bottom: overlayBottom }}
         >
-          {t('map.unmatched')}
-        </div>
+          <CardContent>{t('map.unmatched')}</CardContent>
+        </Card>
       )}
 
       {/* Desktop basemap picker — bottom-start corner. Mobile uses the cluster above. */}

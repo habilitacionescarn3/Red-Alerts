@@ -91,8 +91,13 @@ export function useTimelineUrlSync() {
       }
     }
 
+    // Canonicalize key order so this hook and useSelectedEventUrlSync (disjoint
+    // params, same URL) always serialize to the same string and never ping-pong.
+    params.sort();
     const next = params.toString();
-    const current = searchParams.toString();
+    const canonicalCurrent = new URLSearchParams(searchParams);
+    canonicalCurrent.sort();
+    const current = canonicalCurrent.toString();
     if (next !== current) {
       navigate({ pathname: location.pathname, search: next ? `?${next}` : '' }, { replace: true });
     }

@@ -72,10 +72,10 @@ export function CityFilterPopover({ options }: CityFilterPopoverProps) {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t('analytics.filters.searchCities')}
-            className="h-8"
+            size="sm"
           />
         </div>
-        <ScrollArea className="h-64">
+        <ScrollArea className="h-[min(16rem,45svh)]">
           <div className="p-1">
             {visible.length === 0 ? (
               <p className="px-3 py-6 text-center text-sm text-muted-foreground">

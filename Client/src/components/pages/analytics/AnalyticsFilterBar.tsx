@@ -31,8 +31,10 @@ export function AnalyticsFilterBar({
   const hasFilters = cityNames.length > 0 || typeKeys.length > 0;
 
   return (
-    <div className="sticky top-0 z-20 -mx-3 border-b bg-background/95 px-3 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:-mx-4 sm:px-4">
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+    // On phones the strip is sticky and must stay SHORT: chips collapse to one
+    // horizontally-scrollable row and each group gets a compact row of its own.
+    <div className="sticky top-0 z-20 -mx-3 border-b bg-background/95 px-3 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:-mx-4 sm:px-4 sm:py-3">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 sm:gap-x-4">
         <RangePresetPicker />
         <TypeFilterChips counts={typeCounts} />
         <CityFilterPopover options={cityOptions} />

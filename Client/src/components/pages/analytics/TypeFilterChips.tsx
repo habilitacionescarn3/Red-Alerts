@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
+import { Chip } from '@/components/ui/chip';
 import { ALERT_TYPES } from '@/data/alertTypes';
-import { cn } from '@/lib/utils';
 import { useAnalyticsFilterStore } from '@/store/analyticsFilterStore';
 import type { AlertTypeCount } from '@/types/alerts';
 
@@ -34,28 +34,20 @@ export function TypeFilterChips({ counts }: TypeFilterChipsProps) {
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5">
-      {chips.map((chip) => {
-        const selected = typeKeys.includes(chip.key);
-        return (
-          <button
-            key={chip.key}
-            type="button"
-            onClick={() => toggleType(chip.key)}
-            aria-pressed={selected}
-            className={cn(
-              'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
-              selected
-                ? 'border-primary bg-primary/10 text-foreground'
-                : 'border-border text-muted-foreground hover:bg-accent hover:text-foreground',
-            )}
-          >
-            <span className="size-2 rounded-full" style={{ backgroundColor: chip.color }} />
-            <span>{chip.label}</span>
-            <span className="tabular-nums opacity-70">{chip.count}</span>
-          </button>
-        );
-      })}
+    // Below sm the chips become ONE horizontally-scrollable row so the sticky
+    // filter strip stays short on phones.
+    <div className="flex items-center gap-1.5 max-sm:w-full max-sm:overflow-x-auto max-sm:pb-0.5 max-sm:[scrollbar-width:none] sm:flex-wrap">
+      {chips.map((chip) => (
+        <Chip
+          key={chip.key}
+          selected={typeKeys.includes(chip.key)}
+          swatch={chip.color}
+          onClick={() => toggleType(chip.key)}
+        >
+          <span>{chip.label}</span>
+          <span className="tabular-nums opacity-70">{chip.count}</span>
+        </Chip>
+      ))}
     </div>
   );
 }

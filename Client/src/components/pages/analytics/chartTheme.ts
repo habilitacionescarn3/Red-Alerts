@@ -1,5 +1,9 @@
 /** Shared recharts styling for the analytics cards (theme-aware CSS vars). */
 
+// One margin + axis width across the cards (replaces per-card left:-16 hacks).
+export const CHART_MARGIN = { top: 8, right: 16, left: 0, bottom: 0 };
+export const Y_AXIS_WIDTH = 32;
+
 export const PALETTE = [
   'var(--chart-1)',
   'var(--chart-2)',

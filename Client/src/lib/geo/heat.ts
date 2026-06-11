@@ -19,6 +19,10 @@ const GREEN: [number, number, number] = [34, 197, 94];
 const YELLOW: [number, number, number] = [234, 179, 8];
 const RED: [number, number, number] = [239, 68, 68];
 
+/** Same ramp as a CSS gradient — keeps the HeatLegend in sync with the map. */
+export const HEAT_RAMP_GRADIENT =
+  'linear-gradient(to right, rgb(34,197,94), rgb(234,179,8), rgb(239,68,68))';
+
 function lerp(a: [number, number, number], b: [number, number, number], t: number): string {
   const channel = (i: number) => Math.round(a[i] + (b[i] - a[i]) * t);
   const hex = (v: number) => v.toString(16).padStart(2, '0');

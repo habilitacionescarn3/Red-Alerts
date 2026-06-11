@@ -9,7 +9,7 @@ import { MAP_COLORS } from '@/data/mapColors';
 import { localizeCityName } from '@/lib/geo/cityNames';
 import { pointsToGeometry } from '@/lib/geo/geojson';
 import { escapeHtml } from '@/lib/html';
-import { getBasemapStyle } from './mapStyle';
+import { getBasemapStyle, getBasemapMaxZoom } from './mapStyle';
 import { ensurePinImages, PIN_ACTIVE_IMAGE } from './pin';
 
 const SOURCE_ID = 'preview';
@@ -213,6 +213,11 @@ export function GeoPreviewMap({ current, candidate, allCities = null }: GeoPrevi
       style: getBasemapStyle('satellite', resolvedTheme),
       center: CONFIG.MAP_CENTER,
       zoom: CONFIG.MAP_ZOOM,
+      // Same camera limitation as the live map: keep the operator inside the
+      // Israel region (no zooming out to the whole world / panning to the ocean).
+      minZoom: CONFIG.MAP_MIN_ZOOM,
+      maxZoom: getBasemapMaxZoom('satellite'),
+      maxBounds: CONFIG.MAP_MAX_BOUNDS,
       attributionControl: { compact: true },
     });
     mapRef.current = map;

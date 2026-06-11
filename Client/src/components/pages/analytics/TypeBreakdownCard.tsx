@@ -13,9 +13,11 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   AXIS_TICK,
+  CHART_MARGIN,
   PALETTE,
   TOOLTIP_ITEM_STYLE,
   TOOLTIP_STYLE,
+  Y_AXIS_WIDTH,
 } from '@/components/pages/analytics/chartTheme';
 import type { AlertTypeCount } from '@/types/alerts';
 
@@ -73,9 +75,11 @@ export function TypeBreakdownCard({ counts }: TypeBreakdownCardProps) {
         <CardTitle className="text-base">{t('analytics.charts.byCategory')}</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-72 w-full">
+        {/* Keep the categorical axis LTR too — wrapped Hebrew tick labels still
+            render RTL text correctly inside the isolated SVG. */}
+        <div className="h-60 w-full sm:h-72" dir="ltr">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data} margin={{ top: 16, right: 8, left: -16, bottom: 0 }}>
+            <BarChart data={data} margin={{ ...CHART_MARGIN, top: 16, right: 8 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
               <XAxis
                 dataKey="name"
@@ -84,7 +88,12 @@ export function TypeBreakdownCard({ counts }: TypeBreakdownCardProps) {
                 height={44}
                 stroke="var(--border)"
               />
-              <YAxis tick={AXIS_TICK} stroke="var(--border)" allowDecimals={false} />
+              <YAxis
+                tick={AXIS_TICK}
+                stroke="var(--border)"
+                allowDecimals={false}
+                width={Y_AXIS_WIDTH}
+              />
               <Tooltip
                 contentStyle={TOOLTIP_STYLE}
                 itemStyle={TOOLTIP_ITEM_STYLE}

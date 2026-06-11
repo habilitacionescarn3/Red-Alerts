@@ -25,11 +25,14 @@ export function NavBar() {
   return (
     <header className="z-30 flex h-14 shrink-0 items-center justify-between gap-2 border-b bg-background/80 px-3 backdrop-blur-md sm:px-4">
       <div className="flex min-w-0 items-center gap-2 sm:gap-6">
-        <NavLink to={pathTo(ROUTES.HOME, language)} className="flex min-w-0 shrink items-center gap-1.5 font-bold sm:gap-2">
+        <NavLink to={pathTo(ROUTES.HOME, language)} className="flex min-w-0 shrink items-center gap-1.5 sm:gap-2">
           <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
             <TriangleAlert className="size-4" />
           </span>
-          <span className="truncate text-sm tracking-tight sm:text-base">{t('nav.brand')}</span>
+          {/* Icon-only below 380px — a truncated "…lerts" looks broken. */}
+          <span className="truncate font-display text-sm tracking-tight max-[379px]:hidden sm:text-base">
+            {t('nav.brand')}
+          </span>
         </NavLink>
 
         <nav className="flex shrink-0 items-center gap-0.5 sm:gap-1">
@@ -40,7 +43,7 @@ export function NavBar() {
               end={end}
               className={({ isActive }) =>
                 cn(
-                  'flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium transition-colors sm:px-3',
+                  'flex items-center gap-2 rounded-md px-2.5 py-2 text-sm font-medium transition-colors sm:px-3 sm:py-1.5',
                   isActive
                     ? 'bg-primary/10 text-primary'
                     : 'text-muted-foreground hover:bg-accent hover:text-foreground',

@@ -56,8 +56,15 @@ export function useSelectedEventUrlSync(): string | null {
     params.delete('event');
     if (selectedEventId) params.set('event', selectedEventId);
 
+    // Canonicalize key order before comparing/writing. delete+set moves a key to
+    // the end, so without this the timeline sync (which manages disjoint params)
+    // and this hook would emit the same params in different orders and ping-pong
+    // forever on every searchParams change.
+    params.sort();
     const next = params.toString();
-    const current = searchParams.toString();
+    const canonicalCurrent = new URLSearchParams(searchParams);
+    canonicalCurrent.sort();
+    const current = canonicalCurrent.toString();
     if (next !== current) {
       navigate({ pathname: location.pathname, search: next ? `?${next}` : '' }, { replace: true });
     }

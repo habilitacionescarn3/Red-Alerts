@@ -13,7 +13,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { eventsPerDay, eventsPerHour } from '@/lib/analytics';
 import { ISRAEL_TZ } from '@/lib/israelTime';
 import { formatClock } from '@/lib/time';
-import { AXIS_TICK, TOOLTIP_ITEM_STYLE, TOOLTIP_STYLE } from '@/components/pages/analytics/chartTheme';
+import {
+  AXIS_TICK,
+  CHART_MARGIN,
+  TOOLTIP_ITEM_STYLE,
+  TOOLTIP_STYLE,
+  Y_AXIS_WIDTH,
+} from '@/components/pages/analytics/chartTheme';
 import type { AlertEvent, AnalyticsRange } from '@/types/alerts';
 
 interface EventsOverTimeCardProps {
@@ -55,24 +61,30 @@ export function EventsOverTimeCard({ events, range }: EventsOverTimeCardProps) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-72 w-full">
+        {/* Time axes stay LTR in both locales (same convention as the scrubber). */}
+        <div className="h-60 w-full sm:h-72" dir="ltr">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data} margin={{ top: 8, right: 24, left: -16, bottom: 0 }}>
+            <AreaChart data={data} margin={CHART_MARGIN}>
               <defs>
                 <linearGradient id="alertArea" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="var(--chart-1)" stopOpacity={0.5} />
-                  <stop offset="95%" stopColor="var(--chart-1)" stopOpacity={0.05} />
+                  <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.5} />
+                  <stop offset="95%" stopColor="var(--primary)" stopOpacity={0.05} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
               <XAxis dataKey="label" tick={AXIS_TICK} stroke="var(--border)" interval={interval} />
-              <YAxis tick={AXIS_TICK} stroke="var(--border)" allowDecimals={false} />
+              <YAxis
+                tick={AXIS_TICK}
+                stroke="var(--border)"
+                allowDecimals={false}
+                width={Y_AXIS_WIDTH}
+              />
               <Tooltip contentStyle={TOOLTIP_STYLE} itemStyle={TOOLTIP_ITEM_STYLE} />
               <Area
                 type="monotone"
                 dataKey="count"
                 name={t('analytics.events')}
-                stroke="var(--chart-1)"
+                stroke="var(--primary)"
                 fill="url(#alertArea)"
                 strokeWidth={2}
               />

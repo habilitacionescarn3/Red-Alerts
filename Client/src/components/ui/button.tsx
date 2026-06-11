@@ -19,6 +19,8 @@ const buttonVariants = cva(
         ghost:
           "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
         link: "text-primary underline-offset-4 hover:underline",
+        success:
+          "bg-success text-success-foreground hover:bg-success/90 focus-visible:ring-success/30",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",
@@ -30,10 +32,23 @@ const buttonVariants = cva(
         "icon-sm": "size-8",
         "icon-lg": "size-10",
       },
+      // Floating map-overlay treatment (pills hovering over the map canvas).
+      floating: {
+        true: "rounded-full shadow-xl backdrop-blur-md",
+        false: "",
+      },
     },
+    compoundVariants: [
+      {
+        variant: "outline",
+        floating: true,
+        class: "bg-background/90 shadow-xl hover:bg-accent",
+      },
+    ],
     defaultVariants: {
       variant: "default",
       size: "default",
+      floating: false,
     },
   }
 )
@@ -42,6 +57,7 @@ function Button({
   className,
   variant = "default",
   size = "default",
+  floating = false,
   asChild = false,
   ...props
 }: React.ComponentProps<"button"> &
@@ -55,7 +71,7 @@ function Button({
       data-slot="button"
       data-variant={variant}
       data-size={size}
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={cn(buttonVariants({ variant, size, floating, className }))}
       {...props}
     />
   )

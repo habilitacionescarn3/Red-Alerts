@@ -10,7 +10,13 @@ import {
   YAxis,
 } from 'recharts';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { useLocalizeCityName } from '@/hooks/useLocalizeCityName';
 import { AXIS_TICK, TOOLTIP_ITEM_STYLE, TOOLTIP_STYLE } from '@/components/pages/analytics/chartTheme';
 import type { CityCount } from '@/types/alerts';
@@ -39,16 +45,19 @@ export function TopCitiesCard({ cities }: TopCitiesCardProps) {
 
   return (
     <Card>
-      <CardHeader className="flex-row items-center justify-between">
+      <CardHeader>
         <CardTitle className="text-base">{t('analytics.charts.topCities')}</CardTitle>
         {cities.length > COLLAPSED_ROWS && (
-          <Button variant="ghost" size="xs" onClick={() => setExpanded((v) => !v)}>
-            {expanded ? t('analytics.charts.showLess') : t('analytics.charts.showMore')}
-          </Button>
+          <CardAction>
+            <Button variant="ghost" size="xs" onClick={() => setExpanded((v) => !v)}>
+              {expanded ? t('analytics.charts.showLess') : t('analytics.charts.showMore')}
+            </Button>
+          </CardAction>
         )}
       </CardHeader>
       <CardContent>
-        <div className="w-full" style={{ height: heightPx }}>
+        {/* LTR keeps bars growing from the value axis consistently in Hebrew. */}
+        <div className="w-full" style={{ height: heightPx }} dir="ltr">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={data}
@@ -69,7 +78,7 @@ export function TopCitiesCard({ cities }: TopCitiesCardProps) {
               <Bar
                 dataKey="count"
                 name={t('analytics.events')}
-                fill="var(--chart-2)"
+                fill="var(--primary)"
                 radius={[0, 4, 4, 0]}
               />
             </BarChart>

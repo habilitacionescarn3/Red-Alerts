@@ -46,7 +46,7 @@ export function DatePickerControl() {
       <PopoverTrigger asChild>
         <Button variant="outline" size="sm" className="gap-2 shrink-0">
           <CalendarDays className="size-4" />
-          <span className="max-w-[200px] truncate">{formattedSelected}</span>
+          <span className="max-w-[min(55vw,240px)] truncate">{formattedSelected}</span>
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
@@ -63,7 +63,7 @@ export function DatePickerControl() {
           modifiers={{ hasEvents }}
           modifiersClassNames={{
             hasEvents: cn(
-              'bg-red-500/15 text-red-600 dark:text-red-400',
+              'bg-primary/15 text-primary',
               'data-[selected-single=true]:bg-primary data-[selected-single=true]:text-primary-foreground',
             ),
           }}

@@ -59,6 +59,16 @@ export function DayScrubber({ dayEvents }: DayScrubberProps) {
       const track = trackRef.current;
       if (!track) return;
 
+      // Pointer capture keeps move events flowing to the handle even when the
+      // finger/cursor leaves it (and auto-releases on pointerup/cancel).
+      const handle = e.currentTarget as HTMLElement;
+      try {
+        handle.setPointerCapture(e.pointerId);
+      } catch {
+        // Capture is an enhancement; dragging still works while the pointer
+        // stays over the handle even if the id can't be captured.
+      }
+
       const move = (ev: PointerEvent) => {
         const ms = pointerToMs(ev, track, selectedDate);
 
@@ -70,12 +80,14 @@ export function DayScrubber({ dayEvents }: DayScrubberProps) {
       };
 
       const up = () => {
-        window.removeEventListener('pointermove', move);
-        window.removeEventListener('pointerup', up);
+        handle.removeEventListener('pointermove', move);
+        handle.removeEventListener('pointerup', up);
+        handle.removeEventListener('pointercancel', up);
       };
 
-      window.addEventListener('pointermove', move);
-      window.addEventListener('pointerup', up);
+      handle.addEventListener('pointermove', move);
+      handle.addEventListener('pointerup', up);
+      handle.addEventListener('pointercancel', up);
     },
     [rangeEndMs, rangeStartMs, selectedDate, setRangeMs],
   );
@@ -95,8 +107,10 @@ export function DayScrubber({ dayEvents }: DayScrubberProps) {
   };
 
   return (
-    <div className="min-w-0 flex-1">
-      <p className="mb-1.5 hidden text-xs text-muted-foreground md:block">{t('timeline.dragHint')}</p>
+    // The whole scrubber is a time axis and stays LTR in both locales (same
+    // convention as charts/HeatLegend) — this keeps the inline left-% segment
+    // positions, the pointer math, and the 00:00/24:00 labels all in agreement.
+    <div className="min-w-0 flex-1" dir="ltr">
       <div
         ref={trackRef}
         className="relative h-12 rounded-md bg-muted/60 md:h-14"
@@ -110,7 +124,7 @@ export function DayScrubber({ dayEvents }: DayScrubberProps) {
             title={tooltip}
             aria-label={tooltip}
             onClick={() => jumpToEvent(event)}
-            className="absolute top-2 bottom-2 w-2 rounded-full opacity-90 hover:opacity-100 md:w-2.5"
+            className="absolute top-2 bottom-2 w-2 rounded-full opacity-90 hover:opacity-100 md:w-2.5 before:absolute before:-inset-x-2 before:inset-y-0 before:content-['']"
             style={{ left: `${pct(minutes)}%`, backgroundColor: color }}
           />
         ))}
@@ -129,8 +143,9 @@ export function DayScrubber({ dayEvents }: DayScrubberProps) {
               tabIndex={0}
               aria-valuenow={startMin}
               className={cn(
-                'absolute top-0 z-10 h-full w-3 -translate-x-1/2 cursor-ew-resize rounded-sm',
+                'absolute top-0 z-10 h-full w-3 -translate-x-1/2 cursor-ew-resize rounded-sm touch-none',
                 'border-2 border-primary bg-background shadow',
+                "before:absolute before:-inset-x-2 before:inset-y-0 before:content-['']",
               )}
               style={{ left: `${pct(startMin)}%` }}
               onPointerDown={dragHandle('start')}
@@ -140,8 +155,9 @@ export function DayScrubber({ dayEvents }: DayScrubberProps) {
               tabIndex={0}
               aria-valuenow={endMin}
               className={cn(
-                'absolute top-0 z-10 h-full w-3 -translate-x-1/2 cursor-ew-resize rounded-sm',
+                'absolute top-0 z-10 h-full w-3 -translate-x-1/2 cursor-ew-resize rounded-sm touch-none',
                 'border-2 border-primary bg-background shadow',
+                "before:absolute before:-inset-x-2 before:inset-y-0 before:content-['']",
               )}
               style={{ left: `${pct(endMin)}%` }}
               onPointerDown={dragHandle('end')}
@@ -168,7 +184,7 @@ export function DayScrubber({ dayEvents }: DayScrubberProps) {
         )}
       </div>
 
-      <div className="mt-1 flex justify-between text-[10px] text-muted-foreground">
+      <div className="mt-1 flex justify-between font-mono text-2xs tabular-nums text-muted-foreground">
         <span>{t('timeline.midnightStart')}</span>
         <span>{t('timeline.midnightEnd')}</span>
       </div>

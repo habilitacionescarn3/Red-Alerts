@@ -1,6 +1,7 @@
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertTypeIcon } from '@/components/shared/AlertTypeIcon';
+import { Item } from '@/components/ui/item';
 import { alertDisplayLabel, alertTypeBg, resolveAlertType } from '@/data/alertTypes';
 import { useLocalizeCityName } from '@/hooks/useLocalizeCityName';
 import { ISRAEL_TZ } from '@/lib/israelTime';
@@ -44,10 +45,7 @@ function AnalyticsHistoryItemBase({ event }: AnalyticsHistoryItemProps) {
   const cityNames = event.cities.map((c) => localize(c.name));
 
   return (
-    <div
-      className="rounded-lg border border-s-4 bg-card p-3"
-      style={{ borderInlineStartColor: alertType.color }}
-    >
+    <Item style={{ borderInlineStartColor: alertType.color }}>
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2 font-semibold">
           <span
@@ -58,12 +56,16 @@ function AnalyticsHistoryItemBase({ event }: AnalyticsHistoryItemProps) {
           </span>
           <span className="text-sm">{label}</span>
         </div>
-        <time className="shrink-0 text-xs tabular-nums text-muted-foreground">{timeLabel}</time>
+        {/* plaintext isolation: keeps "10 ביוני, 17:21" from bidi-scrambling
+            into "ביוני, 17:21 10" in the RTL layout. */}
+        <time className="shrink-0 font-mono text-xs tabular-nums text-muted-foreground [unicode-bidi:plaintext]">
+          {timeLabel}
+        </time>
       </div>
       <p className="mt-2 line-clamp-2 text-sm">
         {cityNames.length > 0 ? cityNames.join(', ') : t('alerts.unknownArea')}
       </p>
-    </div>
+    </Item>
   );
 }
 
